@@ -67,6 +67,21 @@ async function createAdminUser() {
       defaultActions: ['read', 'write', 'manage'],
     });
 
+    // Newly added scheduling and appointment modules
+    await registerResource({
+      key: 'dashboard.schedules',
+      type: 'module',
+      displayNameKey: 'nav.schedules',
+      defaultActions: ['read', 'write', 'manage', 'create', 'delete'],
+    });
+
+    await registerResource({
+      key: 'dashboard.appointments',
+      type: 'module',
+      displayNameKey: 'nav.appointments',
+      defaultActions: ['read', 'write', 'manage', 'create', 'delete'],
+    });
+
     console.log('✅ Resources registered\n');
 
     // Create or find admin role
@@ -94,6 +109,8 @@ async function createAdminUser() {
       'dashboard.roles',
       'dashboard.resources',
       'dashboard.permissions',
+      'dashboard.schedules',
+      'dashboard.appointments',
     ];
 
     const actions: PermissionAction[] = ['read', 'write', 'manage', 'create', 'delete'];
