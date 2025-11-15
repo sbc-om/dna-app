@@ -8,9 +8,13 @@ import {
   type CreateUserInput,
   type UpdateUserInput,
 } from '@/lib/db/repositories/userRepository';
+import { requirePermission } from '@/lib/auth/auth';
 
 export async function createUserAction(input: CreateUserInput) {
   try {
+    // Check permission
+    await requirePermission('dashboard.users', 'create');
+    
     const user = await createUser(input);
     revalidatePath('/dashboard/users');
     return { success: true, user };
@@ -22,6 +26,9 @@ export async function createUserAction(input: CreateUserInput) {
 
 export async function updateUserAction(id: string, input: UpdateUserInput) {
   try {
+    // Check permission
+    await requirePermission('dashboard.users', 'write');
+    
     const user = await updateUser(id, input);
     if (!user) {
       return { success: false, error: 'User not found' };
@@ -36,6 +43,9 @@ export async function updateUserAction(id: string, input: UpdateUserInput) {
 
 export async function deleteUserAction(id: string) {
   try {
+    // Check permission
+    await requirePermission('dashboard.users', 'delete');
+    
     const success = await deleteUser(id);
     if (!success) {
       return { success: false, error: 'User not found' };

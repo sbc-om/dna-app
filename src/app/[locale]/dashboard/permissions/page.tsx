@@ -5,6 +5,8 @@ import { listRoles } from '@/lib/db/repositories/roleRepository';
 import { listPermissions } from '@/lib/db/repositories/permissionRepository';
 import { listResources } from '@/lib/db/repositories/resourceRepository';
 import { PermissionsClient } from '@/components/PermissionsClient';
+import { requirePermission } from '@/lib/auth/auth';
+import { redirect } from 'next/navigation';
 
 export default async function PermissionsPage({
   params,
@@ -12,6 +14,15 @@ export default async function PermissionsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params as { locale: Locale };
+  
+  // Check permission
+  try {
+    await requirePermission('dashboard.permissions', 'read');
+  } catch (error) {
+    console.error('Access denied to permissions page:', error);
+    redirect(`/${locale}/dashboard/forbidden`);
+  }
+  
   const dictionary = await getDictionary(locale);
 
   const [users, roles, permissions, resources] = await Promise.all([

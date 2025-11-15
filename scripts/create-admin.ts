@@ -23,10 +23,10 @@ async function createAdminUser() {
     const existingAdmin = await findUserByEmail('admin@dna.com');
     
     if (existingAdmin) {
-      console.log('✅ Admin user already exists!');
+      console.log('⚠️  Admin user already exists!');
       console.log('📧 Email: admin@dna.com');
-      console.log('🔑 Password: admin123\n');
-      return;
+      console.log('� Updating permissions...\n');
+      // Continue to update permissions
     }
 
     // Register default resources
@@ -113,20 +113,31 @@ async function createAdminUser() {
 
     console.log('✅ Permissions created\n');
 
-    // Create admin user
-    console.log('👤 Creating admin user...');
+    // Create or update admin user
+    console.log('👤 Creating/updating admin user...');
     
-    const adminUser = await createUser({
-      username: 'admin',
-      email: 'admin@dna.com',
-      password: 'admin123', // Will be hashed by createUser function
-      fullName: 'System Administrator',
-      phoneNumber: '+966 777 22 11 2',
-      groupIds: [],
-      directPermissions: permissionIds,
-    });
-
-    console.log('✅ Admin user created successfully!\n');
+    const existingAdmin2 = await findUserByEmail('admin@dna.com');
+    
+    let adminUser;
+    if (existingAdmin2) {
+      // Update existing admin user with new permissions
+      const { updateUser } = await import('../src/lib/db/repositories/userRepository');
+      adminUser = await updateUser(existingAdmin2.id, {
+        directPermissions: permissionIds,
+      });
+      console.log('✅ Admin user permissions updated!\n');
+    } else {
+      adminUser = await createUser({
+        username: 'admin',
+        email: 'admin@dna.com',
+        password: 'admin123', // Will be hashed by createUser function
+        fullName: 'System Administrator',
+        phoneNumber: '+966 777 22 11 2',
+        groupIds: [],
+        directPermissions: permissionIds,
+      });
+      console.log('✅ Admin user created successfully!\n');
+    }
     console.log('═══════════════════════════════════════');
     console.log('📧 Email:    admin@dna.com');
     console.log('🔑 Password: admin123');

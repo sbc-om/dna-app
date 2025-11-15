@@ -8,6 +8,7 @@ import { listPermissions } from '@/lib/db/repositories/permissionRepository';
 import { Users, Shield, FolderTree, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { getCurrentUser, hasPermission } from '@/lib/auth/auth';
 
 export default async function DashboardPage({
   params,
@@ -16,6 +17,13 @@ export default async function DashboardPage({
 }) {
   const { locale } = await params as { locale: Locale };
   const dictionary = await getDictionary(locale);
+  
+  // Get current user for permission checks
+  const currentUser = await getCurrentUser();
+  
+  // Check permissions for quick actions
+  const canManageUsers = currentUser ? await hasPermission(currentUser.id, 'dashboard.users', 'create') : false;
+  const canManageRoles = currentUser ? await hasPermission(currentUser.id, 'dashboard.roles', 'create') : false;
 
   // Get statistics
   const [users, roles, resources, permissions] = await Promise.all([
@@ -84,26 +92,32 @@ export default async function DashboardPage({
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common management tasks</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <Link href={`/${locale}/dashboard/users`}>
-              <Button variant="outline" className="w-full justify-start">
-                <Users className="mr-2 h-4 w-4" />
-                {dictionary.users.createUser}
-              </Button>
-            </Link>
-            <Link href={`/${locale}/dashboard/roles`}>
-              <Button variant="outline" className="w-full justify-start">
-                <Shield className="mr-2 h-4 w-4" />
-                {dictionary.roles.createRole}
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+        {(canManageUsers || canManageRoles) && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Common management tasks</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              {canManageUsers && (
+                <Link href={`/${locale}/dashboard/users`}>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Users className="mr-2 h-4 w-4" />
+                    {dictionary.users.createUser}
+                  </Button>
+                </Link>
+              )}
+              {canManageRoles && (
+                <Link href={`/${locale}/dashboard/roles`}>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Shield className="mr-2 h-4 w-4" />
+                    {dictionary.roles.createRole}
+                  </Button>
+                </Link>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>

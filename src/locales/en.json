@@ -20,7 +20,8 @@
     "actions": "Actions",
     "loading": "Loading...",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "backToDashboard": "Back to Dashboard"
   },
   "nav": {
     "home": "Home",
@@ -143,7 +144,11 @@
     "unauthorized": "You are not authorized to perform this action",
     "notFound": "The requested resource was not found",
     "serverError": "An error occurred on the server",
-    "validationError": "Please check your input and try again"
+    "validationError": "Please check your input and try again",
+    "forbidden": "Access Denied",
+    "forbiddenMessage": "You do not have permission to access this resource",
+    "contactAdmin": "If you believe this is an error, please contact your administrator",
+    "backToDashboard": "Back to Dashboard"
   },
   "pages": {
     "home": {

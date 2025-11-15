@@ -70,3 +70,33 @@ export async function requireAuth(): Promise<AuthUser> {
   
   return user;
 }
+
+/**
+ * Check if user has permission to access a resource
+ */
+export async function hasPermission(
+  userId: string,
+  resourceKey: string,
+  action: 'read' | 'write' | 'manage' | 'delete' | 'create' = 'read'
+): Promise<boolean> {
+  const { canUserPerformAction } = await import('../access-control/checkAccess');
+  return canUserPerformAction({ userId, resourceKey, action });
+}
+
+/**
+ * Require permission - throw error if user doesn't have permission
+ */
+export async function requirePermission(
+  resourceKey: string,
+  action: 'read' | 'write' | 'manage' | 'delete' | 'create' = 'read'
+): Promise<AuthUser> {
+  const user = await requireAuth();
+  
+  const allowed = await hasPermission(user.id, resourceKey, action);
+  
+  if (!allowed) {
+    throw new Error('Forbidden: You do not have permission to access this resource');
+  }
+  
+  return user;
+}
