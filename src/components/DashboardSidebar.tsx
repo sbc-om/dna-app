@@ -84,7 +84,12 @@ export function DashboardSidebar({
         {filteredMenuItems.map((item) => {
           const Icon = item.icon;
           const href = `/${locale}${item.href}`;
-          const isActive = pathname === href || pathname.startsWith(`${href}/`);
+          
+          // For dashboard home, only exact match
+          // For other pages, check if starts with the href
+          const isActive = item.key === 'dashboard'
+            ? pathname === href
+            : pathname === href || pathname.startsWith(`${href}/`);
 
           return (
             <Link
