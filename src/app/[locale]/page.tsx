@@ -27,7 +27,7 @@ export default async function HomePage({ params }: PageProps) {
               <img 
                 src="/logo.png" 
                 alt={dictionary.pages.home.hero.title}
-                className="w-48 h-48 md:w-64 md:h-64 object-contain drop-shadow-2xl"
+                className="w-40 h-40 md:w-52 md:h-52 object-contain drop-shadow-2xl"
               />
             </div>
             
@@ -44,12 +44,12 @@ export default async function HomePage({ params }: PageProps) {
             {/* Desktop Buttons */}
             <div className="hidden md:flex flex-row gap-4 md:gap-6 justify-center items-center pt-8 flex-wrap">
               <Link href={`/${locale}/auth/register`}>
-                <Button size="lg" className="bg-[#F2574C] hover:bg-[#F2574C]/90 text-white px-8 md:px-12 py-6 md:py-8 text-lg md:text-xl rounded-full shadow-xl hover:shadow-2xl transition-all">
+                <Button size="lg" className="bg-[#F2574C] hover:bg-[#F2574C]/90 text-white px-6 md:px-8 py-4 md:py-6 text-base md:text-lg rounded-lg shadow-xl hover:shadow-2xl transition-all">
                   {dictionary.pages.home.hero.cta}
                 </Button>
               </Link>
               <Link href={`/${locale}/auth/login`}>
-                <Button size="lg" variant="outline" className="border-2 border-[#30B2D2] text-[#30B2D2] hover:bg-[#30B2D2]/10 px-8 md:px-12 py-6 md:py-8 text-lg md:text-xl rounded-full shadow-lg hover:shadow-xl transition-all">
+                <Button size="lg" variant="outline" className="border-2 border-[#30B2D2] text-[#30B2D2] hover:bg-[#30B2D2]/10 px-6 md:px-8 py-4 md:py-6 text-base md:text-lg rounded-lg shadow-lg hover:shadow-xl transition-all">
                   {dictionary.pages.home.hero.loginCta}
                 </Button>
               </Link>
@@ -62,12 +62,12 @@ export default async function HomePage({ params }: PageProps) {
       <div className="fixed bottom-0 left-0 right-0 md:hidden bg-background border-t shadow-lg z-50">
         <div className="flex gap-3 p-4">
           <Link href={`/${locale}/auth/register`} className="flex-1">
-            <Button size="lg" className="w-full bg-[#F2574C] hover:bg-[#F2574C]/90 text-white py-6 text-base rounded-lg shadow-lg">
+            <Button size="lg" className="w-full bg-[#F2574C] hover:bg-[#F2574C]/90 text-white py-5 text-sm rounded-lg shadow-lg">
               {dictionary.pages.home.hero.cta}
             </Button>
           </Link>
           <Link href={`/${locale}/auth/login`} className="flex-1">
-            <Button size="lg" className="w-full bg-[#30B2D2] hover:bg-[#30B2D2]/90 text-white py-6 text-base rounded-lg shadow-lg">
+            <Button size="lg" className="w-full bg-[#30B2D2] hover:bg-[#30B2D2]/90 text-white py-5 text-sm rounded-lg shadow-lg">
               {dictionary.pages.home.hero.loginCta}
             </Button>
           </Link>
