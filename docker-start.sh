@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Docker Start Script for Ameen Hub
+# Docker Start Script for dna Hub
 # This script helps you manage the Docker container
 
 set -e
@@ -181,7 +181,7 @@ shell() {
 # Show help
 show_help() {
     echo ""
-    echo "Ameen Hub - Docker Management Script"
+    echo "dna Hub - Docker Management Script"
     echo ""
     echo "Usage: ./docker-start.sh [command]"
     echo ""

@@ -58,9 +58,9 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
       const redirectUrl = searchParams.get('redirect') || `/${locale}/dashboard`;
       console.log('✅ Login successful! Redirecting to:', redirectUrl);
       
-      // Redirect on success
-      router.push(redirectUrl);
-      router.refresh();
+      // Force a full page reload to ensure cookie is available
+      // Using window.location instead of router.push to avoid cookie timing issues
+      window.location.href = redirectUrl;
     } catch (err) {
       console.error('💥 Login error:', err);
       setError(dictionary.errors.serverError);

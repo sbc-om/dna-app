@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Deploy Script for Ameen Hub with Nginx Proxy
+# Deploy Script for dna Hub with Nginx Proxy
 # Simple deployment script like SBC setup
 
 set -e
@@ -63,18 +63,18 @@ build() {
 
 # Start application
 start() {
-    print_info "Starting Ameen Hub..."
+    print_info "Starting dna Hub..."
     $DOCKER_COMPOSE up -d
-    print_success "Ameen Hub started"
+    print_success "dna Hub started"
     print_info "Application will be available at: https://dna.sbc.om"
     print_warning "Wait 1-2 minutes for SSL certificate to be generated"
 }
 
 # Stop application
 stop() {
-    print_info "Stopping Ameen Hub..."
+    print_info "Stopping dna Hub..."
     $DOCKER_COMPOSE down
-    print_success "Ameen Hub stopped"
+    print_success "dna Hub stopped"
 }
 
 # View logs
@@ -95,7 +95,7 @@ status() {
     docker ps --filter name=proxy --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
     
     echo ""
-    print_info "=== Ameen Hub Status ==="
+    print_info "=== dna Hub Status ==="
     $DOCKER_COMPOSE ps
 }
 
@@ -129,7 +129,7 @@ deploy() {
 # Show help
 show_help() {
     echo ""
-    echo "Ameen Hub - Server Deployment Script"
+    echo "dna Hub - Server Deployment Script"
     echo ""
     echo "Usage: ./deploy-server.sh [command]"
     echo ""
