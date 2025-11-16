@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { findUserByEmail, verifyPassword } from '@/lib/db/repositories/userRepository';
-import { cookies } from 'next/headers';
-import { SignJWT } from 'jose';
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'default-secret-change-in-production'
-);
+import { createSession } from '@/lib/auth/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,19 +42,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create JWT token
-    const token = await new SignJWT({
-      userId: user.id,
+    // Create JWT token using centralized session helper
+    const token = await createSession({
+      id: user.id,
       email: user.email,
       username: user.username,
-    })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('7d')
-      .sign(JWT_SECRET);
+    });
 
     console.log('✅ Login successful for user:', user.email);
-    console.log('🍪 Token created, length:', token.length);
 
     // Create response with user data
     const response = NextResponse.json({
@@ -81,8 +71,6 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
     });
-
-    console.log('✅ Cookie set in response');
 
     return response;
 

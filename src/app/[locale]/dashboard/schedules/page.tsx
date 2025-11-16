@@ -5,9 +5,10 @@ import { SchedulesClient } from '@/components/SchedulesClient';
 export default async function SchedulesPage({
   params,
 }: {
-  params: { locale: Locale };
+  params: Promise<{ locale: Locale }>;
 }) {
-  const dictionary = await getDictionary(params.locale);
+  const { locale } = await params;
+  const dictionary = await getDictionary(locale);
 
-  return <SchedulesClient dictionary={dictionary} locale={params.locale} />;
+  return <SchedulesClient dictionary={dictionary} locale={locale} />;
 }

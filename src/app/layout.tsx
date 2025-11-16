@@ -34,7 +34,10 @@ export const metadata: Metadata = {
       { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
     ],
   },
-  themeColor: "#0070f3",
+  // Note: `themeColor` support in `metadata` is deprecated for localized layouts.
+  // If you need to set a theme color, move it to the viewport export or
+  // implement `generateViewport` per Next.js recommendations:
+  // https://nextjs.org/docs/app/api-reference/functions/generate-viewport
 };
 
 export default function RootLayout({

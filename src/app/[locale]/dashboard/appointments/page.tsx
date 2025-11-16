@@ -5,9 +5,10 @@ import { AppointmentsClient } from '@/components/AppointmentsClient';
 export default async function AppointmentsPage({
   params,
 }: {
-  params: { locale: Locale };
+  params: Promise<{ locale: Locale }>;
 }) {
-  const dictionary = await getDictionary(params.locale);
+  const { locale } = await params;
+  const dictionary = await getDictionary(locale);
 
-  return <AppointmentsClient dictionary={dictionary} locale={params.locale} />;
+  return <AppointmentsClient dictionary={dictionary} locale={locale} />;
 }

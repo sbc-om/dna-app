@@ -8,7 +8,7 @@ import { listPermissions } from '@/lib/db/repositories/permissionRepository';
 import { Users, Shield, FolderTree, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { getCurrentUser, hasPermission } from '@/lib/auth/auth';
+import { requireAuth, checkCurrentUserPermission } from '@/lib/auth/auth';
 
 export default async function DashboardPage({
   params,
@@ -18,15 +18,13 @@ export default async function DashboardPage({
   const { locale } = await params as { locale: Locale };
   const dictionary = await getDictionary(locale);
   
-  // Get current user for permission checks
-  const currentUser = await getCurrentUser();
+  // Ensure user is authenticated (middleware already checks, but this is a safety net)
+  const currentUser = await requireAuth(locale);
   
   // Check permissions for quick actions
-  const canManageUsers = currentUser ? await hasPermission(currentUser.id, 'dashboard.users', 'create') : false;
-  const canManageRoles = currentUser ? await hasPermission(currentUser.id, 'dashboard.roles', 'create') : false;
-
-  // Get statistics
-  const [users, roles, resources, permissions] = await Promise.all([
+  const [canManageUsers, canManageRoles, users, roles, resources, permissions] = await Promise.all([
+    checkCurrentUserPermission('dashboard.users', 'create'),
+    checkCurrentUserPermission('dashboard.roles', 'create'),
     listUsers(),
     listRoles(),
     listResources(),

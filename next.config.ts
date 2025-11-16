@@ -3,8 +3,10 @@ import withPWA from '@ducanh2912/next-pwa';
 
 const nextConfig: NextConfig = {
   // Next.js automatically detects src/ directory
-  // Empty turbopack config to acknowledge Turbopack usage
-  turbopack: {},
+  // Set turbopack root to current project directory
+  turbopack: {
+    root: __dirname,
+  },
 };
 
 const pwaConfig = withPWA({
