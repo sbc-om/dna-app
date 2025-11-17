@@ -8,12 +8,12 @@ import {
   type CreateUserInput,
   type UpdateUserInput,
 } from '@/lib/db/repositories/userRepository';
-import { requirePermission } from '@/lib/auth/auth';
+import { requireAdmin } from '@/lib/auth/auth';
 
 export async function createUserAction(input: CreateUserInput) {
   try {
-    // Check permission
-    await requirePermission('dashboard.users', 'create');
+    // Only admin can create users
+    await requireAdmin();
     
     const user = await createUser(input);
     revalidatePath('/dashboard/users');
@@ -26,8 +26,8 @@ export async function createUserAction(input: CreateUserInput) {
 
 export async function updateUserAction(id: string, input: UpdateUserInput) {
   try {
-    // Check permission
-    await requirePermission('dashboard.users', 'write');
+    // Only admin can update users
+    await requireAdmin();
     
     const user = await updateUser(id, input);
     if (!user) {
@@ -43,8 +43,8 @@ export async function updateUserAction(id: string, input: UpdateUserInput) {
 
 export async function deleteUserAction(id: string) {
   try {
-    // Check permission
-    await requirePermission('dashboard.users', 'delete');
+    // Only admin can delete users
+    await requireAdmin();
     
     const success = await deleteUser(id);
     if (!success) {

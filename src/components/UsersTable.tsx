@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { User } from '@/lib/db/repositories/userRepository';
-import { Role } from '@/lib/access-control/permissions';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,12 +21,11 @@ import { deleteUserAction } from '@/lib/actions/userActions';
 
 export interface UsersTableProps {
   users: User[];
-  roles: Role[];
   dictionary: Dictionary;
   onUsersChange: (users: User[]) => void;
 }
 
-export function UsersTable({ users, roles, dictionary, onUsersChange }: UsersTableProps) {
+export function UsersTable({ users, dictionary, onUsersChange }: UsersTableProps) {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
@@ -45,13 +43,6 @@ export function UsersTable({ users, roles, dictionary, onUsersChange }: UsersTab
     } else {
       alert(result.error || 'Failed to delete user');
     }
-  };
-
-  const getRoleNames = (groupIds: string[]) => {
-    return groupIds
-      .map((id) => roles.find((r) => r.id === id)?.name)
-      .filter(Boolean)
-      .join(', ') || '-';
   };
 
   const columns: ColumnDef<User>[] = [
@@ -111,11 +102,15 @@ export function UsersTable({ users, roles, dictionary, onUsersChange }: UsersTab
       },
     },
     {
-      accessorKey: 'groupIds',
+      accessorKey: 'role',
       header: dictionary.users.role,
       cell: ({ row }) => {
-        const groupIds = row.getValue('groupIds') as string[];
-        return <div className="text-gray-700 dark:text-gray-300">{getRoleNames(groupIds)}</div>;
+        const role = row.getValue('role') as string;
+        return (
+          <Badge variant="outline" className="font-medium">
+            {role?.toUpperCase() || '-'}
+          </Badge>
+        );
       },
     },
     {
@@ -220,7 +215,6 @@ export function UsersTable({ users, roles, dictionary, onUsersChange }: UsersTab
           open={!!editingUser}
           onOpenChange={(open: boolean) => !open && setEditingUser(null)}
           dictionary={dictionary}
-          roles={roles}
           onUserUpdated={(updatedUser: User) => {
             onUsersChange(
               users.map((u) => (u.id === updatedUser.id ? updatedUser : u))

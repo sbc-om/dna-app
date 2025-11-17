@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import { User } from '@/lib/db/repositories/userRepository';
-import { Role } from '@/lib/access-control/permissions';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { UsersTable } from '@/components/UsersTable';
@@ -12,10 +11,9 @@ import { CreateUserDialog } from '@/components/CreateUserDialog';
 export interface UsersClientProps {
   dictionary: Dictionary;
   initialUsers: User[];
-  roles: Role[];
 }
 
-export function UsersClient({ dictionary, initialUsers, roles }: UsersClientProps) {
+export function UsersClient({ dictionary, initialUsers }: UsersClientProps) {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
@@ -43,7 +41,6 @@ export function UsersClient({ dictionary, initialUsers, roles }: UsersClientProp
 
       <UsersTable
         users={users}
-        roles={roles}
         dictionary={dictionary}
         onUsersChange={handleUsersChange}
       />
@@ -52,7 +49,6 @@ export function UsersClient({ dictionary, initialUsers, roles }: UsersClientProp
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         dictionary={dictionary}
-        roles={roles}
         onUserCreated={(newUser: User) => {
           setUsers([...users, newUser]);
         }}

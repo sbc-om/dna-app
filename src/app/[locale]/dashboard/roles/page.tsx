@@ -1,10 +1,8 @@
 import { getDictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
-import { listRoles } from '@/lib/db/repositories/roleRepository';
-import { listResources } from '@/lib/db/repositories/resourceRepository';
-import { RolesClient } from '@/components/RolesClient';
-import { requirePermission } from '@/lib/auth/auth';
-import { redirect } from 'next/navigation';
+import { requireAdmin } from '@/lib/auth/auth';
+import { RolesPermissionsClient } from '@/components/RolesPermissionsClient';
+import { getAllRolePermissions, initializeDefaultRolePermissions } from '@/lib/db/repositories/rolePermissionRepository';
 
 export default async function RolesPage({
   params,
@@ -13,24 +11,19 @@ export default async function RolesPage({
 }) {
   const { locale } = await params as { locale: Locale };
   
-  // Check permission
-  try {
-    await requirePermission('dashboard.roles', 'read');
-  } catch (error) {
-    console.error('Access denied to roles page:', error);
-    redirect(`/${locale}/dashboard/forbidden`);
-  }
+  // Only admin can access roles page
+  await requireAdmin(locale);
+  
+  // Initialize default permissions if not exists
+  await initializeDefaultRolePermissions();
   
   const dictionary = await getDictionary(locale);
-
-  const roles = await listRoles();
-  const resources = await listResources();
+  const rolePermissions = await getAllRolePermissions();
 
   return (
-    <RolesClient
+    <RolesPermissionsClient
       dictionary={dictionary}
-      initialRoles={roles}
-      resources={resources}
+      initialRolePermissions={rolePermissions}
     />
   );
 }

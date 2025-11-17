@@ -6,8 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: dna
-    mem_limit: 2048m
-    cpus: 1.000
+    mem_limit: 4096m
+    cpus: 2.000
     restart: unless-stopped
     environment:
       # Nginx Proxy Configuration

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { User } from '@/lib/db/repositories/userRepository';
-import { Role } from '@/lib/access-control/permissions';
+import { ROLES, UserRole } from '@/config/roles';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import {
   Dialog,
@@ -22,7 +22,6 @@ export interface CreateUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   dictionary: Dictionary;
-  roles: Role[];
   onUserCreated: (user: User) => void;
 }
 
@@ -30,7 +29,6 @@ export function CreateUserDialog({
   open,
   onOpenChange,
   dictionary,
-  roles,
   onUserCreated,
 }: CreateUserDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,7 +38,7 @@ export function CreateUserDialog({
     password: '',
     fullName: '',
     phoneNumber: '',
-    groupIds: [] as string[],
+    role: ROLES.KID as UserRole,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,7 +58,7 @@ export function CreateUserDialog({
         password: '',
         fullName: '',
         phoneNumber: '',
-        groupIds: [],
+        role: ROLES.KID,
       });
     } else {
       alert(result.error || 'Failed to create user');
@@ -130,18 +128,18 @@ export function CreateUserDialog({
             <div className="grid gap-2">
               <Label htmlFor="role">{dictionary.users.role}</Label>
               <Select
-                value={formData.groupIds[0] || ''}
+                value={formData.role}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, groupIds: value ? [value] : [] })
+                  setFormData({ ...formData, role: value as UserRole })
                 }
               >
                 <SelectTrigger>
                   <SelectValue placeholder={dictionary.users.role} />
                 </SelectTrigger>
                 <SelectContent>
-                  {roles.map((role) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.name}
+                  {Object.entries(ROLES).map(([key, value]) => (
+                    <SelectItem key={value} value={value}>
+                      {key}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { jwtVerify, SignJWT } from 'jose';
 import { findUserById } from '../db/repositories/userRepository';
 import { redirect } from 'next/navigation';
+import { UserRole } from '@/config/roles';
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'default-secret-change-in-production'
@@ -13,8 +14,7 @@ export interface AuthUser {
   username: string;
   fullName?: string;
   phoneNumber?: string;
-  groupIds: string[];
-  directPermissions: string[];
+  role: UserRole;
   isActive: boolean;
 }
 
@@ -99,8 +99,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       username: user.username,
       fullName: user.fullName,
       phoneNumber: user.phoneNumber,
-      groupIds: user.groupIds,
-      directPermissions: user.directPermissions,
+      role: user.role,
       isActive: user.isActive,
     };
 
@@ -138,35 +137,12 @@ export async function requireAuthApi(): Promise<AuthUser> {
 }
 
 /**
- * Check if user has permission to access a resource
+ * Require admin role - redirects to forbidden if not admin
  */
-export async function hasPermission(
-  userId: string,
-  resourceKey: string,
-  action: 'read' | 'write' | 'manage' | 'delete' | 'create' = 'read'
-): Promise<boolean> {
-  try {
-    const { canUserPerformAction } = await import('../access-control/checkAccess');
-    return canUserPerformAction({ userId, resourceKey, action });
-  } catch (error) {
-    console.error('Error checking permission:', error);
-    return false;
-  }
-}
-
-/**
- * Require permission - returns user if allowed, redirects to forbidden page if not
- */
-export async function requirePermission(
-  resourceKey: string,
-  action: 'read' | 'write' | 'manage' | 'delete' | 'create' = 'read',
-  locale: string = 'en'
-): Promise<AuthUser> {
+export async function requireAdmin(locale: string = 'en'): Promise<AuthUser> {
   const user = await requireAuth(locale);
   
-  const allowed = await hasPermission(user.id, resourceKey, action);
-  
-  if (!allowed) {
+  if (user.role !== 'admin') {
     redirect(`/${locale}/dashboard/forbidden`);
   }
   
@@ -174,19 +150,18 @@ export async function requirePermission(
 }
 
 /**
- * Check if current user has permission
+ * Require specific role
  */
-export async function checkCurrentUserPermission(
-  resourceKey: string,
-  action: 'read' | 'write' | 'manage' | 'delete' | 'create' = 'read'
-): Promise<boolean> {
-  const user = await getCurrentUser();
+export async function requireRole(role: UserRole | UserRole[], locale: string = 'en'): Promise<AuthUser> {
+  const user = await requireAuth(locale);
   
-  if (!user) {
-    return false;
+  const allowedRoles = Array.isArray(role) ? role : [role];
+  
+  if (!allowedRoles.includes(user.role)) {
+    redirect(`/${locale}/dashboard/forbidden`);
   }
   
-  return hasPermission(user.id, resourceKey, action);
+  return user;
 }
 
 /**

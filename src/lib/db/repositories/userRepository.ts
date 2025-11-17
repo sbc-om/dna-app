@@ -1,5 +1,6 @@
 import { getDatabase, generateId } from '../lmdb';
 import bcrypt from 'bcryptjs';
+import { UserRole, ROLES } from '@/config/roles';
 
 export interface User {
   id: string;
@@ -8,8 +9,7 @@ export interface User {
   passwordHash: string;
   fullName?: string;
   phoneNumber?: string;
-  groupIds: string[];
-  directPermissions: string[];
+  role: UserRole;
   createdAt: string;
   updatedAt: string;
   isActive: boolean;
@@ -21,8 +21,7 @@ export interface CreateUserInput {
   password: string;
   fullName?: string;
   phoneNumber?: string;
-  groupIds?: string[];
-  directPermissions?: string[];
+  role?: UserRole;
 }
 
 export interface UpdateUserInput {
@@ -31,8 +30,7 @@ export interface UpdateUserInput {
   password?: string;
   fullName?: string;
   phoneNumber?: string;
-  groupIds?: string[];
-  directPermissions?: string[];
+  role?: UserRole;
   isActive?: boolean;
 }
 
@@ -82,8 +80,7 @@ export async function createUser(input: CreateUserInput): Promise<User> {
     passwordHash,
     fullName: input.fullName,
     phoneNumber: input.phoneNumber,
-    groupIds: input.groupIds || [],
-    directPermissions: input.directPermissions || [],
+    role: input.role || ROLES.KID,
     createdAt: now,
     updatedAt: now,
     isActive: true,
@@ -178,8 +175,7 @@ export async function updateUser(id: string, input: UpdateUserInput): Promise<Us
     passwordHash: input.password ? await hashPassword(input.password) : user.passwordHash,
     fullName: input.fullName !== undefined ? input.fullName : user.fullName,
     phoneNumber: input.phoneNumber !== undefined ? input.phoneNumber : user.phoneNumber,
-    groupIds: input.groupIds !== undefined ? input.groupIds : user.groupIds,
-    directPermissions: input.directPermissions !== undefined ? input.directPermissions : user.directPermissions,
+    role: input.role !== undefined ? input.role : user.role,
     isActive: input.isActive !== undefined ? input.isActive : user.isActive,
     updatedAt: new Date().toISOString(),
   };

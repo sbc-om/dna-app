@@ -6,8 +6,6 @@ import {
   LayoutDashboard, 
   Users, 
   Shield, 
-  FolderTree,
-  Key,
   Calendar,
   CalendarClock,
   Bell,
@@ -68,20 +66,6 @@ const menuItems: MenuItem[] = [
     labelKey: 'roles',
     href: '/dashboard/roles',
     icon: Shield,
-  },
-  {
-    key: 'resources',
-    resourceKey: 'dashboard.resources',
-    labelKey: 'resources',
-    href: '/dashboard/resources',
-    icon: FolderTree,
-  },
-  {
-    key: 'permissions',
-    resourceKey: 'dashboard.permissions',
-    labelKey: 'permissions',
-    href: '/dashboard/permissions',
-    icon: Key,
   },
 ];
 
