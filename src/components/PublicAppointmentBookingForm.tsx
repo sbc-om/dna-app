@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,9 +13,17 @@ interface PublicAppointmentBookingFormProps {
   locale: string;
 }
 
+interface TimeSlot {
+  time: string;
+  isBooked: boolean;
+}
+
 export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppointmentBookingFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -25,6 +33,46 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
     notes: '',
   });
 
+  // Load available dates on mount
+  useEffect(() => {
+    loadAvailableDates();
+  }, []);
+
+  // Load time slots when date changes
+  useEffect(() => {
+    if (formData.date) {
+      loadTimeSlots(formData.date);
+    } else {
+      setTimeSlots([]);
+    }
+  }, [formData.date]);
+
+  const loadAvailableDates = async () => {
+    try {
+      const response = await fetch('/api/schedules');
+      const data = await response.json();
+      if (data.success && data.dates) {
+        setAvailableDates(data.dates);
+      }
+    } catch (error) {
+      console.error('Error loading available dates:', error);
+    }
+  };
+
+  const loadTimeSlots = async (date: string) => {
+    setLoadingSlots(true);
+    try {
+      const response = await fetch(`/api/schedules?date=${date}`);
+      const data = await response.json();
+      if (data.success && data.timeSlots) {
+        setTimeSlots(data.timeSlots);
+      }
+    } catch (error) {
+      console.error('Error loading time slots:', error);
+    }
+    setLoadingSlots(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -32,9 +80,7 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
     try {
       const response = await fetch('/api/appointments/public', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
@@ -50,8 +96,6 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
           time: '',
           notes: '',
         });
-        
-        // Reset success message after 5 seconds
         setTimeout(() => setIsSuccess(false), 5000);
       } else {
         alert(data.error || 'Failed to book appointment');
@@ -78,10 +122,7 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
             <p className="text-green-700 dark:text-green-400">
               {dictionary.appointments?.bookingSuccessMessage || 'Your appointment has been scheduled. We will contact you soon to confirm.'}
             </p>
-            <Button
-              onClick={() => setIsSuccess(false)}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
+            <Button onClick={() => setIsSuccess(false)} className="bg-green-600 hover:bg-green-700 text-white">
               {dictionary.appointments?.bookAnother || 'Book Another Appointment'}
             </Button>
           </div>
@@ -102,7 +143,6 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Full Name */}
           <div className="space-y-2">
             <Label htmlFor="fullName" className="flex items-center gap-2">
               <User className="h-4 w-4" />
@@ -119,7 +159,6 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
             />
           </div>
 
-          {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
@@ -136,7 +175,6 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
             />
           </div>
 
-          {/* Phone Number */}
           <div className="space-y-2">
             <Label htmlFor="phoneNumber" className="flex items-center gap-2">
               <Phone className="h-4 w-4" />
@@ -153,40 +191,77 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
             />
           </div>
 
-          {/* Date */}
           <div className="space-y-2">
             <Label htmlFor="date" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               {dictionary.appointments?.preferredDate || 'Preferred Date'} *
             </Label>
-            <Input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              required
-              className="text-lg"
-              min={new Date().toISOString().split('T')[0]}
-            />
+            {availableDates.length === 0 ? (
+              <p className="text-sm text-muted-foreground p-3 border rounded-md">
+                {dictionary.appointment?.noAvailableDates || 'No dates available. Please check back later.'}
+              </p>
+            ) : (
+              <select
+                id="date"
+                aria-label={dictionary.appointment?.selectDate || 'Select a date'}
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value, time: '' })}
+                required
+                className="w-full px-3 py-2 text-lg border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">{dictionary.appointment?.selectDate || 'Select a date'}</option>
+                {availableDates.map((date) => (
+                  <option key={date} value={date}>
+                    {new Date(date + 'T00:00:00').toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
-          {/* Time */}
-          <div className="space-y-2">
-            <Label htmlFor="time" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              {dictionary.appointments?.preferredTime || 'Preferred Time'} *
-            </Label>
-            <Input
-              id="time"
-              type="time"
-              value={formData.time}
-              onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-              required
-              className="text-lg"
-            />
-          </div>
+          {formData.date && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                {dictionary.appointments?.preferredTime || 'Preferred Time'} *
+              </Label>
+              {loadingSlots ? (
+                <p className="text-sm text-muted-foreground p-3 border rounded-md">
+                  {dictionary.common?.loading || 'Loading...'}
+                </p>
+              ) : timeSlots.length === 0 ? (
+                <p className="text-sm text-muted-foreground p-3 border rounded-md">
+                  {dictionary.appointment?.noSlotsAvailable || 'No time slots available for this date'}
+                </p>
+              ) : (
+                <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                  {timeSlots.map((slot) => (
+                    <button
+                      key={slot.time}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, time: slot.time })}
+                      disabled={slot.isBooked}
+                      className={`px-3 py-2 text-sm border rounded-md transition-colors ${
+                        formData.time === slot.time
+                          ? 'bg-purple-600 text-white border-purple-600'
+                          : slot.isBooked
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'hover:bg-purple-50 hover:border-purple-300'
+                      }`}
+                    >
+                      {slot.time}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
-          {/* Notes */}
           <div className="space-y-2">
             <Label htmlFor="notes">
               {dictionary.appointments?.additionalNotes || 'Additional Notes'} ({dictionary.common?.optional || 'Optional'})
@@ -201,11 +276,10 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
             />
           </div>
 
-          {/* Submit Button */}
           <Button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-lg py-6"
+            disabled={isSubmitting || !formData.date || !formData.time}
+            className="w-full bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-lg py-6 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting 
               ? (dictionary.common?.loading || 'Submitting...') 

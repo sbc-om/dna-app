@@ -21,7 +21,8 @@
     "loading": "جاري التحميل...",
     "error": "خطأ",
     "success": "نجح",
-    "backToDashboard": "العودة إلى لوحة التحكم"
+    "backToDashboard": "العودة إلى لوحة التحكم",
+    "optional": "اختياري"
   },
   "nav": {
     "home": "الرئيسية",
@@ -90,9 +91,27 @@
     "endTime": "وقت النهاية",
     "scheduleCreated": "تم إنشاء الجدول بنجاح",
     "scheduleDeleted": "تم حذف الجدول بنجاح",
+  "confirmDelete": "هل أنت متأكد أنك تريد حذف هذا الجدول؟",
     "appointmentDetails": "تفاصيل الموعد",
     "registerUser": "تسجيل مستخدم",
     "createAccounts": "إنشاء حسابات"
+  },
+  "appointments": {
+    "bookAppointment": "حجز موعد",
+    "bookingDescription": "املأ بياناتك لتحديد موعد معنا",
+    "bookingSuccess": "تم الحجز بنجاح!",
+    "bookingSuccessMessage": "تم جدولة موعدك. سنتواصل معك قريبًا للتأكيد.",
+    "bookAnother": "حجز موعد آخر",
+    "appointmentDetails": "تفاصيل الموعد",
+    "fillDetails": "يرجى ملء معلوماتك أدناه",
+    "enterFullName": "أدخل اسمك الكامل",
+    "enterEmail": "أدخل بريدك الإلكتروني",
+    "enterPhone": "أدخل رقم هاتفك",
+    "preferredDate": "التاريخ المفضل",
+    "preferredTime": "الوقت المفضل",
+    "additionalNotes": "ملاحظات إضافية",
+    "notesPlaceholder": "أي معلومات إضافية...",
+    "submitBooking": "إرسال الحجز"
   },
   "dashboard": {
     "title": "لوحة التحكم",

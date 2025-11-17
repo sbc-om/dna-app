@@ -21,7 +21,8 @@
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
-    "backToDashboard": "Back to Dashboard"
+    "backToDashboard": "Back to Dashboard",
+    "optional": "Optional"
   },
   "nav": {
     "home": "Home",
@@ -90,9 +91,27 @@
     "endTime": "End Time",
     "scheduleCreated": "Schedule created successfully",
     "scheduleDeleted": "Schedule deleted successfully",
+  "confirmDelete": "Are you sure you want to delete this schedule?",
     "appointmentDetails": "Appointment Details",
     "registerUser": "Register User",
     "createAccounts": "Create Accounts"
+  },
+  "appointments": {
+    "bookAppointment": "Book an Appointment",
+    "bookingDescription": "Fill in your details to schedule an appointment with us",
+    "bookingSuccess": "Booking Successful!",
+    "bookingSuccessMessage": "Your appointment has been scheduled. We will contact you soon to confirm.",
+    "bookAnother": "Book Another Appointment",
+    "appointmentDetails": "Appointment Details",
+    "fillDetails": "Please fill in your information below",
+    "enterFullName": "Enter your full name",
+    "enterEmail": "Enter your email",
+    "enterPhone": "Enter your phone number",
+    "preferredDate": "Preferred Date",
+    "preferredTime": "Preferred Time",
+    "additionalNotes": "Additional Notes",
+    "notesPlaceholder": "Any additional information...",
+    "submitBooking": "Submit Booking"
   },
   "dashboard": {
     "title": "Dashboard",

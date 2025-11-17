@@ -2,7 +2,7 @@ import { getDictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { AppointmentBookingForm } from '@/components/PublicAppointmentBookingForm';
+import { PublicAppointmentBookingForm } from '@/components/PublicAppointmentBookingForm';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -17,10 +17,10 @@ export default async function BookAppointmentPage({ params }: PageProps) {
     <div className="min-h-screen bg-background flex flex-col">
       <Header dictionary={dictionary} locale={locale} />
       
-      <main className="flex-1 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 py-12 px-4">
+  <main className="flex-1 bg-linear-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 py-12 px-4">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+            <h1 className="text-4xl font-bold bg-linear-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
               {dictionary.appointments?.bookAppointment || 'Book an Appointment'}
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
@@ -28,7 +28,7 @@ export default async function BookAppointmentPage({ params }: PageProps) {
             </p>
           </div>
 
-          <AppointmentBookingForm dictionary={dictionary} locale={locale} />
+          <PublicAppointmentBookingForm dictionary={dictionary} locale={locale} />
         </div>
       </main>
 

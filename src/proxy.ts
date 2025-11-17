@@ -14,6 +14,7 @@ const publicRoutes = [
   '/about',
   '/contact',
   '/offline',
+  '/book-appointment',
 ];
 
 // Define auth routes (redirect to dashboard if already authenticated)
@@ -28,6 +29,8 @@ const publicApiRoutes = [
   '/api/auth/login',
   '/api/auth/register',
   '/api/health',
+  '/api/appointments/public',
+  '/api/schedules',
 ];
 
 export default async function proxy(request: NextRequest) {
@@ -83,14 +86,20 @@ export default async function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
       }
     } catch (error) {
-      // Invalid token
-      console.error('Invalid token in proxy:', error);
+      // Invalid token - this is common when JWT secret changes or tokens expire
+      console.warn('Invalid JWT token, clearing and redirecting to login');
       
-      // Clear invalid token
+      // Clear invalid token and redirect to login
       const response = NextResponse.redirect(new URL(`/${locale}/auth/login`, request.url));
-      response.cookies.delete('auth-token');
+      response.cookies.set('auth-token', '', { 
+        expires: new Date(0),
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+      });
       
-      // Don't redirect if already on auth page
+      // Don't redirect if already on auth page to prevent infinite loops
       if (!isAuthRoute) {
         return response;
       }
