@@ -28,12 +28,12 @@ RUN npm install --production --frozen-lockfile && npm cache clean --force
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 
-# Copy necessary configuration files
-COPY --from=builder /app/next.config.ts ./
-COPY --from=builder /app/tsconfig.json ./
-COPY --from=builder /app/package.json ./
+# Copy necessary files
+COPY next.config.ts ./
+COPY tsconfig.json ./
 
-# Copy source files needed for runtime
+# Copy scripts and src for runtime database operations
+COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/src ./src
 
 # Create directories for uploads and logs
@@ -41,14 +41,14 @@ RUN mkdir -p /app/data/uploads/images /app/data/uploads/documents /app/data/uplo
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=3016
+ENV PORT=4040
 
 # Expose port
-EXPOSE 3016
+EXPOSE 4040
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3016/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+  CMD node -e "require('http').get('http://localhost:4040/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Start the application
 CMD ["npm", "start"]
