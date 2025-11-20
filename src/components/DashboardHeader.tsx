@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, User, Menu, X, Download, Bell } from 'lucide-react';
+import { LogOut, User, Menu, X, Download, Bell, Globe } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useEffect, useState } from 'react';
@@ -123,6 +123,19 @@ export function DashboardHeader({ dictionary, user, onMobileMenuToggle }: Dashbo
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* View Website Button */}
+          <Link href={`/${locale}`}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20"
+              title="View Website"
+            >
+              <Globe className="h-5 w-5 text-purple-600" />
+              <span className="sr-only">View Website</span>
+            </Button>
+          </Link>
+
           <LanguageSwitcher />
 
           {/* Install App Button */}

@@ -115,7 +115,23 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "welcomeMessage": "Welcome to your dashboard"
+    "welcomeMessage": "Welcome to your dashboard",
+    "overview": "System Overview",
+    "statistics": "Statistics",
+    "totalUsers": "Total Users",
+    "totalAppointments": "Total Appointments",
+    "pendingAppointments": "Pending Appointments",
+    "todayAppointments": "Today's Appointments",
+    "activeUsers": "Active Users",
+    "adminAccess": "You have full system access. Use the sidebar to manage users and system settings.",
+    "coachAccess": "Welcome coach! You can manage appointments and schedules.",
+    "parentAccess": "Welcome parent! You can view and manage appointments for your children.",
+    "kidAccess": "Welcome! You can view your schedule and activities.",
+    "quickActions": "Quick Actions",
+    "manageUsers": "Manage Users",
+    "viewAppointments": "View Appointments",
+    "manageSchedules": "Manage Schedules",
+    "viewRoles": "View Roles"
   },
   "users": {
     "title": "Users",
@@ -134,7 +150,24 @@
     "confirmDelete": "Are you sure you want to delete this user?",
     "userCreated": "User created successfully",
     "userUpdated": "User updated successfully",
-    "userDeleted": "User deleted successfully"
+    "userDeleted": "User deleted successfully",
+    "parentProfile": "Parent Profile",
+    "viewParentDetails": "View and manage parent and their children",
+    "children": "Children",
+    "noChildren": "No children added yet",
+    "addChild": "Add Child",
+    "addChildDescription": "Add a new child for this parent. Default password is 11111111.",
+    "nationalId": "National ID",
+    "nationalIdPlaceholder": "Enter national ID number",
+    "nationalIdNote": "This will be used as the login username",
+    "fullNamePlaceholder": "Enter child full name",
+    "defaultPassword": "Default Password",
+    "roles": {
+      "admin": "Administrator",
+      "parent": "Parent",
+      "coach": "Coach",
+      "kid": "Kid"
+    }
   },
   "roles": {
     "title": "Roles",

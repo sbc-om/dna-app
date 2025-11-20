@@ -6,45 +6,157 @@ import { Button } from '@/components/ui/button';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
-import { Bell } from 'lucide-react';
-import { useState } from 'react';
+import { Bell, Download, LogOut, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
 
 interface HeaderProps {
   dictionary: Dictionary;
   locale: Locale;
+  user?: {
+    fullName?: string;
+    email: string;
+  } | null;
 }
 
-export function Header({ dictionary, locale }: HeaderProps) {
+export function Header({ dictionary, locale, user }: HeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+
+    await installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      console.log('PWA installed');
+    }
+    
+    setInstallPrompt(null);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        router.push(`/${locale}/auth/login`);
+        router.refresh();
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex h-24 items-center justify-between">
-        {/* Logo */}
-        <Link href={`/${locale}`} className="flex items-center space-x-3">
-          <div className="text-4xl md:text-5xl font-black bg-gradient-to-r from-[#F2574C] via-[#30B2D2] to-[#E8A12D] bg-clip-text text-transparent">
-            DNA
-          </div>
+    <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur-xl dark:bg-gray-900/90 shadow-sm">
+      <div className="flex h-16 items-center justify-between px-4 sm:px-6 max-w-7xl mx-auto">
+        {/* Logo & Title */}
+        <Link href={`/${locale}`} className="flex items-center gap-3">
+          <img 
+            src="/logo.png" 
+            alt="DNA Logo" 
+            className="h-8 w-8 object-contain"
+          />
+          <h1 className="hidden sm:block text-xl font-bold bg-gradient-to-r from-[#F2574C] via-[#30B2D2] to-[#F2574C] bg-clip-text text-transparent">
+            DNA Program
+          </h1>
         </Link>
 
-        {/* Desktop Actions */}
-        <div className="hidden md:flex items-center space-x-4">
-          <Link href={`/${locale}/dashboard/notifications`}>
-            <Button variant="ghost" size="lg" className="relative p-6">
-              <Bell className="text-[#F2574C]" style={{ width: '24px', height: '24px' }} />
-            </Button>
-          </Link>
+        <div className="flex items-center gap-2 sm:gap-3">
           <LanguageSwitcher />
-        </div>
 
-        {/* Mobile Actions */}
-        <div className="flex md:hidden items-center space-x-3">
+          {/* Install App Button */}
+          {installPrompt && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleInstall}
+              className="h-10 w-10 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20"
+              title="Install App"
+            >
+              <Download className="h-5 w-5 text-green-600" />
+              <span className="sr-only">Install App</span>
+            </Button>
+          )}
+
+          {/* Notifications Button */}
           <Link href={`/${locale}/dashboard/notifications`}>
-            <Button variant="ghost" size="lg" className="relative p-6">
-              <Bell className="text-[#F2574C]" style={{ width: '24px', height: '24px' }} />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 relative"
+              title={dictionary.nav.notifications}
+            >
+              <Bell className="h-5 w-5 text-blue-600" />
+              <span className="sr-only">{dictionary.nav.notifications}</span>
             </Button>
           </Link>
-          <LanguageSwitcher />
+
+          {/* User Menu or Login Button */}
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-purple-50 dark:hover:bg-purple-900/20">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center text-white text-sm font-semibold shadow-lg">
+                    {user.fullName?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                  <span className="sr-only">User menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <span className="text-sm font-semibold">
+                      {user.fullName || dictionary.common.welcome}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{user.email}</span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>{dictionary.common.logout}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link href={`/${locale}/auth/login`}>
+              <Button className="bg-[#F2574C] hover:bg-[#d94841] text-white">
+                {dictionary.common.login}
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </header>

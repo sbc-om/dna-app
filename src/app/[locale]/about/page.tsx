@@ -4,6 +4,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Gamepad2, UserCircle, BarChart3, Gift, Target, Sparkles } from 'lucide-react';
+import { getCurrentUser } from '@/lib/auth/auth';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -13,10 +14,11 @@ export default async function AboutPage({ params }: PageProps) {
   const resolvedParams = await params;
   const locale = resolvedParams.locale as Locale;
   const dictionary = await getDictionary(locale);
+  const user = await getCurrentUser();
 
   return (
     <div className="min-h-screen bg-background">
-      <Header dictionary={dictionary} locale={locale} />
+      <Header dictionary={dictionary} locale={locale} user={user} />
       
       <main>
         {/* Hero Section */}

@@ -57,6 +57,7 @@ export function UsersClient({ dictionary, initialUsers, locale }: UsersClientPro
         users={users}
         dictionary={dictionary}
         onUsersChange={handleUsersChange}
+        locale={locale}
       />
 
       <CreateUserDialog

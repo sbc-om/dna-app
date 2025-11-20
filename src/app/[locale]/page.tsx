@@ -4,6 +4,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { getCurrentUser } from '@/lib/auth/auth';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -13,10 +14,11 @@ export default async function HomePage({ params }: PageProps) {
   const resolvedParams = await params;
   const locale = resolvedParams.locale as Locale;
   const dictionary = await getDictionary(locale);
+  const user = await getCurrentUser();
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
-      <Header dictionary={dictionary} locale={locale} />
+      <Header dictionary={dictionary} locale={locale} user={user} />
       
       <main className="flex-1 bg-gradient-to-br from-[#F2574C]/10 via-[#30B2D2]/10 to-[#E8A12D]/10 overflow-y-auto pb-20 md:pb-0">
         {/* Hero Section */}
@@ -48,11 +50,19 @@ export default async function HomePage({ params }: PageProps) {
                   {dictionary.pages.home.hero.cta}
                 </Button>
               </Link>
-              <Link href={`/${locale}/auth/login`}>
-                <Button size="lg" variant="outline" className="border-2 border-[#30B2D2] text-[#30B2D2] hover:bg-[#30B2D2]/10 px-6 md:px-8 py-4 md:py-6 text-base md:text-lg rounded-lg shadow-lg hover:shadow-xl transition-all">
-                  {dictionary.pages.home.hero.loginCta}
-                </Button>
-              </Link>
+              {user ? (
+                <Link href={`/${locale}/dashboard`}>
+                  <Button size="lg" variant="outline" className="border-2 border-[#30B2D2] text-[#30B2D2] hover:bg-[#30B2D2]/10 px-6 md:px-8 py-4 md:py-6 text-base md:text-lg rounded-lg shadow-lg hover:shadow-xl transition-all">
+                    {dictionary.nav.dashboard}
+                  </Button>
+                </Link>
+              ) : (
+                <Link href={`/${locale}/auth/login`}>
+                  <Button size="lg" variant="outline" className="border-2 border-[#30B2D2] text-[#30B2D2] hover:bg-[#30B2D2]/10 px-6 md:px-8 py-4 md:py-6 text-base md:text-lg rounded-lg shadow-lg hover:shadow-xl transition-all">
+                    {dictionary.pages.home.hero.loginCta}
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </section>
@@ -66,11 +76,19 @@ export default async function HomePage({ params }: PageProps) {
               {dictionary.pages.home.hero.cta}
             </Button>
           </Link>
-          <Link href={`/${locale}/auth/login`} className="flex-1">
-            <Button size="lg" className="w-full bg-[#30B2D2] hover:bg-[#30B2D2]/90 text-white py-5 text-sm rounded-lg shadow-lg">
-              {dictionary.pages.home.hero.loginCta}
-            </Button>
-          </Link>
+          {user ? (
+            <Link href={`/${locale}/dashboard`} className="flex-1">
+              <Button size="lg" className="w-full bg-[#30B2D2] hover:bg-[#30B2D2]/90 text-white py-5 text-sm rounded-lg shadow-lg">
+                {dictionary.nav.dashboard}
+              </Button>
+            </Link>
+          ) : (
+            <Link href={`/${locale}/auth/login`} className="flex-1">
+              <Button size="lg" className="w-full bg-[#30B2D2] hover:bg-[#30B2D2]/90 text-white py-5 text-sm rounded-lg shadow-lg">
+                {dictionary.pages.home.hero.loginCta}
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 

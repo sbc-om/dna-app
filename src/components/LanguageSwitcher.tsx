@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Globe } from 'lucide-react';
+import { Languages } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,7 +47,7 @@ export function LanguageSwitcher() {
           size="sm"
           className="h-10 gap-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         >
-          <Globe className="h-5 w-5 text-[#30B2D2]" />
+          <Languages className="h-5 w-5 text-[#30B2D2]" />
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {currentLocale.toUpperCase()}
           </span>
@@ -63,7 +63,7 @@ export function LanguageSwitcher() {
               currentLocale === locale && 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 font-semibold'
             )}
           >
-            <Globe className="h-4 w-4" />
+            <Languages className="h-4 w-4" />
             {localeNames[locale]}
           </DropdownMenuItem>
         ))}

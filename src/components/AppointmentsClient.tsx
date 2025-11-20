@@ -55,50 +55,31 @@ export function AppointmentsClient({ dictionary, locale }: AppointmentsClientPro
   };
 
   const handleRegisterUser = async (appointment: Appointment) => {
-    // This would create parent, mother, and child accounts
-    // For now, we'll just update the appointment status
     const confirmed = confirm(
-      `This will create accounts for:\n- Parent\n- Mother\n- Child\n\nProceed?`
+      `This will create a parent account for:\n${appointment.fullName}\n\nEmail: ${appointment.email}\nPassword: 11111111\n\nProceed?`
     );
     
     if (!confirmed) return;
 
-    // Create parent account
+    // Create parent account with default password 11111111
     const parentResult = await createUserAction({
       email: appointment.email,
-      username: appointment.email.split('@')[0] + '_parent',
-      fullName: appointment.fullName + ' (Parent)',
+      username: appointment.email.split('@')[0],
+      fullName: appointment.fullName,
       phoneNumber: appointment.mobileNumber,
-      password: generateRandomPassword(),
+      password: '11111111',
+      role: 'parent',
     });
 
-    // Create mother account
-    const motherResult = await createUserAction({
-      email: appointment.email.replace('@', '_mother@'),
-      username: appointment.email.split('@')[0] + '_mother',
-      fullName: appointment.fullName + ' (Mother)',
-      phoneNumber: appointment.mobileNumber,
-      password: generateRandomPassword(),
-    });
-
-    // Create child account
-    const childResult = await createUserAction({
-      email: appointment.email.replace('@', '_child@'),
-      username: appointment.email.split('@')[0] + '_child',
-      fullName: appointment.fullName + ' (Child)',
-      phoneNumber: appointment.mobileNumber,
-      password: generateRandomPassword(),
-    });
-
-    if (parentResult.success && motherResult.success && childResult.success) {
+    if (parentResult.success) {
       await updateAppointmentAction(appointment.id, {
         status: 'completed',
-        registeredUserIds: [parentResult.user!.id, motherResult.user!.id, childResult.user!.id],
+        registeredUserIds: [parentResult.user!.id],
       });
       loadAppointments();
-      alert('Accounts created successfully! Credentials have been sent to the email.');
+      alert(`Parent account created successfully!\n\nEmail: ${appointment.email}\nPassword: 11111111\n\nThe parent can now login and add their children.`);
     } else {
-      alert('Failed to create some accounts. Please try again.');
+      alert('Failed to create parent account. Please try again.');
     }
   };
 

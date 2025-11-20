@@ -23,7 +23,7 @@ interface ContactFormData {
 
 // Since we can't use async in client components, we'll need to pass dictionary as props
 // For now, we'll create a client component that receives the dictionary
-export default function ContactPage({ dictionary, locale }: { dictionary: any; locale: Locale }) {
+export default function ContactPage({ dictionary, locale, user }: { dictionary: any; locale: Locale; user?: { fullName?: string; email: string } | null }) {
   const [formData, setFormData] = useState<ContactFormData>({
     name: '',
     email: '',
@@ -56,7 +56,7 @@ export default function ContactPage({ dictionary, locale }: { dictionary: any; l
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-pink-900/20">
-      <Header dictionary={dictionary} locale={locale} />
+      <Header dictionary={dictionary} locale={locale} user={user} />
       
       <main className="flex-1">
         {/* Hero Section */}

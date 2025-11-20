@@ -9,7 +9,9 @@ export interface User {
   passwordHash: string;
   fullName?: string;
   phoneNumber?: string;
+  nationalId?: string; // For kids (children)
   role: UserRole;
+  parentId?: string; // For kids - reference to parent user
   createdAt: string;
   updatedAt: string;
   isActive: boolean;
@@ -21,7 +23,9 @@ export interface CreateUserInput {
   password: string;
   fullName?: string;
   phoneNumber?: string;
+  nationalId?: string;
   role?: UserRole;
+  parentId?: string;
 }
 
 export interface UpdateUserInput {
@@ -30,8 +34,10 @@ export interface UpdateUserInput {
   password?: string;
   fullName?: string;
   phoneNumber?: string;
+  nationalId?: string;
   role?: UserRole;
   isActive?: boolean;
+  parentId?: string;
 }
 
 const USERS_PREFIX = 'users:';
@@ -80,7 +86,9 @@ export async function createUser(input: CreateUserInput): Promise<User> {
     passwordHash,
     fullName: input.fullName,
     phoneNumber: input.phoneNumber,
+    nationalId: input.nationalId,
     role: input.role || ROLES.KID,
+    parentId: input.parentId,
     createdAt: now,
     updatedAt: now,
     isActive: true,
@@ -237,4 +245,12 @@ export async function listUsers(): Promise<User[]> {
   }
 
   return users;
+}
+
+/**
+ * Get children (kids) by parent ID
+ */
+export async function getChildrenByParentId(parentId: string): Promise<User[]> {
+  const allUsers = await listUsers();
+  return allUsers.filter(user => user.parentId === parentId && user.role === ROLES.KID);
 }

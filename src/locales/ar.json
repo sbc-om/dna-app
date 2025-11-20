@@ -115,7 +115,23 @@
   },
   "dashboard": {
     "title": "لوحة التحكم",
-    "welcomeMessage": "مرحباً بك في لوحة التحكم"
+    "welcomeMessage": "مرحباً بك في لوحة التحكم",
+    "overview": "نظرة عامة على النظام",
+    "statistics": "الإحصائيات",
+    "totalUsers": "إجمالي المستخدمين",
+    "totalAppointments": "إجمالي المواعيد",
+    "pendingAppointments": "المواعيد المعلقة",
+    "todayAppointments": "مواعيد اليوم",
+    "activeUsers": "المستخدمون النشطون",
+    "adminAccess": "لديك وصول كامل للنظام. استخدم القائمة الجانبية لإدارة المستخدمين وإعدادات النظام.",
+    "coachAccess": "مرحباً أيها المدرب! يمكنك إدارة المواعيد والجداول.",
+    "parentAccess": "مرحباً أيها الوالد! يمكنك عرض وإدارة مواعيد أطفالك.",
+    "kidAccess": "مرحباً! يمكنك عرض جدولك وأنشطتك.",
+    "quickActions": "إجراءات سريعة",
+    "manageUsers": "إدارة المستخدمين",
+    "viewAppointments": "عرض المواعيد",
+    "manageSchedules": "إدارة الجداول",
+    "viewRoles": "عرض الأدوار"
   },
   "users": {
     "title": "المستخدمون",
@@ -134,7 +150,24 @@
     "confirmDelete": "هل أنت متأكد من حذف هذا المستخدم؟",
     "userCreated": "تم إنشاء المستخدم بنجاح",
     "userUpdated": "تم تحديث المستخدم بنجاح",
-    "userDeleted": "تم حذف المستخدم بنجاح"
+    "userDeleted": "تم حذف المستخدم بنجاح",
+    "parentProfile": "ملف الوالد",
+    "viewParentDetails": "عرض وإدارة الوالد وأطفاله",
+    "children": "الأطفال",
+    "noChildren": "لم يتم إضافة أطفال بعد",
+    "addChild": "إضافة طفل",
+    "addChildDescription": "إضافة طفل جديد لهذا الوالد. كلمة المرور الافتراضية هي 11111111.",
+    "nationalId": "الرقم الوطني",
+    "nationalIdPlaceholder": "أدخل رقم الهوية الوطنية",
+    "nationalIdNote": "سيتم استخدام هذا كاسم مستخدم لتسجيل الدخول",
+    "fullNamePlaceholder": "أدخل الاسم الكامل للطفل",
+    "defaultPassword": "كلمة المرور الافتراضية",
+    "roles": {
+      "admin": "مدير",
+      "parent": "والد",
+      "coach": "مدرب",
+      "kid": "طفل"
+    }
   },
   "roles": {
     "title": "الأدوار",

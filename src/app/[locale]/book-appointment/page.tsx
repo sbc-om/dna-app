@@ -3,6 +3,7 @@ import { Locale } from '@/config/i18n';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PublicAppointmentBookingForm } from '@/components/PublicAppointmentBookingForm';
+import { getCurrentUser } from '@/lib/auth/auth';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -12,10 +13,11 @@ export default async function BookAppointmentPage({ params }: PageProps) {
   const resolvedParams = await params;
   const locale = resolvedParams.locale as Locale;
   const dictionary = await getDictionary(locale);
+  const user = await getCurrentUser();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header dictionary={dictionary} locale={locale} />
+      <Header dictionary={dictionary} locale={locale} user={user} />
       
   <main className="flex-1 bg-linear-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 py-12 px-4">
         <div className="max-w-2xl mx-auto">

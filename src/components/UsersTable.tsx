@@ -18,14 +18,16 @@ import {
 import { DataTable } from '@/components/ui/data-table';
 import { EditUserDialog } from '@/components/EditUserDialog';
 import { deleteUserAction } from '@/lib/actions/userActions';
+import Link from 'next/link';
 
 export interface UsersTableProps {
   users: User[];
   dictionary: Dictionary;
   onUsersChange: (users: User[]) => void;
+  locale: string;
 }
 
-export function UsersTable({ users, dictionary, onUsersChange }: UsersTableProps) {
+export function UsersTable({ users, dictionary, onUsersChange, locale }: UsersTableProps) {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
@@ -62,6 +64,17 @@ export function UsersTable({ users, dictionary, onUsersChange }: UsersTableProps
       },
       cell: ({ row }) => {
         const fullName = row.getValue('fullName') as string;
+        const user = row.original;
+        
+        // Make parent names clickable
+        if (user.role === 'parent') {
+          return (
+            <Link href={`/${locale}/dashboard/users/${user.id}`} className="font-semibold text-[#30B2D2] hover:text-[#1E3A8A] hover:underline">
+              {fullName || '-'}
+            </Link>
+          );
+        }
+        
         return <div className="font-semibold text-gray-900 dark:text-gray-100">{fullName || '-'}</div>;
       },
     },
