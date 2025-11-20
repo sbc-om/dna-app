@@ -195,7 +195,7 @@ export function ImageUpload({
 
       {/* Crop Dialog */}
       <Dialog open={cropDialogOpen} onOpenChange={setCropDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[700px] max-h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-[#1E3A8A]">
               Crop Your Image
@@ -205,7 +205,7 @@ export function ImageUpload({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="w-full flex items-center justify-center bg-gray-100 rounded-lg p-4">
+          <div className="w-full flex items-center justify-center bg-gray-100 rounded-lg p-4 overflow-hidden" style={{ maxHeight: 'calc(80vh - 200px)' }}>
             {imageToCrop && (
               <ReactCrop
                 crop={crop}
@@ -218,7 +218,7 @@ export function ImageUpload({
                   ref={imgRef}
                   src={imageToCrop}
                   alt="Crop preview"
-                  className="max-w-full h-auto"
+                  style={{ maxHeight: 'calc(80vh - 220px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' }}
                 />
               </ReactCrop>
             )}

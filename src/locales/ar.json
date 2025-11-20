@@ -36,6 +36,7 @@
     "appointments": "المواعيد",
     "schedules": "الجداول",
     "notifications": "الإشعارات",
+    "messages": "الرسائل",
     "settings": "الإعدادات"
   },
   "auth": {
@@ -362,6 +363,38 @@
         "phone": "الهاتف: +1 (555) 123-4567"
       }
     }
+  },
+  "messages": {
+    "title": "الرسائل",
+    "conversations": "المحادثات",
+    "groups": "المجموعات",
+    "newMessage": "رسالة جديدة",
+    "newGroup": "مجموعة جديدة",
+    "sendMessage": "إرسال رسالة",
+    "typeMessage": "اكتب رسالتك...",
+    "selectUser": "اختر مستخدمًا لبدء المحادثة",
+    "noMessages": "لا توجد رسائل بعد",
+    "noConversations": "لا توجد محادثات بعد",
+    "groupName": "اسم المجموعة",
+    "groupMembers": "أعضاء المجموعة",
+    "createGroup": "إنشاء مجموعة",
+    "editGroup": "تعديل المجموعة",
+    "deleteGroup": "حذف المجموعة",
+    "leaveGroup": "مغادرة المجموعة",
+    "addMembers": "إضافة أعضاء",
+    "removeMembers": "إزالة أعضاء",
+    "groupCreated": "تم إنشاء المجموعة بنجاح",
+    "groupUpdated": "تم تحديث المجموعة بنجاح",
+    "groupDeleted": "تم حذف المجموعة بنجاح",
+    "messageSent": "تم إرسال الرسالة بنجاح",
+    "unreadCount": "{count} رسائل غير مقروءة",
+    "searchUsers": "بحث عن المستخدمين...",
+    "selectRecipient": "اختر المستلم",
+    "selectMembers": "اختر الأعضاء",
+    "allUsers": "جميع المستخدمين",
+    "admins": "المدراء",
+    "coaches": "المدربون",
+    "parents": "أولياء الأمور"
   },
   "footer": {
     "description": "كن بطلاً!",

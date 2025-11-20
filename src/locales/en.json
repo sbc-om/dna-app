@@ -36,6 +36,7 @@
     "appointments": "Appointments",
     "schedules": "Schedules",
     "notifications": "Notifications",
+    "messages": "Messages",
     "settings": "Settings"
   },
   "auth": {
@@ -362,6 +363,38 @@
         "phone": "Phone: +1 (555) 123-4567"
       }
     }
+  },
+  "messages": {
+    "title": "Messages",
+    "conversations": "Conversations",
+    "groups": "Groups",
+    "newMessage": "New Message",
+    "newGroup": "New Group",
+    "sendMessage": "Send Message",
+    "typeMessage": "Type your message...",
+    "selectUser": "Select a user to start chatting",
+    "noMessages": "No messages yet",
+    "noConversations": "No conversations yet",
+    "groupName": "Group Name",
+    "groupMembers": "Group Members",
+    "createGroup": "Create Group",
+    "editGroup": "Edit Group",
+    "deleteGroup": "Delete Group",
+    "leaveGroup": "Leave Group",
+    "addMembers": "Add Members",
+    "removeMembers": "Remove Members",
+    "groupCreated": "Group created successfully",
+    "groupUpdated": "Group updated successfully",
+    "groupDeleted": "Group deleted successfully",
+    "messageSent": "Message sent successfully",
+    "unreadCount": "{count} unread messages",
+    "searchUsers": "Search users...",
+    "selectRecipient": "Select recipient",
+    "selectMembers": "Select members",
+    "allUsers": "All Users",
+    "admins": "Admins",
+    "coaches": "Coaches",
+    "parents": "Parents"
   },
   "footer": {
     "description": "Be a Champion!",

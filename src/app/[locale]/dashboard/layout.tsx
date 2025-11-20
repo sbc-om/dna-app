@@ -38,6 +38,8 @@ export default async function DashboardLayout({
   if (userPermissions.canViewReports) {
     accessibleResources.push('dashboard.notifications');
   }
+  // Messages - all authenticated users can access
+  accessibleResources.push('dashboard.messages');
   // Settings is admin-only
   if (user.role === 'admin') {
     accessibleResources.push('dashboard.settings');

@@ -253,6 +253,13 @@ export async function listUsers(): Promise<User[]> {
 }
 
 /**
+ * Get all users (alias for listUsers for consistency)
+ */
+export async function getAllUsers(): Promise<User[]> {
+  return listUsers();
+}
+
+/**
  * Get children (kids) by parent ID
  */
 export async function getChildrenByParentId(parentId: string): Promise<User[]> {

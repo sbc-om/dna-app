@@ -12,5 +12,11 @@ export default async function SettingsPage({
   const dictionary = await getDictionary(locale);
   await requireAdmin(locale);
 
-  return <SettingsClient dictionary={dictionary} locale={locale} />;
+  return (
+    <div className="h-full overflow-y-auto">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl space-y-6">
+        <SettingsClient dictionary={dictionary} locale={locale} />
+      </div>
+    </div>
+  );
 }

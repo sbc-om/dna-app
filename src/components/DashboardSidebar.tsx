@@ -9,6 +9,7 @@ import {
   Calendar,
   CalendarClock,
   Bell,
+  MessageSquare,
   ChevronLeft,
   ChevronRight,
   Settings
@@ -46,6 +47,13 @@ const menuItems: MenuItem[] = [
     labelKey: 'users',
     href: '/dashboard/users',
     icon: Users,
+  },
+  {
+    key: 'messages',
+    resourceKey: 'dashboard.messages',
+    labelKey: 'messages',
+    href: '/dashboard/messages',
+    icon: MessageSquare,
   },
   {
     key: 'settings',

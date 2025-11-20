@@ -35,9 +35,10 @@ export default async function DashboardPage({
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="space-y-2">
+    <div className="h-full overflow-y-auto">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl space-y-6">
+        {/* Header */}
+        <div className="space-y-2">
         <h1 className="text-3xl font-bold text-[#1E3A8A]">
           {dictionary.common.welcome} {user.fullName || user.username}
         </h1>
@@ -170,6 +171,7 @@ export default async function DashboardPage({
         </div>
       )}
 
+      </div>
     </div>
   );
 }

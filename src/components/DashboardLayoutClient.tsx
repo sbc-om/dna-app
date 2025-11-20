@@ -52,10 +52,8 @@ export function DashboardLayoutClient({
           onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         />
 
-        <main className="flex-1 overflow-y-auto">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl">
-            {children}
-          </div>
+        <main className="flex-1 overflow-hidden">
+          {children}
         </main>
       </div>
     </div>
