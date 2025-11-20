@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { useConfirm } from '@/components/ConfirmDialog';
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,6 @@ import {
 } from '@/lib/actions/appointmentActions';
 import { createUserAction } from '@/lib/actions/userActions';
 import type { Appointment } from '@/lib/db/repositories/appointmentRepository';
-import { useConfirm } from '@/components/ConfirmDialog';
 
 interface AppointmentsClientProps {
   dictionary: Dictionary;
@@ -36,6 +36,7 @@ export function AppointmentsClient({ dictionary, locale }: AppointmentsClientPro
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('pending');
+  const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
     loadAppointments();
@@ -56,9 +57,12 @@ export function AppointmentsClient({ dictionary, locale }: AppointmentsClientPro
   };
 
   const handleRegisterUser = async (appointment: Appointment) => {
-    const confirmed = confirm(
-      `This will create a parent account for:\n${appointment.fullName}\n\nEmail: ${appointment.email}\nPassword: 11111111\n\nProceed?`
-    );
+    const confirmed = await confirm({
+      title: dictionary.appointment?.createAccounts || 'Create Account',
+      description: `This will create a parent account for:\n${appointment.fullName}\n\nEmail: ${appointment.email}\nPassword: 11111111\n\nProceed?`,
+      confirmText: dictionary.common?.create || 'Create',
+      cancelText: dictionary.common?.cancel || 'Cancel',
+    });
     
     if (!confirmed) return;
 
@@ -78,9 +82,18 @@ export function AppointmentsClient({ dictionary, locale }: AppointmentsClientPro
         registeredUserIds: [parentResult.user!.id],
       });
       loadAppointments();
-      alert(`Parent account created successfully!\n\nEmail: ${appointment.email}\nPassword: 11111111\n\nThe parent can now login and add their children.`);
+      await confirm({
+        title: dictionary.common?.success || 'Success',
+        description: `Parent account created successfully!\n\nEmail: ${appointment.email}\nPassword: 11111111\n\nThe parent can now login and add their children.`,
+        confirmText: 'OK',
+      });
     } else {
-      alert('Failed to create parent account. Please try again.');
+      await confirm({
+        title: dictionary.common?.error || 'Error',
+        description: 'Failed to create parent account. Please try again.',
+        confirmText: 'OK',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -327,6 +340,8 @@ export function AppointmentsClient({ dictionary, locale }: AppointmentsClientPro
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog />
     </div>
   );
 }

@@ -21,8 +21,10 @@ async function main() {
     allUsers.forEach((user, index) => {
       console.log(`${index + 1}. Email: ${user.email}`);
       console.log(`   Username: ${user.username}`);
+      console.log(`   Full Name: ${user.fullName || 'N/A'}`);
       console.log(`   Role: ${user.role || 'N/A'}`);
       console.log(`   Active: ${user.isActive}`);
+      console.log(`   Profile Picture: ${user.profilePicture || 'None'}`);
       console.log(`   ID: ${user.id}`);
       console.log('');
     });

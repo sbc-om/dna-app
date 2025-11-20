@@ -203,7 +203,8 @@
     "emailNote": "Email cannot be changed",
     "updateProfile": "Update Profile",
     "confirmUpdate": "Are you sure you want to update your profile?",
-    "profileUpdated": "Profile updated successfully!"
+    "profileUpdated": "Profile updated successfully!",
+    "profilePictureUpdated": "Profile picture updated successfully!"
   },
   "roles": {
     "title": "Roles",

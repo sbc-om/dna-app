@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
-import { Camera, X, Check } from 'lucide-react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { Upload, X, Check, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -44,14 +44,21 @@ export function ImageUpload({
   const imgRef = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sync previewUrl with currentImage prop
+  useEffect(() => {
+    if (currentImage) {
+      setPreviewUrl(currentImage);
+    }
+  }, [currentImage]);
+
   const handleFileSelect = (file: File) => {
     if (!file.type.startsWith('image/')) {
-      onError?.('Please select an image file');
+      if (onError) onError('Please select an image file');
       return;
     }
 
     if (file.size > maxSizeMB * 1024 * 1024) {
-      onError?.(`File size must be less than ${maxSizeMB}MB`);
+      if (onError) onError(`File size must be less than ${maxSizeMB}MB`);
       return;
     }
 
@@ -142,25 +149,27 @@ export function ImageUpload({
           accept="image/*"
           onChange={handleFileInputChange}
           className="hidden"
+          aria-label="Upload profile picture"
         />
         
         <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-[#30B2D2] shadow-xl transition-transform group-hover:scale-105">
           {previewUrl ? (
             <img
+              key={previewUrl}
               src={previewUrl}
               alt="Profile preview"
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[#30B2D2] to-[#1E3A8A] flex items-center justify-center">
-              <Camera className="w-16 h-16 text-white" />
+            <div className="w-full h-full bg-gradient-to-br from-[#30B2D2]/20 to-[#1E3A8A]/20 flex items-center justify-center">
+              <UserCircle className="w-24 h-24 text-gray-400" />
             </div>
           )}
           
           {/* Overlay on Hover */}
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <div className="text-center text-white">
-              <Camera className="w-8 h-8 mx-auto mb-2" />
+              <Upload className="w-8 h-8 mx-auto mb-2" />
               <p className="text-sm font-semibold">Change Photo</p>
             </div>
           </div>
@@ -196,7 +205,7 @@ export function ImageUpload({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="w-full max-h-[400px] overflow-auto flex items-center justify-center bg-gray-100 rounded-lg p-4">
+          <div className="w-full flex items-center justify-center bg-gray-100 rounded-lg p-4">
             {imageToCrop && (
               <ReactCrop
                 crop={crop}

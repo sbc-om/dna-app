@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { User, Mail, Phone, UserCircle, Save, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,7 @@ import { Dictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
 import { User as UserType } from '@/lib/db/repositories/userRepository';
 import { ImageUpload } from '@/components/ImageUpload';
-import { updateUserAction } from '@/lib/actions/userActions';
+import { updateOwnProfileAction } from '@/lib/actions/userActions';
 import { useConfirm } from '@/components/ConfirmDialog';
 
 interface ProfileClientProps {
@@ -20,6 +21,7 @@ interface ProfileClientProps {
 }
 
 export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     fullName: user.fullName || '',
     phoneNumber: user.phoneNumber || '',
@@ -31,21 +33,52 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
 
   const handleImageUpload = async (file: File, croppedImageUrl: string) => {
     try {
-      const formData = new FormData();
+      const uploadFormData = new FormData();
       
       // Convert cropped image URL to Blob
       const response = await fetch(croppedImageUrl);
       const blob = await response.blob();
-      formData.append('file', blob, file.name);
+      uploadFormData.append('file', blob, file.name);
 
       const uploadResponse = await fetch('/api/upload', {
         method: 'POST',
-        body: formData,
+        body: uploadFormData,
       });
 
       if (uploadResponse.ok) {
         const data = await uploadResponse.json();
-        setProfilePicture(data.url);
+        const newImageUrl = data.url;
+        
+        // Update local state immediately for instant preview
+        setProfilePicture(newImageUrl);
+        
+        // Save immediately to database
+        const result = await updateOwnProfileAction({
+          fullName: formData.fullName,
+          phoneNumber: formData.phoneNumber,
+          profilePicture: newImageUrl,
+        });
+        
+        if (result.success) {
+          // Show success message
+          await confirm({
+            title: dictionary.common.success || 'Success',
+            description: dictionary.users?.profilePictureUpdated || 'Profile picture updated successfully!',
+            confirmText: 'OK',
+          });
+          
+          // Refresh to update header and all components
+          router.refresh();
+        } else {
+          await confirm({
+            title: dictionary.common.error || 'Error',
+            description: result.error || 'Failed to save profile picture',
+            confirmText: 'OK',
+            variant: 'destructive',
+          });
+          // Revert to old image on error
+          setProfilePicture(user.profilePicture || '');
+        }
       }
     } catch (error) {
       console.error('Upload error:', error);
@@ -81,7 +114,7 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
 
     setLoading(true);
 
-    const result = await updateUserAction(user.id, {
+    const result = await updateOwnProfileAction({
       fullName: formData.fullName,
       phoneNumber: formData.phoneNumber,
       profilePicture: profilePicture,
@@ -95,7 +128,7 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
         description: dictionary.users?.profileUpdated || 'Profile updated successfully!',
         confirmText: 'OK',
       });
-      window.location.reload();
+      router.refresh();
     } else {
       await confirm({
         title: dictionary.common.error || 'Error',
@@ -136,7 +169,7 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
                 maxSizeMB={5}
                 onError={handleImageError}
               />
-            </CardContent></invoke>
+            </CardContent>
           </Card>
 
           {/* Personal Information */}

@@ -38,12 +38,17 @@ export default async function DashboardLayout({
   if (userPermissions.canViewReports) {
     accessibleResources.push('dashboard.notifications');
   }
+  // Settings is admin-only
+  if (user.role === 'admin') {
+    accessibleResources.push('dashboard.settings');
+  }
 
   // Transform user for DashboardHeader
   const headerUser = {
     email: user.email,
     fullName: user.fullName,
     role: user.role,
+    profilePicture: user.profilePicture,
   };
 
   return (

@@ -185,7 +185,10 @@ export async function updateUser(id: string, input: UpdateUserInput): Promise<Us
     passwordHash: input.password ? await hashPassword(input.password) : user.passwordHash,
     fullName: input.fullName !== undefined ? input.fullName : user.fullName,
     phoneNumber: input.phoneNumber !== undefined ? input.phoneNumber : user.phoneNumber,
+    nationalId: input.nationalId !== undefined ? input.nationalId : user.nationalId,
+    profilePicture: input.profilePicture !== undefined ? input.profilePicture : user.profilePicture,
     role: input.role !== undefined ? input.role : user.role,
+    parentId: input.parentId !== undefined ? input.parentId : user.parentId,
     isActive: input.isActive !== undefined ? input.isActive : user.isActive,
     updatedAt: new Date().toISOString(),
   };

@@ -41,7 +41,7 @@ export function DashboardHeader({ dictionary, user, onMobileMenuToggle }: Dashbo
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
+      // Don't prevent default - browser will handle it if we don't show custom UI
       setInstallPrompt(e as BeforeInstallPromptEvent);
     };
 
@@ -171,6 +171,7 @@ export function DashboardHeader({ dictionary, user, onMobileMenuToggle }: Dashbo
               <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-purple-50 dark:hover:bg-purple-900/20">
                 {user.profilePicture ? (
                   <img
+                    key={user.profilePicture}
                     src={user.profilePicture}
                     alt={user.fullName || 'User'}
                     className="h-8 w-8 rounded-full object-cover shadow-lg border-2 border-purple-600"

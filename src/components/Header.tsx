@@ -39,7 +39,7 @@ export function Header({ dictionary, locale, user }: HeaderProps) {
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
+      // Don't prevent default - browser will handle it if we don't show custom UI
       setInstallPrompt(e as BeforeInstallPromptEvent);
     };
 
