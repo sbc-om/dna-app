@@ -23,6 +23,7 @@ import {
 } from '@/lib/actions/appointmentActions';
 import { createUserAction } from '@/lib/actions/userActions';
 import type { Appointment } from '@/lib/db/repositories/appointmentRepository';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 interface AppointmentsClientProps {
   dictionary: Dictionary;

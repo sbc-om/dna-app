@@ -35,7 +35,8 @@
     "resources": "Resources",
     "appointments": "Appointments",
     "schedules": "Schedules",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "settings": "Settings"
   },
   "auth": {
     "login": "Login",
@@ -133,6 +134,33 @@
     "manageSchedules": "Manage Schedules",
     "viewRoles": "View Roles"
   },
+  "settings": {
+    "description": "Manage application settings and data backup",
+    "backupRestore": "Backup & Restore",
+    "general": "General",
+    "backupManagement": "Backup Management",
+    "backupDescription": "Create and manage backups of your database and uploaded files",
+    "createNewBackup": "Create New Backup",
+    "createBackupDesc": "Backup includes database and all uploaded files",
+    "create": "Create",
+    "createBackup": "Create Backup",
+    "createBackupConfirm": "This will create a backup of all database data and uploaded files. Continue?",
+    "backupCreated": "Backup created successfully!",
+    "backupFailed": "Failed to create backup",
+    "restoreFromBackup": "Restore from Backup",
+    "restoreDesc": "Upload a backup file to restore data",
+    "restore": "Restore",
+    "restoreBackup": "Restore Backup",
+    "restoreWarning": "WARNING: This will replace ALL current data with the backup data. This action cannot be undone. Continue?",
+    "restoreConfirm": "Yes, Restore",
+    "restoreSuccess": "Backup restored successfully! Please restart the application for changes to take effect.",
+    "restoreFailed": "Failed to restore backup",
+    "backupHistory": "Backup History",
+    "noBackups": "No backups available",
+    "generalSettings": "General Settings",
+    "generalDescription": "Configure general application settings",
+    "comingSoon": "More settings coming soon..."
+  },
   "users": {
     "title": "Users",
     "createUser": "Create User",
@@ -167,7 +195,15 @@
       "parent": "Parent",
       "coach": "Coach",
       "kid": "Kid"
-    }
+    },
+    "profile": "My Profile",
+    "profileDescription": "Manage your account information and profile picture",
+    "profilePicture": "Profile Picture",
+    "personalInfo": "Personal Information",
+    "emailNote": "Email cannot be changed",
+    "updateProfile": "Update Profile",
+    "confirmUpdate": "Are you sure you want to update your profile?",
+    "profileUpdated": "Profile updated successfully!"
   },
   "roles": {
     "title": "Roles",

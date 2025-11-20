@@ -27,6 +27,7 @@ export interface DashboardHeaderProps {
   user: {
     fullName?: string;
     email: string;
+    profilePicture?: string;
   };
   onMobileMenuToggle?: () => void;
 }
@@ -168,9 +169,17 @@ export function DashboardHeader({ dictionary, user, onMobileMenuToggle }: Dashbo
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-purple-50 dark:hover:bg-purple-900/20">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center text-white text-sm font-semibold shadow-lg">
-                  {user.fullName?.[0]?.toUpperCase() || 'U'}
-                </div>
+                {user.profilePicture ? (
+                  <img
+                    src={user.profilePicture}
+                    alt={user.fullName || 'User'}
+                    className="h-8 w-8 rounded-full object-cover shadow-lg border-2 border-purple-600"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center text-white text-sm font-semibold shadow-lg">
+                    {user.fullName?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                )}
                 <span className="sr-only">User menu</span>
               </Button>
             </DropdownMenuTrigger>
@@ -183,6 +192,13 @@ export function DashboardHeader({ dictionary, user, onMobileMenuToggle }: Dashbo
                   <span className="text-xs text-muted-foreground">{user.email}</span>
                 </div>
               </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <Link href={`/${locale}/dashboard/profile`}>
+                <DropdownMenuItem className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>{dictionary.users?.profile || 'My Profile'}</span>
+                </DropdownMenuItem>
+              </Link>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
                 <LogOut className="mr-2 h-4 w-4" />

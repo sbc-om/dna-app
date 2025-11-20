@@ -10,7 +10,8 @@ import {
   CalendarClock,
   Bell,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Dictionary } from '@/lib/i18n/getDictionary';
@@ -45,6 +46,13 @@ const menuItems: MenuItem[] = [
     labelKey: 'users',
     href: '/dashboard/users',
     icon: Users,
+  },
+  {
+    key: 'settings',
+    resourceKey: 'dashboard.settings',
+    labelKey: 'settings',
+    href: '/dashboard/settings',
+    icon: Settings,
   },
 ];
 

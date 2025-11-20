@@ -10,6 +10,7 @@ export interface User {
   fullName?: string;
   phoneNumber?: string;
   nationalId?: string; // For kids (children)
+  profilePicture?: string; // Profile image URL
   role: UserRole;
   parentId?: string; // For kids - reference to parent user
   createdAt: string;
@@ -35,6 +36,7 @@ export interface UpdateUserInput {
   fullName?: string;
   phoneNumber?: string;
   nationalId?: string;
+  profilePicture?: string;
   role?: UserRole;
   isActive?: boolean;
   parentId?: string;
