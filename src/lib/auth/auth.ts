@@ -14,6 +14,7 @@ export interface AuthUser {
   username: string;
   fullName?: string;
   phoneNumber?: string;
+  profilePicture?: string;
   role: UserRole;
   isActive: boolean;
 }
@@ -99,6 +100,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       username: user.username,
       fullName: user.fullName,
       phoneNumber: user.phoneNumber,
+      profilePicture: user.profilePicture,
       role: user.role,
       isActive: user.isActive,
     };
