@@ -144,6 +144,7 @@
     "pushNotificationsDescription": "Get notified instantly when you receive new messages",
     "backupRestore": "Backup & Restore",
     "general": "General",
+    "adminSettings": "Admin Settings",
     "backupManagement": "Backup Management",
     "backupDescription": "Create and manage backups of your database and uploaded files",
     "createNewBackup": "Create New Backup",

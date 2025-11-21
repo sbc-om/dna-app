@@ -1,10 +1,11 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import { PushNotificationInit } from '@/components/PushNotificationInit';
+import { useNotificationFallback } from '@/lib/notifications/fallback';
 
 interface DashboardLayoutClientProps {
   children: ReactNode;
@@ -27,11 +28,21 @@ export function DashboardLayoutClient({
   direction
 }: DashboardLayoutClientProps) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isPushSupported, setIsPushSupported] = useState(true);
+
+  // Check if push notifications are supported
+  useEffect(() => {
+    const supported = 'serviceWorker' in navigator && 'PushManager' in window;
+    setIsPushSupported(supported);
+  }, []);
+
+  // Use fallback polling for devices without push notification support (like iOS)
+  useNotificationFallback(!isPushSupported);
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-950 dark:via-purple-950/30 dark:to-pink-950/30" dir={direction}>
-      {/* Initialize Push Notifications */}
-      <PushNotificationInit />
+      {/* Initialize Push Notifications (only on supported devices) */}
+      {isPushSupported && <PushNotificationInit />}
       
       {/* Mobile Overlay */}
       {isMobileSidebarOpen && (

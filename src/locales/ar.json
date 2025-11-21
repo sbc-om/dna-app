@@ -144,6 +144,7 @@
     "pushNotificationsDescription": "احصل على إشعارات فورية عند استلام رسائل جديدة",
     "backupRestore": "النسخ الاحتياطي والاستعادة",
     "general": "عام",
+    "adminSettings": "إعدادات المسؤول",
     "backupManagement": "إدارة النسخ الاحتياطي",
     "backupDescription": "إنشاء وإدارة نسخ احتياطية من قاعدة البيانات والملفات المحملة",
     "createNewBackup": "إنشاء نسخة احتياطية جديدة",

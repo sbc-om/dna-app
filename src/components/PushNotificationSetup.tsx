@@ -31,13 +31,30 @@ export function PushNotificationSetup({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [isIOS, setIsIOS] = useState<boolean>(false);
+  const [browserInfo, setBrowserInfo] = useState<string>('');
+
   // Check support and permission on mount
   useEffect(() => {
+    // Detect iOS
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    setIsIOS(iOS);
+    
+    // Get browser info
+    const ua = navigator.userAgent;
+    let browser = 'Unknown';
+    if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+    else if (ua.includes('Chrome')) browser = 'Chrome';
+    else if (ua.includes('Firefox')) browser = 'Firefox';
+    else if (ua.includes('Edge')) browser = 'Edge';
+    setBrowserInfo(browser);
+    
     checkSupport();
     checkSubscription();
     
-    if (autoPrompt && permission === 'default') {
-      // Auto-prompt after a short delay
+    if (autoPrompt && permission === 'default' && !iOS) {
+      // Auto-prompt after a short delay (only on supported platforms)
       const timer = setTimeout(() => {
         handleSubscribe();
       }, 2000);
@@ -127,6 +144,60 @@ export function PushNotificationSetup({
             Push notifications are not supported in your browser.
           </CardDescription>
         </CardHeader>
+        <CardContent className="space-y-4">
+          {isIOS && (
+            <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+              <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
+                <span className="text-2xl">📱</span>
+                iOS/Safari Users
+              </h4>
+              <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                Apple Safari on iOS doesn't support web push notifications. Here are your options:
+              </p>
+              <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold mt-0.5">✓</span>
+                  <div>
+                    <strong>Install as App:</strong> Add this website to your Home Screen for a better app-like experience
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold mt-0.5">✓</span>
+                  <div>
+                    <strong>Check Messages Page:</strong> Visit regularly to see new notifications and messages
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold mt-0.5">✓</span>
+                  <div>
+                    <strong>Use Another Device:</strong> Try Chrome or Firefox on Android/Desktop for full push notification support
+                  </div>
+                </li>
+              </ul>
+              
+              <div className="mt-4 p-3 bg-white dark:bg-gray-900 rounded border border-blue-300 dark:border-blue-700">
+                <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-2">📲 How to Add to Home Screen:</p>
+                <ol className="text-xs text-blue-800 dark:text-blue-200 space-y-1 list-decimal list-inside">
+                  <li>Tap the Share button <span className="inline-block bg-blue-100 dark:bg-blue-800 px-1.5 py-0.5 rounded text-xs font-mono">⎋</span> at the bottom</li>
+                  <li>Scroll down and tap "Add to Home Screen"</li>
+                  <li>Tap "Add" to confirm</li>
+                  <li>Open the app from your home screen</li>
+                </ol>
+              </div>
+            </div>
+          )}
+          
+          {!isIOS && (
+            <div className="bg-amber-50 dark:bg-amber-950 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                <strong>Detected Browser:</strong> {browserInfo}
+              </p>
+              <p className="text-sm text-amber-800 dark:text-amber-200 mt-2">
+                Please try using a modern browser like <strong>Chrome</strong>, <strong>Firefox</strong>, or <strong>Edge</strong> for push notification support.
+              </p>
+            </div>
+          )}
+        </CardContent>
       </Card>
     );
   }

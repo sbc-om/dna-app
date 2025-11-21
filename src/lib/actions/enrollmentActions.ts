@@ -28,7 +28,21 @@ export async function getAllEnrollmentsAction() {
   
   try {
     const enrollments = await getAllEnrollments();
-    return { success: true, enrollments };
+    
+    // Enrich enrollments with course and student details
+    const enrichedEnrollments = await Promise.all(
+      enrollments.map(async (enrollment) => {
+        const course = await findCourseById(enrollment.courseId);
+        const student = await findUserById(enrollment.studentId);
+        return {
+          ...enrollment,
+          course,
+          student,
+        };
+      })
+    );
+    
+    return { success: true, enrollments: enrichedEnrollments };
   } catch (error) {
     console.error('Error getting enrollments:', error);
     return { success: false, error: 'Failed to get enrollments' };
@@ -53,7 +67,19 @@ export async function getEnrollmentsByStudentIdAction(studentId: string) {
   
   try {
     const enrollments = await getEnrollmentsByStudentId(studentId);
-    return { success: true, enrollments };
+    
+    // Enrich enrollments with course details
+    const enrichedEnrollments = await Promise.all(
+      enrollments.map(async (enrollment) => {
+        const course = await findCourseById(enrollment.courseId);
+        return {
+          ...enrollment,
+          course,
+        };
+      })
+    );
+    
+    return { success: true, enrollments: enrichedEnrollments };
   } catch (error) {
     console.error('Error getting enrollments:', error);
     return { success: false, error: 'Failed to get enrollments' };
@@ -79,7 +105,20 @@ export async function getMyEnrollmentsAction() {
       return { success: false, error: 'Unauthorized' };
     }
     
-    return { success: true, enrollments };
+    // Enrich enrollments with course and student details
+    const enrichedEnrollments = await Promise.all(
+      enrollments.map(async (enrollment) => {
+        const course = await findCourseById(enrollment.courseId);
+        const student = await findUserById(enrollment.studentId);
+        return {
+          ...enrollment,
+          course,
+          student,
+        };
+      })
+    );
+    
+    return { success: true, enrollments: enrichedEnrollments };
   } catch (error) {
     console.error('Error getting enrollments:', error);
     return { success: false, error: 'Failed to get enrollments' };
@@ -170,9 +209,12 @@ export async function uploadPaymentProofAction(enrollmentId: string, proofUrl: s
       return { success: false, error: 'Unauthorized' };
     }
     
+    // Store base64 directly in database (like profile picture)
     const updatedEnrollment = await updatePaymentStatus(enrollmentId, 'pending', proofUrl);
     
     revalidatePath('/[locale]/dashboard/payments');
+    revalidatePath(`/[locale]/dashboard/payments/${enrollmentId}`);
+    revalidatePath('/[locale]/dashboard/kids');
     return { success: true, enrollment: updatedEnrollment };
   } catch (error) {
     console.error('Error uploading payment proof:', error);
@@ -183,7 +225,8 @@ export async function uploadPaymentProofAction(enrollmentId: string, proofUrl: s
 // Update payment status (admin only)
 export async function updatePaymentStatusAction(
   enrollmentId: string,
-  status: 'pending' | 'paid' | 'rejected'
+  status: 'pending' | 'paid' | 'rejected',
+  notes?: string
 ) {
   const user = await getCurrentUser();
   
@@ -192,7 +235,19 @@ export async function updatePaymentStatusAction(
   }
   
   try {
-    const enrollment = await updatePaymentStatus(enrollmentId, status);
+    const updates: any = {
+      paymentStatus: status,
+    };
+    
+    if (notes) {
+      updates.notes = notes;
+    }
+    
+    if (status === 'paid') {
+      updates.paymentDate = new Date().toISOString();
+    }
+    
+    const enrollment = await updateEnrollment(enrollmentId, updates);
     
     if (!enrollment) {
       return { success: false, error: 'Enrollment not found' };
@@ -200,10 +255,42 @@ export async function updatePaymentStatusAction(
     
     revalidatePath('/[locale]/dashboard/enrollments');
     revalidatePath('/[locale]/dashboard/payments');
+    revalidatePath('/[locale]/dashboard/payments/review/[enrollmentId]');
     return { success: true, enrollment };
   } catch (error) {
     console.error('Error updating payment status:', error);
     return { success: false, error: 'Failed to update payment status' };
+  }
+}
+
+// Update enrollment course (admin only)
+export async function updateEnrollmentCourseAction(enrollmentId: string, courseId: string) {
+  const user = await getCurrentUser();
+  
+  if (!user || user.role !== 'admin') {
+    return { success: false, error: 'Unauthorized' };
+  }
+  
+  try {
+    // Validate course exists
+    const course = await findCourseById(courseId);
+    if (!course) {
+      return { success: false, error: 'Invalid course' };
+    }
+    
+    const enrollment = await updateEnrollment(enrollmentId, { courseId });
+    
+    if (!enrollment) {
+      return { success: false, error: 'Enrollment not found' };
+    }
+    
+    revalidatePath('/[locale]/dashboard/enrollments');
+    revalidatePath('/[locale]/dashboard/kids');
+    revalidatePath('/[locale]/dashboard/users');
+    return { success: true, enrollment };
+  } catch (error) {
+    console.error('Error updating enrollment course:', error);
+    return { success: false, error: 'Failed to update enrollment course' };
   }
 }
 

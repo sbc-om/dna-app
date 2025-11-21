@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User } from '@/lib/db/repositories/userRepository';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import { UserRole, ROLES, ROLE_LABELS } from '@/config/roles';
@@ -18,6 +18,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { updateUserAction } from '@/lib/actions/userActions';
+import { getActiveCoursesAction } from '@/lib/actions/courseActions';
+import { getEnrollmentsByStudentIdAction, updateEnrollmentCourseAction, createEnrollmentAction } from '@/lib/actions/enrollmentActions';
+import type { Course } from '@/lib/db/repositories/courseRepository';
+import type { Enrollment } from '@/lib/db/repositories/enrollmentRepository';
 
 export interface EditUserDialogProps {
   user: User;
@@ -25,6 +29,7 @@ export interface EditUserDialogProps {
   onOpenChange: (open: boolean) => void;
   dictionary: Dictionary;
   onUserUpdated: (user: User) => void;
+  locale: string;
 }
 
 export function EditUserDialog({
@@ -33,8 +38,11 @@ export function EditUserDialog({
   onOpenChange,
   dictionary,
   onUserUpdated,
+  locale,
 }: EditUserDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [currentEnrollment, setCurrentEnrollment] = useState<Enrollment | null>(null);
   const [formData, setFormData] = useState({
     email: user.email,
     username: user.username,
@@ -43,7 +51,30 @@ export function EditUserDialog({
     phoneNumber: user.phoneNumber || '',
     role: user.role,
     isActive: user.isActive,
+    courseId: '',
   });
+
+  useEffect(() => {
+    if (open && user.role === ROLES.KID) {
+      loadCoursesAndEnrollment();
+    }
+  }, [open, user.role]);
+
+  const loadCoursesAndEnrollment = async () => {
+    // Load active courses
+    const coursesResult = await getActiveCoursesAction();
+    if (coursesResult.success && coursesResult.courses) {
+      setCourses(coursesResult.courses);
+    }
+
+    // Load current enrollment
+    const enrollmentsResult = await getEnrollmentsByStudentIdAction(user.id);
+    if (enrollmentsResult.success && enrollmentsResult.enrollments && enrollmentsResult.enrollments.length > 0) {
+      const enrollment = enrollmentsResult.enrollments[0];
+      setCurrentEnrollment(enrollment);
+      setFormData(prev => ({ ...prev, courseId: enrollment.courseId }));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,14 +95,31 @@ export function EditUserDialog({
 
     const result = await updateUserAction(user.id, updateData);
 
-    setIsSubmitting(false);
-
     if (result.success && result.user) {
+      // Handle enrollment changes for kids
+      if (user.role === ROLES.KID && formData.courseId) {
+        if (currentEnrollment) {
+          // Update existing enrollment
+          if (currentEnrollment.courseId !== formData.courseId) {
+            await updateEnrollmentCourseAction(currentEnrollment.id, formData.courseId);
+          }
+        } else {
+          // Create new enrollment
+          await createEnrollmentAction({
+            studentId: user.id,
+            courseId: formData.courseId,
+            parentId: user.parentId || '',
+          });
+        }
+      }
+
       onUserUpdated(result.user);
       onOpenChange(false);
     } else {
       alert(result.error || 'Failed to update user');
     }
+
+    setIsSubmitting(false);
   };
 
   return (
@@ -154,6 +202,32 @@ export function EditUserDialog({
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Show course selection for kids */}
+            {user.role === ROLES.KID && courses.length > 0 && (
+              <div className="grid gap-2">
+                <Label htmlFor="courseId">
+                  {locale === 'ar' ? 'الدورة التدريبية' : 'Course'}
+                </Label>
+                <Select
+                  value={formData.courseId || undefined}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, courseId: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={locale === 'ar' ? 'اختر الدورة (اختياري)' : 'Select Course (Optional)'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courses.map((course) => (
+                      <SelectItem key={course.id} value={course.id}>
+                        {locale === 'ar' ? course.nameAr : course.name} - {course.price} {course.currency}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="flex items-center space-x-2">
               <Checkbox

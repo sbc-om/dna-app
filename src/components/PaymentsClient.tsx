@@ -1,29 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Upload, CheckCircle, XCircle, Clock, DollarSign, Calendar, User as UserIcon } from 'lucide-react';
+import { Upload, CheckCircle, XCircle, Clock, DollarSign, Calendar, User as UserIcon, Eye } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from './ui/dialog';
-import { Label } from './ui/label';
-import { getMyEnrollmentsAction, uploadPaymentProofAction } from '@/lib/actions/enrollmentActions';
-import { getAdminSettingsAction } from '@/lib/actions/adminSettingsActions';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { getMyEnrollmentsAction, getAllEnrollmentsAction } from '@/lib/actions/enrollmentActions';
 import type { Enrollment } from '@/lib/db/repositories/enrollmentRepository';
-import type { AdminSettings } from '@/lib/db/repositories/adminSettingsRepository';
 import type { Course } from '@/lib/db/repositories/courseRepository';
 import type { User } from '@/lib/db/repositories/userRepository';
-import { ImageUpload } from './ImageUpload';
 
 interface EnrollmentWithDetails extends Enrollment {
-  course?: Course;
-  student?: User;
+  course?: Course | null;
+  student?: User | null;
 }
 
 interface PaymentsClientProps {
@@ -39,11 +29,7 @@ interface PaymentsClientProps {
 
 export default function PaymentsClient({ locale, dict, currentUser }: PaymentsClientProps) {
   const [enrollments, setEnrollments] = useState<EnrollmentWithDetails[]>([]);
-  const [adminSettings, setAdminSettings] = useState<AdminSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedEnrollment, setSelectedEnrollment] = useState<EnrollmentWithDetails | null>(null);
-  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [uploadingProof, setUploadingProof] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -53,39 +39,14 @@ export default function PaymentsClient({ locale, dict, currentUser }: PaymentsCl
     setLoading(true);
     
     // Load enrollments
-    const enrollmentsResult = await getMyEnrollmentsAction();
+    const enrollmentsResult = currentUser.role === 'admin' 
+      ? await getAllEnrollmentsAction()
+      : await getMyEnrollmentsAction();
     if (enrollmentsResult.success && enrollmentsResult.enrollments) {
       setEnrollments(enrollmentsResult.enrollments);
     }
     
-    // Load admin settings
-    const settingsResult = await getAdminSettingsAction();
-    if (settingsResult.success && settingsResult.settings) {
-      setAdminSettings(settingsResult.settings);
-    }
-    
     setLoading(false);
-  };
-
-  const handlePaymentClick = (enrollment: EnrollmentWithDetails) => {
-    setSelectedEnrollment(enrollment);
-    setIsPaymentDialogOpen(true);
-  };
-
-  const handleImageUpload = async (file: File, croppedImageUrl: string) => {
-    if (!selectedEnrollment) return;
-    
-    setUploadingProof(true);
-    const result = await uploadPaymentProofAction(selectedEnrollment.id, croppedImageUrl);
-    
-    if (result.success) {
-      setIsPaymentDialogOpen(false);
-      setSelectedEnrollment(null);
-      loadData();
-    } else {
-      alert(locale === 'ar' ? 'فشل في رفع إثبات الدفع' : 'Failed to upload payment proof');
-    }
-    setUploadingProof(false);
   };
 
   const getStatusBadge = (status: string) => {
@@ -120,6 +81,211 @@ export default function PaymentsClient({ locale, dict, currentUser }: PaymentsCl
     return <div className="p-6">{locale === 'ar' ? 'جاري التحميل...' : 'Loading...'}</div>;
   }
 
+  // Admin View
+  if (currentUser.role === 'admin') {
+    const pendingEnrollments = enrollments.filter(e => e.paymentStatus === 'pending' && e.paymentProofUrl);
+    const paidEnrollments = enrollments.filter(e => e.paymentStatus === 'paid');
+    const unpaidEnrollments = enrollments.filter(e => e.paymentStatus === 'pending' && !e.paymentProofUrl);
+
+    return (
+      <div className="p-6 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">
+            {locale === 'ar' ? 'إدارة المدفوعات' : 'Payment Management'}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {locale === 'ar' ? 'مراجعة وإدارة مدفوعات الطلاب' : 'Review and manage student payments'}
+          </p>
+        </div>
+
+        <Tabs defaultValue="pending" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="pending">
+              <Clock className="w-4 h-4 mr-2" />
+              {locale === 'ar' ? 'قيد المراجعة' : 'Pending Review'} ({pendingEnrollments.length})
+            </TabsTrigger>
+            <TabsTrigger value="paid">
+              <CheckCircle className="w-4 h-4 mr-2" />
+              {locale === 'ar' ? 'مدفوع' : 'Paid'} ({paidEnrollments.length})
+            </TabsTrigger>
+            <TabsTrigger value="unpaid">
+              <XCircle className="w-4 h-4 mr-2" />
+              {locale === 'ar' ? 'غير مدفوع' : 'Unpaid'} ({unpaidEnrollments.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="pending" className="space-y-4">
+            {pendingEnrollments.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Clock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    {locale === 'ar' ? 'لا توجد مدفوعات قيد المراجعة' : 'No pending payments'}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {pendingEnrollments.map((enrollment) => (
+                  <Card key={enrollment.id} className="overflow-hidden border-yellow-200">
+                    <CardHeader className="bg-yellow-50 dark:bg-yellow-950">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg">
+                            {locale === 'ar' ? enrollment.course?.nameAr : enrollment.course?.name}
+                          </CardTitle>
+                          <CardDescription className="mt-1">
+                            <div className="flex items-center gap-2 mt-2">
+                              <UserIcon className="w-4 h-4" />
+                              {enrollment.student?.fullName}
+                            </div>
+                          </CardDescription>
+                        </div>
+                        {getStatusBadge(enrollment.paymentStatus)}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">{locale === 'ar' ? 'المبلغ' : 'Amount'}</span>
+                          <span className="font-semibold">{enrollment.course?.price} {enrollment.course?.currency}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">{locale === 'ar' ? 'تاريخ التسجيل' : 'Enrollment Date'}</span>
+                          <span className="font-semibold">
+                            {new Date(enrollment.enrollmentDate).toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US')}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {enrollment.paymentProofUrl && (
+                        <div className="border rounded-lg p-2">
+                          <img 
+                            src={enrollment.paymentProofUrl} 
+                            alt="Payment Proof" 
+                            className="w-full h-40 object-contain rounded"
+                          />
+                        </div>
+                      )}
+
+                      <Button 
+                        onClick={() => window.location.href = `/${locale}/dashboard/payments/review/${enrollment.id}`}
+                        className="w-full bg-[#30B2D2] hover:bg-[#1E3A8A]"
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        {locale === 'ar' ? 'مراجعة والموافقة' : 'Review & Approve'}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="paid" className="space-y-4">
+            {paidEnrollments.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <CheckCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    {locale === 'ar' ? 'لا توجد مدفوعات مكتملة' : 'No completed payments'}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {paidEnrollments.map((enrollment) => (
+                  <Card key={enrollment.id} className="overflow-hidden border-green-200">
+                    <CardHeader className="bg-green-50 dark:bg-green-950">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg">
+                            {locale === 'ar' ? enrollment.course?.nameAr : enrollment.course?.name}
+                          </CardTitle>
+                          <CardDescription className="mt-1">
+                            <div className="flex items-center gap-2 mt-2">
+                              <UserIcon className="w-4 h-4" />
+                              {enrollment.student?.fullName}
+                            </div>
+                          </CardDescription>
+                        </div>
+                        {getStatusBadge(enrollment.paymentStatus)}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">{locale === 'ar' ? 'المبلغ' : 'Amount'}</span>
+                        <span className="font-semibold">{enrollment.course?.price} {enrollment.course?.currency}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">{locale === 'ar' ? 'تاريخ الدفع' : 'Payment Date'}</span>
+                        <span className="font-semibold">
+                          {enrollment.paymentDate ? new Date(enrollment.paymentDate).toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US') : '-'}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="unpaid" className="space-y-4">
+            {unpaidEnrollments.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <DollarSign className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    {locale === 'ar' ? 'جميع الطلاب دفعوا' : 'All students have paid'}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {unpaidEnrollments.map((enrollment) => (
+                  <Card key={enrollment.id} className="overflow-hidden">
+                    <CardHeader className="bg-gray-50 dark:bg-gray-950">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg">
+                            {locale === 'ar' ? enrollment.course?.nameAr : enrollment.course?.name}
+                          </CardTitle>
+                          <CardDescription className="mt-1">
+                            <div className="flex items-center gap-2 mt-2">
+                              <UserIcon className="w-4 h-4" />
+                              {enrollment.student?.fullName}
+                            </div>
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">{locale === 'ar' ? 'المبلغ المطلوب' : 'Amount Due'}</span>
+                        <span className="font-semibold">{enrollment.course?.price} {enrollment.course?.currency}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">{locale === 'ar' ? 'تاريخ التسجيل' : 'Enrollment Date'}</span>
+                        <span className="font-semibold">
+                          {new Date(enrollment.enrollmentDate).toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US')}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground pt-2">
+                        {locale === 'ar' ? 'في انتظار رفع إثبات الدفع من ولي الأمر' : 'Waiting for parent to upload payment proof'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
+      </div>
+    );
+  }
+
+  // Parent View
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -144,7 +310,7 @@ export default function PaymentsClient({ locale, dict, currentUser }: PaymentsCl
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {enrollments.map((enrollment) => (
             <Card key={enrollment.id} className="overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
+              <CardHeader className="bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <CardTitle className="text-lg">
@@ -214,7 +380,7 @@ export default function PaymentsClient({ locale, dict, currentUser }: PaymentsCl
 
                 {(enrollment.paymentStatus === 'pending' && !enrollment.paymentProofUrl) || enrollment.paymentStatus === 'rejected' ? (
                   <Button 
-                    onClick={() => handlePaymentClick(enrollment)}
+                    onClick={() => window.location.href = `/${locale}/dashboard/payments/${enrollment.id}`}
                     className="w-full"
                     variant="default"
                   >
@@ -227,131 +393,6 @@ export default function PaymentsClient({ locale, dict, currentUser }: PaymentsCl
           ))}
         </div>
       )}
-
-      {/* Payment Dialog */}
-      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {locale === 'ar' ? 'رفع إثبات الدفع' : 'Upload Payment Proof'}
-            </DialogTitle>
-            <DialogDescription>
-              {locale === 'ar' 
-                ? 'قم بتحويل المبلغ إلى الحساب أدناه ثم ارفع صورة إثبات الدفع' 
-                : 'Transfer the amount to the account below and upload the payment proof'}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6">
-            {/* Admin Payment Info */}
-            {adminSettings && (
-              <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {locale === 'ar' ? 'معلومات الحساب البنكي' : 'Bank Account Information'}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {adminSettings.fullName && (
-                    <div className="grid grid-cols-3 gap-2">
-                      <span className="font-semibold">{locale === 'ar' ? 'الاسم:' : 'Name:'}</span>
-                      <span className="col-span-2">{adminSettings.fullName}</span>
-                    </div>
-                  )}
-                  {adminSettings.phoneNumber && (
-                    <div className="grid grid-cols-3 gap-2">
-                      <span className="font-semibold">{locale === 'ar' ? 'الهاتف:' : 'Phone:'}</span>
-                      <span className="col-span-2" dir="ltr">{adminSettings.phoneNumber}</span>
-                    </div>
-                  )}
-                  {adminSettings.bankName && (
-                    <div className="grid grid-cols-3 gap-2">
-                      <span className="font-semibold">{locale === 'ar' ? 'البنك:' : 'Bank:'}</span>
-                      <span className="col-span-2">{adminSettings.bankName}</span>
-                    </div>
-                  )}
-                  {adminSettings.bankAccountNumber && (
-                    <div className="grid grid-cols-3 gap-2">
-                      <span className="font-semibold">{locale === 'ar' ? 'رقم الحساب:' : 'Account Number:'}</span>
-                      <span className="col-span-2 font-mono" dir="ltr">{adminSettings.bankAccountNumber}</span>
-                    </div>
-                  )}
-                  {adminSettings.bankAccountHolder && (
-                    <div className="grid grid-cols-3 gap-2">
-                      <span className="font-semibold">{locale === 'ar' ? 'اسم صاحب الحساب:' : 'Account Holder:'}</span>
-                      <span className="col-span-2">{adminSettings.bankAccountHolder}</span>
-                    </div>
-                  )}
-                  {adminSettings.iban && (
-                    <div className="grid grid-cols-3 gap-2">
-                      <span className="font-semibold">{locale === 'ar' ? 'IBAN:' : 'IBAN:'}</span>
-                      <span className="col-span-2 font-mono text-sm" dir="ltr">{adminSettings.iban}</span>
-                    </div>
-                  )}
-                  {adminSettings.swiftCode && (
-                    <div className="grid grid-cols-3 gap-2">
-                      <span className="font-semibold">{locale === 'ar' ? 'Swift Code:' : 'Swift Code:'}</span>
-                      <span className="col-span-2 font-mono" dir="ltr">{adminSettings.swiftCode}</span>
-                    </div>
-                  )}
-                  {(locale === 'ar' ? adminSettings.paymentInstructionsAr : adminSettings.paymentInstructions) && (
-                    <div className="pt-2 border-t border-blue-200 dark:border-blue-800">
-                      <p className="text-sm whitespace-pre-wrap">
-                        {locale === 'ar' ? adminSettings.paymentInstructionsAr : adminSettings.paymentInstructions}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Course and Amount Info */}
-            {selectedEnrollment && (
-              <Card className="border-2 border-primary">
-                <CardContent className="p-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">{locale === 'ar' ? 'الدورة:' : 'Course:'}</span>
-                      <span className="font-semibold">
-                        {locale === 'ar' ? selectedEnrollment.course?.nameAr : selectedEnrollment.course?.name}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">{locale === 'ar' ? 'الطالب:' : 'Student:'}</span>
-                      <span className="font-semibold">{selectedEnrollment.student?.fullName}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-lg font-bold border-t pt-2 mt-2">
-                      <span>{locale === 'ar' ? 'المبلغ المطلوب:' : 'Amount Due:'}</span>
-                      <span className="text-primary">
-                        {selectedEnrollment.course?.price} {selectedEnrollment.course?.currency}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Image Upload */}
-            <div>
-              <Label className="text-base font-semibold mb-4 block">
-                {locale === 'ar' ? 'إثبات الدفع' : 'Payment Proof'}
-              </Label>
-              <ImageUpload
-                onUpload={handleImageUpload}
-                currentImage={selectedEnrollment?.paymentProofUrl}
-                aspectRatio={16 / 9}
-                maxSizeMB={5}
-              />
-            </div>
-
-            {uploadingProof && (
-              <div className="text-center text-sm text-muted-foreground">
-                {locale === 'ar' ? 'جاري الرفع...' : 'Uploading...'}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

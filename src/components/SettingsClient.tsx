@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, Database, Download, Upload, Trash2, Clock, Bell } from 'lucide-react';
+import { Settings, Database, Download, Upload, Trash2, Clock, Bell, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +10,7 @@ import { Locale } from '@/config/i18n';
 import { useConfirm } from '@/components/ConfirmDialog';
 import { PushNotificationSetup } from '@/components/PushNotificationSetup';
 import { RolePermission } from '@/lib/db/repositories/rolePermissionRepository';
+import AdminSettingsClient from '@/components/AdminSettingsClient';
 
 interface SettingsClientProps {
   dictionary: Dictionary;
@@ -153,7 +154,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
         </div>
 
         <Tabs defaultValue="notifications" className="space-y-4">
-          <TabsList className={`grid w-full lg:w-[600px] ${permissions.canManageBackups ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          <TabsList className={`grid w-full lg:w-[800px] ${permissions.canManageBackups ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
               {dictionary.settings?.notifications || 'Notifications'}
@@ -162,6 +163,12 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
               <TabsTrigger value="backup" className="flex items-center gap-2">
                 <Database className="h-4 w-4" />
                 {dictionary.settings?.backupRestore || 'Backup & Restore'}
+              </TabsTrigger>
+            )}
+            {permissions.canManageBackups && (
+              <TabsTrigger value="admin" className="flex items-center gap-2">
+                <UserCog className="h-4 w-4" />
+                {dictionary.settings?.adminSettings || 'Admin Settings'}
               </TabsTrigger>
             )}
             <TabsTrigger value="general" className="flex items-center gap-2">
@@ -182,7 +189,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
           {permissions.canManageBackups && (
           <TabsContent value="backup" className="space-y-4">
             <Card className="border-2 border-[#30B2D2]/30">
-              <CardHeader className="bg-gradient-to-r from-[#30B2D2]/10 to-[#1E3A8A]/10">
+              <CardHeader className="bg-linear-to-r from-[#30B2D2]/10 to-[#1E3A8A]/10">
                 <CardTitle className="text-xl font-bold text-[#1E3A8A] flex items-center gap-2">
                   <Database className="h-6 w-6" />
                   {dictionary.settings?.backupManagement || 'Backup Management'}
@@ -275,10 +282,17 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
           </TabsContent>
           )}
 
+          {/* Admin Settings Tab */}
+          {permissions.canManageBackups && (
+          <TabsContent value="admin" className="space-y-4">
+            <AdminSettingsClient locale={locale} dict={dictionary} />
+          </TabsContent>
+          )}
+
           {/* General Settings Tab */}
           <TabsContent value="general" className="space-y-4">
             <Card className="border-2 border-[#30B2D2]/30">
-              <CardHeader className="bg-gradient-to-r from-[#30B2D2]/10 to-[#1E3A8A]/10">
+              <CardHeader className="bg-linear-to-r from-[#30B2D2]/10 to-[#1E3A8A]/10">
                 <CardTitle className="text-xl font-bold text-[#1E3A8A]">
                   {dictionary.settings?.generalSettings || 'General Settings'}
                 </CardTitle>

@@ -222,7 +222,7 @@ export function CreateUserDialog({
                   {locale === 'ar' ? 'الدورة التدريبية' : 'Course'}
                 </Label>
                 <Select
-                  value={formData.courseId}
+                  value={formData.courseId || undefined}
                   onValueChange={(value) =>
                     setFormData({ ...formData, courseId: value })
                   }
@@ -231,9 +231,6 @@ export function CreateUserDialog({
                     <SelectValue placeholder={locale === 'ar' ? 'اختر الدورة (اختياري)' : 'Select Course (Optional)'} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">
-                      {locale === 'ar' ? 'بدون دورة' : 'No Course'}
-                    </SelectItem>
                     {courses.map((course) => (
                       <SelectItem key={course.id} value={course.id}>
                         {locale === 'ar' ? course.nameAr : course.name} - {course.price} {course.currency}

@@ -121,8 +121,11 @@ export async function updatePaymentStatus(
     paymentStatus: status,
   };
   
-  if (status === 'paid' && paymentProofUrl) {
+  if (paymentProofUrl) {
     updates.paymentProofUrl = paymentProofUrl;
+  }
+  
+  if (status === 'paid') {
     updates.paymentDate = new Date().toISOString();
   }
   

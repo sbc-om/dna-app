@@ -20,6 +20,8 @@ interface ImageUploadProps {
   aspectRatio?: number;
   maxSizeMB?: number;
   onError?: (message: string) => void;
+  shape?: 'circle' | 'square';
+  icon?: React.ReactNode;
 }
 
 export function ImageUpload({
@@ -28,6 +30,8 @@ export function ImageUpload({
   aspectRatio = 1,
   maxSizeMB = 5,
   onError,
+  shape = 'circle',
+  icon,
 }: ImageUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>(currentImage || '');
@@ -35,10 +39,10 @@ export function ImageUpload({
   const [imageToCrop, setImageToCrop] = useState<string>('');
   const [crop, setCrop] = useState<Crop>({
     unit: '%',
-    width: 90,
-    height: 90,
-    x: 5,
-    y: 5,
+    width: 80,
+    height: 60,
+    x: 10,
+    y: 20,
   });
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -109,16 +113,8 @@ export function ImageUpload({
       completedCrop.height
     );
 
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          resolve(url);
-        } else {
-          resolve(imageToCrop);
-        }
-      }, 'image/jpeg', 0.95);
-    });
+    // Convert canvas to base64 instead of blob URL
+    return canvas.toDataURL('image/jpeg', 0.95);
   }, [completedCrop, imageToCrop]);
 
   const handleCropComplete = async () => {
@@ -139,30 +135,34 @@ export function ImageUpload({
     }
   };
 
+  const isSquare = shape === 'square';
+  const containerClass = isSquare ? 'w-64 h-64' : 'w-48 h-48';
+  const borderClass = isSquare ? 'rounded-lg' : 'rounded-full';
+  
   return (
     <div className="space-y-4">
-      {/* Profile Picture Preview with Click to Upload */}
-      <div className="relative w-48 h-48 mx-auto group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+      {/* Image Preview with Click to Upload */}
+      <div className={`relative ${containerClass} mx-auto group cursor-pointer`} onClick={() => fileInputRef.current?.click()}>
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
           onChange={handleFileInputChange}
           className="hidden"
-          aria-label="Upload profile picture"
+          aria-label="Upload image"
         />
         
-        <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-[#30B2D2] shadow-xl transition-transform group-hover:scale-105">
+        <div className={`relative w-full h-full ${borderClass} overflow-hidden border-4 border-[#30B2D2] shadow-xl transition-transform group-hover:scale-105`}>
           {previewUrl ? (
             <img
               key={previewUrl}
               src={previewUrl}
-              alt="Profile preview"
+              alt="Preview"
               className="w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-[#30B2D2]/20 to-[#1E3A8A]/20 flex items-center justify-center">
-              <UserCircle className="w-24 h-24 text-gray-400" />
+              {icon || <UserCircle className="w-24 h-24 text-gray-400" />}
             </div>
           )}
           
@@ -170,7 +170,7 @@ export function ImageUpload({
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <div className="text-center text-white">
               <Upload className="w-8 h-8 mx-auto mb-2" />
-              <p className="text-sm font-semibold">Change Photo</p>
+              <p className="text-sm font-semibold">{isSquare ? 'Upload Document' : 'Change Photo'}</p>
             </div>
           </div>
         </div>
@@ -181,7 +181,7 @@ export function ImageUpload({
             type="button"
             variant="destructive"
             size="icon"
-            className="absolute -top-2 -right-2 h-8 w-8 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+            className={`absolute -top-2 -right-2 h-8 w-8 ${borderClass} shadow-lg opacity-0 group-hover:opacity-100 transition-opacity`}
             onClick={handleRemoveImage}
           >
             <X className="h-4 w-4" />
@@ -190,7 +190,7 @@ export function ImageUpload({
       </div>
 
       <p className="text-center text-sm text-muted-foreground">
-        Click on the image to upload a new photo (Max {maxSizeMB}MB)
+        Click on the image to upload {isSquare ? 'a document' : 'a new photo'} (Max {maxSizeMB}MB)
       </p>
 
       {/* Crop Dialog */}
@@ -211,8 +211,8 @@ export function ImageUpload({
                 crop={crop}
                 onChange={(c) => setCrop(c)}
                 onComplete={(c) => setCompletedCrop(c)}
-                aspect={aspectRatio}
-                circularCrop={aspectRatio === 1}
+                aspect={shape === 'circle' ? 1 : undefined}
+                circularCrop={shape === 'circle'}
               >
                 <img
                   ref={imgRef}
