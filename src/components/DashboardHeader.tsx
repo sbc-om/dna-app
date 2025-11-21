@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
+import { getUnreadCountAction } from '@/lib/actions/notificationActions';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -38,6 +39,21 @@ export function DashboardHeader({ dictionary, user, onMobileMenuToggle }: Dashbo
   const locale = (params.locale as Locale) || 'en';
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      const result = await getUnreadCountAction();
+      if (result.success) {
+        setUnreadCount(result.count);
+      }
+    };
+
+    fetchUnreadCount();
+    // Poll every minute
+    const interval = setInterval(fetchUnreadCount, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -162,6 +178,9 @@ export function DashboardHeader({ dictionary, user, onMobileMenuToggle }: Dashbo
               title={dictionary.nav.notifications}
             >
               <Bell className="h-5 w-5 text-blue-600" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 h-3 w-3 rounded-full bg-red-500 border-2 border-white dark:border-gray-900" />
+              )}
               <span className="sr-only">{dictionary.nav.notifications}</span>
             </Button>
           </Link>

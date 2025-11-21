@@ -19,10 +19,28 @@ import {
 import { getCurrentUser, requireAuth, requireAdmin } from '@/lib/auth/auth';
 import { findUserById } from '@/lib/db/repositories/userRepository';
 
+/**
+ * Send push notification to user
+ */
+async function sendPushNotification(userId: string, title: string, message: string, url?: string) {
+  try {
+    const { sendNotification } = await import('@/lib/notifications/sendNotification');
+    
+    await sendNotification(userId, {
+      title,
+      body: message,
+      url,
+    });
+  } catch (error) {
+    console.error('Error sending push notification:', error);
+  }
+}
+
 export async function sendMessageAction(input: {
   recipientId?: string;
   groupId?: string;
   content: string;
+  locale?: string;
 }) {
   try {
     const currentUser = await getCurrentUser();
@@ -45,6 +63,25 @@ export async function sendMessageAction(input: {
       groupId: input.groupId,
       content: input.content,
     });
+
+    // Send push notification to recipient(s)
+    if (input.recipientId) {
+      // Individual message - send to recipient
+      const recipient = await findUserById(input.recipientId);
+      const locale = input.locale || 'en';
+      if (recipient) {
+        await sendPushNotification(
+          input.recipientId,
+          `New message from ${currentUser.fullName || currentUser.username}`,
+          input.content.length > 50 ? input.content.substring(0, 50) + '...' : input.content,
+          `/${locale}/dashboard/messages`
+        );
+      }
+    } else if (input.groupId) {
+      // Group message - send to all group members except sender
+      // This will be implemented when we add group member tracking
+      // For now, we'll skip group notifications
+    }
 
     revalidatePath('/dashboard/messages');
     

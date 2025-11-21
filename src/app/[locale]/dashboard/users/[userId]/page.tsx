@@ -4,8 +4,9 @@ import { Locale } from '@/config/i18n';
 import { findUserById, getChildrenByParentId } from '@/lib/db/repositories/userRepository';
 import { notFound } from 'next/navigation';
 import { ParentProfileClient } from '@/components/ParentProfileClient';
+import { KidProfileClient } from '@/components/KidProfileClient';
 
-export default async function ParentProfilePage({
+export default async function UserProfilePage({
   params,
 }: {
   params: Promise<{ locale: string; userId: string }>;
@@ -14,11 +15,23 @@ export default async function ParentProfilePage({
   const dictionary = await getDictionary(locale);
   const currentUser = await requireAuth(locale);
 
-  // Get parent user
-  const parent = await findUserById(userId);
+  // Get user
+  const targetUser = await findUserById(userId);
   
-  if (!parent) {
+  if (!targetUser) {
     notFound();
+  }
+
+  // If user is a kid, show kid profile
+  if (targetUser.role === 'kid') {
+    return (
+      <KidProfileClient
+        dictionary={dictionary}
+        locale={locale}
+        kid={targetUser}
+        currentUser={currentUser}
+      />
+    );
   }
 
   // Get children of this parent
@@ -28,7 +41,7 @@ export default async function ParentProfilePage({
     <ParentProfileClient
       dictionary={dictionary}
       locale={locale}
-      parent={parent}
+      parent={targetUser}
       children={children}
       currentUser={currentUser}
     />

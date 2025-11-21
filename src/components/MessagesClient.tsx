@@ -27,15 +27,17 @@ import {
 } from '@/lib/actions/messageActions';
 import { Message, MessageGroup } from '@/lib/db/repositories/messageRepository';
 import { useConfirm } from '@/components/ConfirmDialog';
+import { RolePermission } from '@/lib/db/repositories/rolePermissionRepository';
 
 interface MessagesClientProps {
   dictionary: Dictionary;
   locale: Locale;
   currentUser: AuthUser;
   allUsers: User[];
+  permissions: RolePermission['permissions'];
 }
 
-export function MessagesClient({ dictionary, locale, currentUser, allUsers }: MessagesClientProps) {
+export function MessagesClient({ dictionary, locale, currentUser, allUsers, permissions }: MessagesClientProps) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [groups, setGroups] = useState<MessageGroup[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<{ type: 'user' | 'group'; id: string; name: string } | null>(null);
@@ -128,6 +130,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers }: Me
         recipientId: selectedConversation.type === 'user' ? selectedConversation.id : undefined,
         groupId: selectedConversation.type === 'group' ? selectedConversation.id : undefined,
         content: messageText,
+        locale,
       });
 
       if (result.success) {
@@ -227,18 +230,20 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers }: Me
                 {isAdmin ? 'Send messages to users and manage groups' : 'Your conversations'}
               </p>
             </div>
-            {isAdmin && (
-              <div className="flex gap-2">
+            <div className="flex gap-2">
+              {isAdmin && (
                 <Button onClick={() => setShowUserSelectDialog(true)} className="bg-[#30B2D2] hover:bg-[#1E3A8A]">
                   <MessageSquare className="mr-2 h-4 w-4" />
                   {dictionary.messages?.newMessage || 'New Message'}
                 </Button>
+              )}
+              {permissions.canCreateGroup && (
                 <Button onClick={() => setShowNewGroupDialog(true)} variant="outline">
                   <UsersIcon className="mr-2 h-4 w-4" />
                   {dictionary.messages?.newGroup || 'New Group'}
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 

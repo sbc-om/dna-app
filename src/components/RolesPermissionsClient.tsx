@@ -78,6 +78,11 @@ export function RolesPermissionsClient({ dictionary, initialRolePermissions }: R
     canManageNotifications: { en: 'Manage Notifications', ar: 'إدارة الإشعارات' },
     canViewProfile: { en: 'View Profile', ar: 'عرض الملف الشخصي' },
     canEditProfile: { en: 'Edit Profile', ar: 'تعديل الملف الشخصي' },
+    canAccessSettings: { en: 'Access Settings', ar: 'الوصول إلى الإعدادات' },
+    canManageBackups: { en: 'Manage Backups', ar: 'إدارة النسخ الاحتياطي' },
+    canAccessMessages: { en: 'Access Messages', ar: 'الوصول إلى الرسائل' },
+    canCreateGroup: { en: 'Create Groups', ar: 'إنشاء مجموعات' },
+    canSendPushNotifications: { en: 'Send Push Notifications', ar: 'إرسال إشعارات' },
   };
 
   return (
@@ -126,7 +131,7 @@ export function RolesPermissionsClient({ dictionary, initialRolePermissions }: R
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {(Object.keys(rolePermission.permissions) as Array<keyof RolePermission['permissions']>).map(
+                {(Object.keys(permissionLabels) as Array<keyof RolePermission['permissions']>).map(
                   (permission) => (
                     <div key={permission} className="flex items-center justify-between py-2 border-b last:border-0">
                       <Label htmlFor={`${role}-${permission}`} className="text-sm font-medium cursor-pointer">
@@ -134,7 +139,7 @@ export function RolesPermissionsClient({ dictionary, initialRolePermissions }: R
                       </Label>
                       <Switch
                         id={`${role}-${permission}`}
-                        checked={rolePermission.permissions[permission]}
+                        checked={rolePermission.permissions[permission] ?? false}
                         onCheckedChange={(checked: boolean) =>
                           handlePermissionChange(role, permission, checked)
                         }

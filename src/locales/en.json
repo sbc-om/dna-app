@@ -137,6 +137,9 @@
   },
   "settings": {
     "description": "Manage application settings and data backup",
+    "notifications": "Notifications",
+    "pushNotifications": "Push Notifications",
+    "pushNotificationsDescription": "Get notified instantly when you receive new messages",
     "backupRestore": "Backup & Restore",
     "general": "General",
     "backupManagement": "Backup Management",

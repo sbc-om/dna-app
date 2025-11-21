@@ -19,6 +19,11 @@ export interface RolePermission {
     canManageNotifications: boolean;
     canViewProfile: boolean;
     canEditProfile: boolean;
+    canAccessSettings: boolean;
+    canManageBackups: boolean;
+    canAccessMessages: boolean;
+    canCreateGroup: boolean;
+    canSendPushNotifications: boolean;
   };
   updatedAt: string;
   updatedBy: string;
@@ -92,6 +97,11 @@ export async function initializeDefaultRolePermissions(): Promise<void> {
       canManageNotifications: true,
       canViewProfile: true,
       canEditProfile: true,
+      canAccessSettings: true,
+      canManageBackups: true,
+      canAccessMessages: true,
+      canCreateGroup: true,
+      canSendPushNotifications: true,
     },
     [ROLES.COACH]: {
       canAccessDashboard: true,
@@ -103,6 +113,11 @@ export async function initializeDefaultRolePermissions(): Promise<void> {
       canManageNotifications: true,
       canViewProfile: true,
       canEditProfile: true,
+      canAccessSettings: false,
+      canManageBackups: false,
+      canAccessMessages: true,
+      canCreateGroup: true,
+      canSendPushNotifications: true,
     },
     [ROLES.PARENT]: {
       canAccessDashboard: true,
@@ -114,6 +129,11 @@ export async function initializeDefaultRolePermissions(): Promise<void> {
       canManageNotifications: false,
       canViewProfile: true,
       canEditProfile: true,
+      canAccessSettings: false,
+      canManageBackups: false,
+      canAccessMessages: true,
+      canCreateGroup: false,
+      canSendPushNotifications: false,
     },
     [ROLES.KID]: {
       canAccessDashboard: true,
@@ -125,6 +145,11 @@ export async function initializeDefaultRolePermissions(): Promise<void> {
       canManageNotifications: false,
       canViewProfile: true,
       canEditProfile: false,
+      canAccessSettings: false,
+      canManageBackups: false,
+      canAccessMessages: true,
+      canCreateGroup: false,
+      canSendPushNotifications: false,
     },
   };
 

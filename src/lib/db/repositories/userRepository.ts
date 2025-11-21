@@ -13,6 +13,23 @@ export interface User {
   profilePicture?: string; // Profile image URL
   role: UserRole;
   parentId?: string; // For kids - reference to parent user
+  
+  // Extended Profile for Kids
+  birthDate?: string;
+  gender?: 'male' | 'female';
+  address?: string;
+  school?: string;
+  grade?: string;
+  medicalInfo?: string;
+  
+  // Player Card Fields
+  position?: string; // e.g., "Forward", "Midfielder", "Defender", "Goalkeeper"
+  preferredFoot?: 'left' | 'right' | 'both';
+  height?: number; // cm
+  weight?: number; // kg
+  country?: string; // ISO country code or name
+  dnaStage?: string; // e.g., "Bronze", "Silver", "Gold", "Platinum"
+  
   createdAt: string;
   updatedAt: string;
   isActive: boolean;
@@ -27,6 +44,20 @@ export interface CreateUserInput {
   nationalId?: string;
   role?: UserRole;
   parentId?: string;
+  
+  birthDate?: string;
+  gender?: 'male' | 'female';
+  address?: string;
+  school?: string;
+  grade?: string;
+  medicalInfo?: string;
+  
+  position?: string;
+  preferredFoot?: 'left' | 'right' | 'both';
+  height?: number;
+  weight?: number;
+  country?: string;
+  dnaStage?: string;
 }
 
 export interface UpdateUserInput {
@@ -40,6 +71,20 @@ export interface UpdateUserInput {
   role?: UserRole;
   isActive?: boolean;
   parentId?: string;
+  
+  birthDate?: string;
+  gender?: 'male' | 'female';
+  address?: string;
+  school?: string;
+  grade?: string;
+  medicalInfo?: string;
+  
+  position?: string;
+  preferredFoot?: 'left' | 'right' | 'both';
+  height?: number;
+  weight?: number;
+  country?: string;
+  dnaStage?: string;
 }
 
 const USERS_PREFIX = 'users:';
@@ -91,6 +136,21 @@ export async function createUser(input: CreateUserInput): Promise<User> {
     nationalId: input.nationalId,
     role: input.role || ROLES.KID,
     parentId: input.parentId,
+    
+    birthDate: input.birthDate,
+    gender: input.gender,
+    address: input.address,
+    school: input.school,
+    grade: input.grade,
+    medicalInfo: input.medicalInfo,
+    
+    position: input.position,
+    preferredFoot: input.preferredFoot,
+    height: input.height,
+    weight: input.weight,
+    country: input.country,
+    dnaStage: input.dnaStage,
+
     createdAt: now,
     updatedAt: now,
     isActive: true,
@@ -190,6 +250,21 @@ export async function updateUser(id: string, input: UpdateUserInput): Promise<Us
     role: input.role !== undefined ? input.role : user.role,
     parentId: input.parentId !== undefined ? input.parentId : user.parentId,
     isActive: input.isActive !== undefined ? input.isActive : user.isActive,
+    
+    birthDate: input.birthDate !== undefined ? input.birthDate : user.birthDate,
+    gender: input.gender !== undefined ? input.gender : user.gender,
+    address: input.address !== undefined ? input.address : user.address,
+    school: input.school !== undefined ? input.school : user.school,
+    grade: input.grade !== undefined ? input.grade : user.grade,
+    medicalInfo: input.medicalInfo !== undefined ? input.medicalInfo : user.medicalInfo,
+    
+    position: input.position !== undefined ? input.position : user.position,
+    preferredFoot: input.preferredFoot !== undefined ? input.preferredFoot : user.preferredFoot,
+    height: input.height !== undefined ? input.height : user.height,
+    weight: input.weight !== undefined ? input.weight : user.weight,
+    country: input.country !== undefined ? input.country : user.country,
+    dnaStage: input.dnaStage !== undefined ? input.dnaStage : user.dnaStage,
+
     updatedAt: new Date().toISOString(),
   };
 

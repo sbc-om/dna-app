@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Bell, 
   CheckCheck, 
@@ -31,6 +31,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
 import { cn } from '@/lib/utils';
+import { 
+  getNotificationsAction, 
+  markAsReadAction, 
+  markAllAsReadAction, 
+  deleteNotificationAction 
+} from '@/lib/actions/notificationActions';
+import { Notification } from '@/lib/db/repositories/notificationRepository';
 
 interface NotificationsClientProps {
   dictionary: Dictionary;
@@ -40,103 +47,33 @@ interface NotificationsClientProps {
 type NotificationType = 'info' | 'success' | 'warning' | 'error';
 type NotificationCategory = 'all' | 'system' | 'appointments' | 'users' | 'messages';
 
-interface Notification {
-  id: string;
-  type: NotificationType;
-  category: NotificationCategory;
-  title: string;
-  message: string;
-  timestamp: Date;
-  read: boolean;
-  actionUrl?: string;
-}
-
-// Mock data - replace with real API call
-const generateMockNotifications = (): Notification[] => [
-  {
-    id: '1',
-    type: 'success',
-    category: 'appointments',
-    title: 'New Appointment Confirmed',
-    message: 'Sarah Johnson has confirmed their appointment for December 15, 2025 at 10:00 AM.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
-    read: false,
-    actionUrl: '/dashboard/appointments',
-  },
-  {
-    id: '2',
-    type: 'info',
-    category: 'users',
-    title: 'New User Registration',
-    message: 'A new user "Michael Brown" has registered and is awaiting approval.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-    read: false,
-    actionUrl: '/dashboard/users',
-  },
-  {
-    id: '3',
-    type: 'warning',
-    category: 'system',
-    title: 'System Maintenance Scheduled',
-    message: 'Scheduled maintenance will occur on December 20, 2025 from 2:00 AM to 4:00 AM.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
-    read: true,
-  },
-  {
-    id: '4',
-    type: 'success',
-    category: 'messages',
-    title: 'Message Received',
-    message: 'You have a new message from Emma Wilson regarding appointment rescheduling.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-    read: true,
-    actionUrl: '/dashboard/messages',
-  },
-  {
-    id: '5',
-    type: 'error',
-    category: 'appointments',
-    title: 'Appointment Cancelled',
-    message: 'John Doe has cancelled their appointment scheduled for December 12, 2025.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
-    read: true,
-    actionUrl: '/dashboard/appointments',
-  },
-  {
-    id: '6',
-    type: 'info',
-    category: 'system',
-    title: 'Database Backup Completed',
-    message: 'Automated database backup was completed successfully at 3:00 AM.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
-    read: true,
-  },
-  {
-    id: '7',
-    type: 'success',
-    category: 'users',
-    title: 'User Role Updated',
-    message: 'User permissions for "Admin Team" role have been updated successfully.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5), // 5 days ago
-    read: true,
-    actionUrl: '/dashboard/roles',
-  },
-  {
-    id: '8',
-    type: 'warning',
-    category: 'appointments',
-    title: 'Upcoming Appointment Reminder',
-    message: 'You have 5 appointments scheduled for tomorrow. Please review and prepare.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // 1 week ago
-    read: true,
-    actionUrl: '/dashboard/appointments',
-  },
-];
-
 export function NotificationsClient({ dictionary, locale }: NotificationsClientProps) {
-  const [notifications, setNotifications] = useState<Notification[]>(generateMockNotifications());
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<NotificationCategory>('all');
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadNotifications();
+  }, []);
+
+  const loadNotifications = async () => {
+    try {
+      const result = await getNotificationsAction();
+      if (result.success && result.notifications) {
+        // Convert timestamp strings to Date objects if needed
+        const parsedNotifications = result.notifications.map(n => ({
+          ...n,
+          timestamp: new Date(n.timestamp)
+        }));
+        setNotifications(parsedNotifications as any);
+      }
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getNotificationIcon = (type: NotificationType, category: NotificationCategory) => {
     if (category === 'appointments') return Calendar;
@@ -161,9 +98,10 @@ export function NotificationsClient({ dictionary, locale }: NotificationsClientP
     }
   };
 
-  const formatTimestamp = (timestamp: Date) => {
+  const formatTimestamp = (timestamp: Date | string) => {
+    const date = new Date(timestamp);
     const now = new Date();
-    const diff = now.getTime() - timestamp.getTime();
+    const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86301600);
@@ -173,22 +111,27 @@ export function NotificationsClient({ dictionary, locale }: NotificationsClientP
     return `${days}d ago`;
   };
 
-  const markAsRead = (id: string) => {
+  const markAsRead = async (id: string) => {
+    // Optimistic update
     setNotifications(notifications.map(n => 
       n.id === id ? { ...n, read: true } : n
     ));
+    
+    await markAsReadAction(id);
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
+    // Optimistic update
     setNotifications(notifications.map(n => ({ ...n, read: true })));
+    
+    await markAllAsReadAction();
   };
 
-  const deleteNotification = (id: string) => {
+  const deleteNotification = async (id: string) => {
+    // Optimistic update
     setNotifications(notifications.filter(n => n.id !== id));
-  };
-
-  const clearAllRead = () => {
-    setNotifications(notifications.filter(n => !n.read));
+    
+    await deleteNotificationAction(id);
   };
 
   const filteredNotifications = notifications.filter(n => {
@@ -263,7 +206,7 @@ export function NotificationsClient({ dictionary, locale }: NotificationsClientP
               <Button
                 variant="outline"
                 size="sm"
-                onClick={clearAllRead}
+                onClick={() => {}} // Not implemented yet
                 className="gap-2 text-red-600 hover:text-red-700"
               >
                 <Trash2 className="h-4 w-4" />

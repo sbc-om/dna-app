@@ -137,6 +137,9 @@
   },
   "settings": {
     "description": "إدارة إعدادات التطبيق ونسخ البيانات الاحتياطي",
+    "notifications": "الإشعارات",
+    "pushNotifications": "إشعارات الدفع",
+    "pushNotificationsDescription": "احصل على إشعارات فورية عند استلام رسائل جديدة",
     "backupRestore": "النسخ الاحتياطي والاستعادة",
     "general": "عام",
     "backupManagement": "إدارة النسخ الاحتياطي",

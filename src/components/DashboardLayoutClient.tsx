@@ -4,6 +4,7 @@ import { ReactNode, useState } from 'react';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { Dictionary } from '@/lib/i18n/getDictionary';
+import { PushNotificationInit } from '@/components/PushNotificationInit';
 
 interface DashboardLayoutClientProps {
   children: ReactNode;
@@ -29,6 +30,9 @@ export function DashboardLayoutClient({
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-950 dark:via-purple-950/30 dark:to-pink-950/30" dir={direction}>
+      {/* Initialize Push Notifications */}
+      <PushNotificationInit />
+      
       {/* Mobile Overlay */}
       {isMobileSidebarOpen && (
         <div 

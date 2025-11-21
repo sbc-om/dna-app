@@ -105,6 +105,7 @@ export function AppointmentBookingForm({ dictionary, locale }: AppointmentBookin
       email,
       appointmentDate: selectedDate,
       appointmentTime: selectedTime,
+      locale,
     });
 
     if (result.success) {
