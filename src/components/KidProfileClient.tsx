@@ -20,8 +20,8 @@ import { PlayerCardData } from '@/lib/db/repositories/playerCardRepository';
 interface KidProfileClientProps {
   dictionary: Dictionary;
   locale: Locale;
-  kid: User;
-  currentUser: AuthUser;
+  kid: User | any;
+  currentUser: AuthUser | any;
 }
 
 export function KidProfileClient({

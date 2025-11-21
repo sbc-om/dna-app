@@ -17,7 +17,15 @@ import { useConfirm } from '@/components/ConfirmDialog';
 interface ProfileClientProps {
   dictionary: Dictionary;
   locale: Locale;
-  user: UserType;
+  user: {
+    id: string;
+    email: string;
+    username: string;
+    fullName?: string;
+    phoneNumber?: string;
+    profilePicture?: string;
+    role: string;
+  };
 }
 
 export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) {

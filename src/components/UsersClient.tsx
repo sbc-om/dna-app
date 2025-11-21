@@ -64,6 +64,7 @@ export function UsersClient({ dictionary, initialUsers, locale }: UsersClientPro
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         dictionary={dictionary}
+        locale={locale}
         onUserCreated={(newUser: User) => {
           setUsers([...users, newUser]);
         }}

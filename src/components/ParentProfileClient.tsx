@@ -24,9 +24,9 @@ import { createUserAction } from '@/lib/actions/userActions';
 interface ParentProfileClientProps {
   dictionary: Dictionary;
   locale: Locale;
-  parent: UserType;
-  children: UserType[];
-  currentUser: UserType;
+  parent: UserType | any;
+  children: UserType[] | any[];
+  currentUser: UserType | any;
 }
 
 export function ParentProfileClient({
