@@ -27,12 +27,14 @@ export default async function EditCoursePage({
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-5xl">
-      <EditCourseClient
-        locale={locale}
-        dict={dictionary}
-        course={course}
-      />
+    <div className="h-full overflow-y-auto">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl space-y-6">
+        <EditCourseClient
+          locale={locale}
+          dict={dictionary}
+          course={course}
+        />
+      </div>
     </div>
   );
 }

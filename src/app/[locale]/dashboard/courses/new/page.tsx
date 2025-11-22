@@ -26,8 +26,10 @@ export default async function NewCoursePage({ params }: PageProps) {
   const dict = await getDictionary(locale as 'en' | 'ar');
 
   return (
-    <div className="container mx-auto py-6 px-4 max-w-4xl">
-      <CreateCourseClient locale={locale} dict={dict} />
+    <div className="h-full overflow-y-auto">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl space-y-6">
+        <CreateCourseClient locale={locale} dict={dict} />
+      </div>
     </div>
   );
 }
