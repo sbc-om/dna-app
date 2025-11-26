@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
+import { locales, defaultLocale } from '@/config/i18n';
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'default-secret-change-in-production'
@@ -36,13 +37,10 @@ const publicApiRoutes = [
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Extract locale from pathname (e.g., /en/dashboard -> en)
-  const localeMatch = pathname.match(/^\/([a-z]{2})(\/|$)/);
-  const locale = localeMatch ? localeMatch[1] : 'en';
-
-  // Skip proxy for static files, API health check, and public assets
+  // Skip proxy for static files, API routes, and Next.js internals
   if (
     pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
     pathname.startsWith('/static') ||
     pathname.startsWith('/icons') ||
     pathname.startsWith('/manifest.json') ||
@@ -51,11 +49,35 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check if it's a public API route
-  const isPublicApiRoute = publicApiRoutes.some(route => pathname.startsWith(route));
-  if (isPublicApiRoute) {
-    return NextResponse.next();
+  // Check if the pathname already has a locale
+  const pathnameHasLocale = locales.some(
+    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
+  );
+
+  // If pathname doesn't have locale, redirect to add it
+  if (!pathnameHasLocale && pathname !== '/') {
+    // Detect user's preferred language
+    const acceptLanguage = request.headers.get('accept-language');
+    let preferredLocale = defaultLocale;
+
+    if (acceptLanguage && acceptLanguage.includes('ar')) {
+      preferredLocale = 'ar';
+    }
+
+    // Check for locale cookie
+    const localeCookie = request.cookies.get('locale')?.value;
+    if (localeCookie && locales.includes(localeCookie as any)) {
+      preferredLocale = localeCookie as any;
+    }
+
+    const url = request.nextUrl.clone();
+    url.pathname = `/${preferredLocale}${pathname}`;
+    return NextResponse.redirect(url);
   }
+
+  // Extract locale from pathname (e.g., /en/dashboard -> en)
+  const localeMatch = pathname.match(/^\/([a-z]{2})(\/|$)/);
+  const locale = localeMatch ? localeMatch[1] : defaultLocale;
 
   // Get auth token from cookies
   const token = request.cookies.get('auth-token');
