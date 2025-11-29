@@ -5,7 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Award } from 'lucide-react';
 import { getCourseAttendanceAction, saveCourseAttendanceAction } from '@/lib/actions/attendanceActions';
+import { AwardMedalDialog } from './AwardMedalDialog';
 
 interface RosterEntry {
   id: string;
@@ -25,17 +27,20 @@ interface AttendanceText {
   loading: string;
   playerLabel: string;
   emptyState: string;
+  awardMedal?: string;
 }
 
 interface CoachAttendanceClientProps {
   text: AttendanceText;
   courseId: string;
   roster: RosterEntry[];
+  dictionary?: any;
+  locale?: 'en' | 'ar';
 }
 
 type AttendanceState = Record<string, { present: boolean; score?: number }>; // key: studentId
 
-export default function CoachAttendanceClient({ text, courseId, roster }: CoachAttendanceClientProps) {
+export default function CoachAttendanceClient({ text, courseId, roster, dictionary, locale = 'en' }: CoachAttendanceClientProps) {
   const today = new Date().toISOString().split('T')[0];
   const [sessionDate, setSessionDate] = useState<string>(today);
   const [attendance, setAttendance] = useState<AttendanceState>({});
@@ -43,6 +48,20 @@ export default function CoachAttendanceClient({ text, courseId, roster }: CoachA
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [medalDialogOpen, setMedalDialogOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string } | null>(null);
+  const [currentAttendanceId, setCurrentAttendanceId] = useState<string>('');
+
+  const openMedalDialog = (studentId: string, studentName: string) => {
+    setSelectedStudent({ id: studentId, name: studentName });
+    setCurrentAttendanceId(`${courseId}-${sessionDate}-${studentId}`);
+    setMedalDialogOpen(true);
+  };
+
+  const handleMedalSuccess = () => {
+    setStatusMessage('Medal awarded successfully!');
+    setTimeout(() => setStatusMessage(null), 3000);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -142,11 +161,12 @@ export default function CoachAttendanceClient({ text, courseId, roster }: CoachA
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{text.title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>{text.title}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="space-y-1">
             <label className="text-sm font-medium text-muted-foreground" htmlFor="sessionDate">
@@ -218,21 +238,32 @@ export default function CoachAttendanceClient({ text, courseId, roster }: CoachA
                       </label>
                     </div>
 
-                    <div className="space-y-2">
-                      <label htmlFor={scoreInputId} className="text-sm font-medium text-gray-700 block">
-                        {text.scoreLabel}
-                      </label>
-                      <Input
-                        id={scoreInputId}
-                        type="number"
-                        min={1}
-                        max={10}
-                        inputMode="numeric"
-                        value={state.score ?? ''}
-                        onChange={(event) => updateScore(student.id, event.target.value)}
-                        placeholder="-"
-                        className="w-full max-w-[140px] text-base"
-                      />
+                    <div className="flex items-center gap-4">
+                      <div className="space-y-2 flex-1">
+                        <label htmlFor={scoreInputId} className="text-sm font-medium text-gray-700 block">
+                          {text.scoreLabel}
+                        </label>
+                        <Input
+                          id={scoreInputId}
+                          type="number"
+                          min={1}
+                          max={10}
+                          inputMode="numeric"
+                          value={state.score ?? ''}
+                          onChange={(event) => updateScore(student.id, event.target.value)}
+                          placeholder="-"
+                          className="w-full max-w-[140px] text-base"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openMedalDialog(student.id, student.name)}
+                        className="mt-6 border-[#FF5F02] text-[#FF5F02] hover:bg-[#FF5F02] hover:text-white"
+                      >
+                        <Award className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
 
@@ -272,6 +303,15 @@ export default function CoachAttendanceClient({ text, courseId, roster }: CoachA
                         placeholder="-"
                         className="w-20"
                       />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openMedalDialog(student.id, student.name)}
+                        className="border-[#FF5F02] text-[#FF5F02] hover:bg-[#FF5F02] hover:text-white"
+                      >
+                        <Award className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -289,6 +329,36 @@ export default function CoachAttendanceClient({ text, courseId, roster }: CoachA
           </Button>
         </div>
       </CardContent>
-    </Card>
+      </Card>
+
+      {selectedStudent && (
+      <AwardMedalDialog
+        open={medalDialogOpen}
+        onOpenChange={setMedalDialogOpen}
+        studentId={selectedStudent.id}
+        studentName={selectedStudent.name}
+        courseId={courseId}
+        attendanceId={currentAttendanceId}
+        onSuccess={handleMedalSuccess}
+        dictionary={dictionary || { 
+          settings: { 
+            awardMedal: text.awardMedal || (locale === 'ar' ? 'منح ميدالية' : 'Award Medal'), 
+            awardMedalTo: locale === 'ar' ? 'منح ميدالية لـ' : 'Award Medal to', 
+            selectMedal: locale === 'ar' ? 'اختر ميدالية' : 'Select Medal', 
+            awardNotes: locale === 'ar' ? 'ملاحظات (اختياري)' : 'Notes (Optional)', 
+            noMedals: locale === 'ar' ? 'لا توجد ميداليات' : 'No medals available' 
+          }, 
+          common: { 
+            cancel: locale === 'ar' ? 'إلغاء' : 'Cancel', 
+            loading: locale === 'ar' ? 'جاري التحميل...' : 'Loading...', 
+            save: locale === 'ar' ? 'حفظ' : 'Save' 
+          }, 
+          courses: { 
+            points: locale === 'ar' ? 'نقاط' : 'pts' 
+          } 
+        }}
+      />
+    )}
+    </>
   );
 }

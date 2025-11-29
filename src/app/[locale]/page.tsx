@@ -86,26 +86,22 @@ export default function HomePage({ params }: PageProps) {
     {
       title: 'FOOTBALL',
       description: 'Professional football training program for all skill levels',
-      image: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400&h=400&fit=crop',
-      color: 'from-blue-600 to-cyan-500'
+      image: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400&h=400&fit=crop'
     },
     {
       title: 'BASKETBALL',
       description: 'Elite basketball development and skills training',
-      image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=400&h=400&fit=crop',
-      color: 'from-orange-600 to-red-500'
+      image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=400&h=400&fit=crop'
     },
     {
       title: 'VOLLEYBALL',
       description: 'Comprehensive volleyball training and team development',
-      image: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=400&h=400&fit=crop',
-      color: 'from-purple-600 to-pink-500'
+      image: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=400&h=400&fit=crop'
     },
     {
       title: 'YOUTH PROGRAM',
       description: 'Building tomorrow\'s champions through structured training',
-      image: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=400&h=400&fit=crop',
-      color: 'from-green-600 to-emerald-500'
+      image: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=400&h=400&fit=crop'
     }
   ];
 
@@ -145,9 +141,22 @@ export default function HomePage({ params }: PageProps) {
         {/* Hero Section */}
         <motion.section 
           style={{ opacity: heroOpacity, scale: heroScale }}
-          className="relative min-h-[90vh] flex items-center justify-center px-4 py-20 bg-gradient-to-br from-[#30B2D2]/10 via-background to-[#F2574C]/10"
+          className="relative min-h-[90vh] flex items-center justify-center px-4 py-20"
         >
+          {/* Background Image */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: "url('/hero.webp')" }}
+          >
+            {/* Dark Overlay for better text contrast */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70"></div>
+            {/* Additional overlay for depth */}
+            <div className="absolute inset-0 bg-[#FF5F02]/10"></div>
+          </div>
+
+          {/* Animated grid overlay */}
           <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5"></div>
+          
           <motion.div 
             initial="hidden"
             animate="visible"
@@ -164,14 +173,14 @@ export default function HomePage({ params }: PageProps) {
             
             <motion.h1 
               variants={itemVariants}
-              className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 bg-gradient-to-r from-[#F2574C] via-[#30B2D2] to-[#E8A12D] bg-clip-text text-transparent leading-tight"
+              className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 text-white drop-shadow-2xl leading-tight"
             >
               {dictionary.pages.home.hero.title}
             </motion.h1>
             
             <motion.p 
               variants={itemVariants}
-              className="text-xl md:text-3xl text-muted-foreground font-semibold mb-12 max-w-3xl mx-auto"
+              className="text-xl md:text-3xl text-white font-semibold mb-12 max-w-3xl mx-auto drop-shadow-lg"
             >
               {dictionary.pages.home.hero.subtitle}
             </motion.p>
@@ -181,21 +190,21 @@ export default function HomePage({ params }: PageProps) {
               className="flex flex-col sm:flex-row gap-4 justify-center items-center"
             >
               <Link href={`/${locale}/book-appointment`}>
-                <Button size="lg" className="bg-gradient-to-r from-[#F2574C] to-[#E8A12D] hover:opacity-90 text-white px-8 py-6 text-lg rounded-full shadow-2xl transform hover:scale-105 transition-all">
+                <Button size="lg" className="bg-[#FF5F02] hover:bg-white hover:text-[#FF5F02] text-white px-8 py-6 text-lg rounded-full shadow-2xl transform hover:scale-110 transition-all duration-300 border-2 border-transparent hover:border-[#FF5F02]">
                   {dictionary.pages.home.hero.cta}
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
               {user ? (
                 <Link href={`/${locale}/dashboard`}>
-                  <Button size="lg" variant="outline" className="border-2 border-[#30B2D2] text-[#30B2D2] hover:bg-[#30B2D2] hover:text-white px-8 py-6 text-lg rounded-full shadow-lg transform hover:scale-105 transition-all">
+                  <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-md border-2 border-white text-white hover:bg-white hover:text-[#FF5F02] px-8 py-6 text-lg rounded-full shadow-lg transform hover:scale-110 transition-all duration-300">
                     {dictionary.nav.dashboard}
                     <ChevronRight className="ml-2 w-5 h-5" />
                   </Button>
                 </Link>
               ) : (
                 <Link href={`/${locale}/auth/login`}>
-                  <Button size="lg" variant="outline" className="border-2 border-[#30B2D2] text-[#30B2D2] hover:bg-[#30B2D2] hover:text-white px-8 py-6 text-lg rounded-full shadow-lg transform hover:scale-105 transition-all">
+                  <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-md border-2 border-white text-white hover:bg-white hover:text-[#FF5F02] px-8 py-6 text-lg rounded-full shadow-lg transform hover:scale-110 transition-all duration-300">
                     {dictionary.pages.home.hero.loginCta}
                     <ChevronRight className="ml-2 w-5 h-5" />
                   </Button>
@@ -235,7 +244,7 @@ export default function HomePage({ params }: PageProps) {
         </section>
 
         {/* Philosophy Section */}
-        <section className="py-20 px-4 bg-gradient-to-br from-[#30B2D2]/5 to-[#F2574C]/5">
+        <section className="py-20 px-4 bg-white dark:bg-[#262626]">
           <div className="max-w-7xl mx-auto">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <motion.div
@@ -244,7 +253,7 @@ export default function HomePage({ params }: PageProps) {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
               >
-                <div className="bg-[#30B2D2] text-white px-4 py-2 rounded-full inline-block mb-4 text-sm font-bold">
+                <div className="bg-[#FF5F02] text-white px-4 py-2 rounded-full inline-block mb-4 text-sm font-bold">
                   {dictionary.pages.home.philosophy.badge}
                 </div>
                 <h2 className="text-4xl md:text-6xl font-black mb-4 text-foreground">
@@ -254,7 +263,7 @@ export default function HomePage({ params }: PageProps) {
                   {dictionary.pages.home.philosophy.subtitle}
                 </p>
                 <div className="space-y-4">
-                  <Card className="border-l-4 border-[#F2574C]">
+                  <Card className="border-l-4 border-[#FF5F02]">
                     <CardContent className="p-6">
                       <h3 className="text-2xl font-bold mb-2">{dictionary.pages.home.philosophy.description}</h3>
                       <p className="text-muted-foreground">{dictionary.pages.home.philosophy.goal}</p>
@@ -275,14 +284,13 @@ export default function HomePage({ params }: PageProps) {
                   alt="Philosophy" 
                   className="w-full rounded-2xl shadow-2xl object-cover h-[500px]"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-2xl"></div>
               </motion.div>
             </div>
           </div>
         </section>
 
         {/* Programs Section */}
-        <section className="py-24 px-4 bg-gradient-to-br from-muted/30 to-background">
+        <section className="py-24 px-4 bg-[#DDDDDD] dark:bg-[#000000]">
           <div className="max-w-7xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -292,10 +300,10 @@ export default function HomePage({ params }: PageProps) {
               className="text-center mb-20"
             >
               <div className="inline-block">
-                <h2 className="text-5xl md:text-7xl font-black mb-6 text-foreground tracking-tight">
+                <h2 className="text-5xl md:text-7xl font-black mb-6 text-[#262626] dark:text-white tracking-tight">
                   {dictionary.pages.home.programs.title}
                 </h2>
-                <div className="h-2 w-32 bg-gradient-to-r from-[#F2574C] via-[#30B2D2] to-[#E8A12D] mx-auto rounded-full mb-6"></div>
+                <div className="h-2 w-32 bg-[#FF5F02] mx-auto rounded-full mb-6"></div>
               </div>
               <p className="text-2xl md:text-3xl text-muted-foreground font-semibold max-w-3xl mx-auto">
                 {dictionary.pages.home.programs.subtitle}
@@ -312,7 +320,7 @@ export default function HomePage({ params }: PageProps) {
                   transition={{ duration: 0.6, delay: index * 0.15 }}
                   className="h-full"
                 >
-                  <Card className="group h-full flex flex-col hover:shadow-2xl transition-all duration-500 overflow-hidden border-2 hover:border-[#30B2D2] cursor-pointer hover:-translate-y-2">
+                  <Card className="group h-full flex flex-col hover:shadow-2xl transition-all duration-500 overflow-hidden border-2 hover:border-[#FF5F02] cursor-pointer hover:-translate-y-2">
                     <CardContent className="p-0 flex flex-col h-full">
                       <div className={`h-64 relative overflow-hidden`}>
                         <img 
@@ -320,10 +328,9 @@ export default function HomePage({ params }: PageProps) {
                           alt={program.title} 
                           className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" 
                         />
-                        <div className="absolute inset-0 bg-gradient-to-br ${program.color} opacity-40 group-hover:opacity-20 transition-all duration-500"></div>
                       </div>
                       <div className="p-8 flex-1 flex flex-col">
-                        <h3 className="text-2xl font-black mb-3 group-hover:text-[#30B2D2] transition-colors min-h-[3.5rem]">
+                        <h3 className="text-2xl font-black mb-3 group-hover:text-[#FF5F02] transition-colors min-h-[3.5rem]">
                           {program.title}
                         </h3>
                         <p className="text-muted-foreground mb-6 flex-1 text-base leading-relaxed">
@@ -331,7 +338,7 @@ export default function HomePage({ params }: PageProps) {
                         </p>
                         <Button 
                           variant="ghost" 
-                          className="w-full group-hover:bg-gradient-to-r group-hover:from-[#30B2D2] group-hover:to-[#F2574C] group-hover:text-white transition-all duration-300 py-6 text-base font-bold rounded-xl"
+                          className="w-full group-hover:bg-[#FF5F02] group-hover:text-white transition-all duration-300 py-6 text-base font-bold rounded-xl"
                         >
                           {dictionary.pages.home.programs.learnMore}
                           <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -346,7 +353,7 @@ export default function HomePage({ params }: PageProps) {
         </section>
 
         {/* Recognition Section */}
-        <section className="py-20 px-4 bg-gradient-to-br from-[#F2574C]/10 to-[#E8A12D]/10">
+        <section className="py-20 px-4 bg-white dark:bg-[#262626]">
           <div className="max-w-7xl mx-auto">
             <motion.div
               initial={{ opacity: 0 }}
@@ -376,8 +383,8 @@ export default function HomePage({ params }: PageProps) {
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  <Card className="text-center p-8 hover:shadow-xl transition-all border-2 hover:border-[#F2574C]">
-                    <item.icon className="w-16 h-16 mx-auto mb-4 text-[#F2574C]" />
+                  <Card className="text-center p-8 hover:shadow-xl transition-all border-2 hover:border-[#FF5F02]">
+                    <item.icon className="w-16 h-16 mx-auto mb-4 text-[#FF5F02]" />
                     <h3 className="text-xl font-bold">{item.title}</h3>
                   </Card>
                 </motion.div>
@@ -387,7 +394,7 @@ export default function HomePage({ params }: PageProps) {
         </section>
 
         {/* Testimonials Section */}
-        <section className="py-20 px-4 bg-background">
+        <section className="py-20 px-4 bg-[#DDDDDD] dark:bg-[#000000]">
           <div className="max-w-7xl mx-auto">
             <motion.div
               initial={{ opacity: 0 }}
@@ -456,7 +463,7 @@ export default function HomePage({ params }: PageProps) {
                   <Card className="hover:shadow-lg transition-all">
                     <CardContent className="p-6">
                       <h3 className="text-lg font-bold mb-2 flex items-start gap-2">
-                        <CheckCircle2 className="w-6 h-6 text-[#30B2D2] flex-shrink-0 mt-1" />
+                        <CheckCircle2 className="w-6 h-6 text-[#FF5F02] shrink-0 mt-1" />
                         {faq.q}
                       </h3>
                       <p className="text-muted-foreground ml-8">{faq.a}</p>
@@ -469,14 +476,14 @@ export default function HomePage({ params }: PageProps) {
         </section>
 
         {/* Newsletter Section */}
-        <section className="py-20 px-4 bg-gradient-to-br from-[#30B2D2] to-[#F2574C]">
+        <section className="py-20 px-4 bg-[#FF5F02]">
           <div className="max-w-3xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <div className="bg-white/20 text-white px-4 py-2 rounded-full inline-block mb-4 text-sm font-bold">
+              <div className="bg-white text-[#FF5F02] px-4 py-2 rounded-full inline-block mb-4 text-sm font-bold">
                 {dictionary.pages.home.newsletter.badge}
               </div>
               <h2 className="text-4xl md:text-5xl font-black text-white mb-8">
@@ -488,13 +495,13 @@ export default function HomePage({ params }: PageProps) {
                   placeholder={dictionary.pages.home.newsletter.placeholder}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 bg-white/90 border-0 text-lg py-6"
+                  className="flex-1 bg-white border-0 text-lg py-6"
                 />
-                <Button size="lg" className="bg-white text-[#30B2D2] hover:bg-white/90 px-8 py-6 text-lg font-bold">
+                <Button size="lg" className="bg-[#262626] text-white hover:bg-[#000000] px-8 py-6 text-lg font-bold">
                   {dictionary.pages.home.newsletter.button}
                 </Button>
               </div>
-              <p className="text-white/80 text-sm mt-4">
+              <p className="text-white opacity-80 text-sm mt-4">
                 {dictionary.pages.home.newsletter.privacy}
               </p>
             </motion.div>
@@ -502,7 +509,7 @@ export default function HomePage({ params }: PageProps) {
         </section>
 
         {/* Discover Section */}
-        <section className="py-20 px-4 bg-black text-white">
+        <section className="py-20 px-4 bg-[#262626] text-white">
           <div className="max-w-7xl mx-auto text-center">
             <motion.h2
               initial={{ opacity: 0, scale: 0.8 }}
@@ -520,7 +527,7 @@ export default function HomePage({ params }: PageProps) {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="text-2xl md:text-3xl font-bold text-white/70 hover:text-white transition-colors cursor-pointer"
+                  className="text-2xl md:text-3xl font-bold text-white opacity-70 hover:opacity-100 hover:text-[#FF5F02] transition-colors cursor-pointer"
                 >
                   {sport}
                 </motion.div>

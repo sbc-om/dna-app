@@ -15,7 +15,7 @@ interface RegisterPageClientProps {
 
 export default function RegisterPageClient({ dictionary, locale }: RegisterPageClientProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 dark:from-blue-950 dark:via-purple-950 dark:to-pink-950">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[#DDDDDD] dark:bg-[#000000]">
       <div className="w-full max-w-2xl">
         <Link 
           href={`/${locale}`}
@@ -26,7 +26,7 @@ export default function RegisterPageClient({ dictionary, locale }: RegisterPageC
         </Link>
         
         <Card className="w-full shadow-2xl border-3 border-blue-200 dark:border-blue-700 rounded-3xl overflow-hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur">
-          <CardHeader className="text-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/50 dark:to-purple-900/50 py-6">
+          <CardHeader className="text-center bg-white dark:bg-[#262626] py-6 border-b border-[#DDDDDD] dark:border-[#262626]">
             <Link href={`/${locale}`} className="flex items-center justify-center mb-4">
               <Image 
                 src="/logo.png" 
@@ -50,7 +50,7 @@ export default function RegisterPageClient({ dictionary, locale }: RegisterPageC
           <CardContent className="p-6">
             <AppointmentBookingForm dictionary={dictionary} locale={locale} />
 
-            <div className="mt-5 text-center p-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-2xl border-2 border-blue-200 dark:border-blue-700">
+            <div className="mt-5 text-center p-3 bg-[#DDDDDD] dark:bg-[#262626] rounded-2xl border-2 border-[#DDDDDD] dark:border-[#262626]">
               <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
                 {dictionary.auth.alreadyHaveAccount}{' '}
                 <Link 

@@ -9,6 +9,7 @@ import { getPaidEnrollmentsByCourseId } from '@/lib/db/repositories/enrollmentRe
 import { Users, Calendar, Clock, CheckCircle, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ChildMedalsPreview } from '@/components/ChildMedalsPreview';
 
 export default async function DashboardPage({
   params,
@@ -222,49 +223,9 @@ export default async function DashboardPage({
                         </div>
                       </div>
 
-                      {/* Right: Achievements (Medals) */}
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="flex items-center gap-1">
-                          {/* Gold Medal */}
-                          <div className="relative group/medal">
-                            <div className="w-10 h-10 rounded-full bg-[#FFD700] flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-                              <span className="text-white text-xl">🥇</span>
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 bg-white rounded-full px-1.5 py-0.5 text-xs font-bold text-[#FFD700] border border-[#FFD700]">
-                              3
-                            </div>
-                          </div>
-
-                          {/* Silver Medal */}
-                          <div className="relative group/medal">
-                            <div className="w-10 h-10 rounded-full bg-[#C0C0C0] flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-                              <span className="text-white text-xl">🥈</span>
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 bg-white rounded-full px-1.5 py-0.5 text-xs font-bold text-[#C0C0C0] border border-[#C0C0C0]">
-                              5
-                            </div>
-                          </div>
-
-                          {/* Bronze Medal */}
-                          <div className="relative group/medal">
-                            <div className="w-10 h-10 rounded-full bg-[#CD7F32] flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-                              <span className="text-white text-xl">🥉</span>
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 bg-white rounded-full px-1.5 py-0.5 text-xs font-bold text-[#CD7F32] border border-[#CD7F32]">
-                              8
-                            </div>
-                          </div>
-
-                          {/* Star/Trophy */}
-                          <div className="relative group/medal">
-                            <div className="w-10 h-10 rounded-full bg-[#FF5F02] flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-                              <span className="text-white text-xl">⭐</span>
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 bg-white rounded-full px-1.5 py-0.5 text-xs font-bold text-[#FF5F02] border border-[#FF5F02]">
-                              12
-                            </div>
-                          </div>
-                        </div>
+                      {/* Right: Real Medals */}
+                      <div className="shrink-0">
+                        <ChildMedalsPreview childId={child.id} />
                       </div>
                     </div>
                   </div>

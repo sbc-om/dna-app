@@ -2,10 +2,11 @@ import { requireAuth } from '@/lib/auth/auth';
 import { getDictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
 import { findCourseById } from '@/lib/db/repositories/courseRepository';
+import { getSessionPlansByCourseId } from '@/lib/db/repositories/sessionPlanRepository';
 import { notFound, redirect } from 'next/navigation';
-import EditCourseClient from '@/components/EditCourseClient';
+import NewSessionClient from '@/components/NewSessionClient';
 
-export default async function EditCoursePage({
+export default async function NewSessionPage({
   params,
 }: {
   params: Promise<{ locale: string; id: string }>;
@@ -14,8 +15,8 @@ export default async function EditCoursePage({
   const dictionary = await getDictionary(locale);
   const user = await requireAuth(locale);
 
-  // Only admin can edit courses
-  if (user.role !== 'admin') {
+  // Only admin and coach can create sessions
+  if (user.role !== 'admin' && user.role !== 'coach') {
     redirect(`/${locale}/dashboard/forbidden`);
   }
 
@@ -26,12 +27,19 @@ export default async function EditCoursePage({
     notFound();
   }
 
+  // Get existing sessions to calculate next session number
+  const existingSessions = getSessionPlansByCourseId(id);
+  const nextSessionNumber = existingSessions.length > 0 
+    ? Math.max(...existingSessions.map(s => s.sessionNumber)) + 1 
+    : 1;
+
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl">
-      <EditCourseClient
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-5xl">
+      <NewSessionClient
         locale={locale}
-        dict={dictionary}
+        dictionary={dictionary}
         course={course}
+        nextSessionNumber={nextSessionNumber}
       />
     </div>
   );

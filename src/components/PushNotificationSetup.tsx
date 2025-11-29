@@ -218,28 +218,37 @@ export function PushNotificationSetup({
     );
   }
 
-  return (
-    <Card className={isSubscribed ? 'border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800' : ''}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          {isSubscribed ? (
-            <Check className="h-5 w-5 text-green-600" />
-          ) : (
-            <Bell className="h-5 w-5" />
-          )}
-          {title}
-          {isSubscribed && (
-            <Badge variant="outline" className="ml-auto bg-green-100 text-green-800 border-green-300">
-              <Check className="h-3 w-3 mr-1" />
-              Active
-            </Badge>
-          )}
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+  // If title is empty, render without outer card (for when wrapped in settings tab)
+  const content = (
+    <div className="space-y-4">
+        {/* Status Badge */}
+        {!title && (
+          <div className={`p-4 rounded-lg border ${isSubscribed ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-white dark:bg-[#262626] border-[#DDDDDD] dark:border-[#000000]'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {isSubscribed ? (
+                  <>
+                    <Check className="h-5 w-5 text-green-600" />
+                    <span className="font-semibold text-green-800 dark:text-green-200">Notifications Enabled</span>
+                  </>
+                ) : (
+                  <>
+                    <Bell className="h-5 w-5 text-[#FF5F02]" />
+                    <span className="font-semibold text-[#262626] dark:text-white">Enable Push Notifications</span>
+                  </>
+                )}
+              </div>
+              {isSubscribed && (
+                <Badge className="bg-green-600 text-white">
+                  Active
+                </Badge>
+              )}
+            </div>
+          </div>
+        )}
+
         {error && (
-          <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+          <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
             {error}
           </div>
         )}
@@ -271,7 +280,36 @@ export function PushNotificationSetup({
           <p>• Works even when the app is closed</p>
           <p>• Available on mobile and desktop</p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
   );
+
+  // If title is provided, wrap in card; otherwise return just the content
+  if (title) {
+    return (
+      <Card className={isSubscribed ? 'border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800' : ''}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {isSubscribed ? (
+              <Check className="h-5 w-5 text-green-600" />
+            ) : (
+              <Bell className="h-5 w-5" />
+            )}
+            {title}
+            {isSubscribed && (
+              <Badge variant="outline" className="ml-auto bg-green-100 text-green-800 border-green-300">
+                <Check className="h-3 w-3 mr-1" />
+                Active
+              </Badge>
+            )}
+          </CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {content}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return content;
 }

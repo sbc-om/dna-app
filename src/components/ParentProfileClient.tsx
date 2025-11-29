@@ -78,16 +78,17 @@ export function ParentProfileClient({
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-[#DDDDDD] dark:bg-[#000000]">
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
         <Link href={`/${locale}/dashboard/users`}>
           <Button variant="outline" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-[#1E3A8A]">
+          <h1 className="text-3xl font-bold text-[#262626] dark:text-white">
             {dictionary.users.parentProfile || 'Parent Profile'}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -97,14 +98,14 @@ export function ParentProfileClient({
       </div>
 
       {/* Parent Information Card */}
-      <Card className="border-2 border-[#1E3A8A]/20">
-        <CardHeader className="bg-[#DDDDDD]">
+      <Card className="border-2 border-[#DDDDDD] dark:border-[#262626]">
+        <CardHeader className="bg-white dark:bg-[#262626] border-b border-[#DDDDDD] dark:border-[#262626]">
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl font-bold text-[#262626] flex items-center gap-2">
               <UserCircle className="h-7 w-7" />
               {parent.fullName || parent.username}
             </CardTitle>
-            <Badge className="bg-[#F2574C] text-white border-0">
+            <Badge className="bg-[#FF5F02] text-white border-0">
               {dictionary.users.roles?.parent || 'Parent'}
             </Badge>
           </div>
@@ -112,21 +113,21 @@ export function ParentProfileClient({
         <CardContent className="pt-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-center gap-3">
-              <Mail className="h-5 w-5 text-[#30B2D2]" />
+              <Mail className="h-5 w-5 text-[#FF5F02]" />
               <div>
                 <p className="text-sm text-muted-foreground">{dictionary.common.email}</p>
                 <p className="font-semibold">{parent.email}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Phone className="h-5 w-5 text-[#30B2D2]" />
+              <Phone className="h-5 w-5 text-[#FF5F02]" />
               <div>
                 <p className="text-sm text-muted-foreground">{dictionary.common.phoneNumber}</p>
                 <p className="font-semibold">{parent.phoneNumber || 'N/A'}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-[#30B2D2]" />
+              <Calendar className="h-5 w-5 text-[#FF5F02]" />
               <div>
                 <p className="text-sm text-muted-foreground">{dictionary.users.createdAt || 'Created At'}</p>
                 <p className="font-semibold">
@@ -135,7 +136,7 @@ export function ParentProfileClient({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <User className="h-5 w-5 text-[#30B2D2]" />
+              <User className="h-5 w-5 text-[#FF5F02]" />
               <div>
                 <p className="text-sm text-muted-foreground">{dictionary.users.status || 'Status'}</p>
                 <Badge variant={parent.isActive ? 'default' : 'destructive'}>
@@ -150,13 +151,13 @@ export function ParentProfileClient({
       {/* Children Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-[#1E3A8A]">
+          <h2 className="text-2xl font-bold text-[#262626] dark:text-white">
             {dictionary.users.children || 'Children'} ({children.length})
           </h2>
           {(currentUser.role === 'admin' || currentUser.id === parent.id) && (
             <Button
               onClick={() => setAddChildOpen(true)}
-              className="bg-[#F2574C] hover:bg-[#d94841] text-white flex items-center gap-2"
+              className="bg-[#FF5F02] hover:bg-[#262626] text-white flex items-center gap-2"
             >
               <Plus className="h-5 w-5" />
               {dictionary.users.addChild || 'Add Child'}
@@ -174,10 +175,10 @@ export function ParentProfileClient({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {children.map((child) => (
               <Link key={child.id} href={`/${locale}/dashboard/kids/${child.id}`}>
-                <Card className="border-2 border-gray-200 hover:border-[#30B2D2] hover:shadow-lg transition-all cursor-pointer">
+                <Card className="border-2 border-[#DDDDDD] dark:border-[#262626] hover:border-[#FF5F02] hover:shadow-lg transition-all cursor-pointer">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                      <User className="h-5 w-5 text-[#30B2D2]" />
+                    <CardTitle className="text-lg font-bold text-[#262626] dark:text-white flex items-center gap-2">
+                      <User className="h-5 w-5 text-[#FF5F02]" />
                       {child.fullName || child.username}
                     </CardTitle>
                   </CardHeader>
@@ -207,7 +208,7 @@ export function ParentProfileClient({
       <Dialog open={addChildOpen} onOpenChange={setAddChildOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-[#1E3A8A]">
+            <DialogTitle className="text-2xl font-bold text-[#262626] dark:text-white">
               {dictionary.users.addChild || 'Add Child'}
             </DialogTitle>
             <DialogDescription>
@@ -236,8 +237,8 @@ export function ParentProfileClient({
                 {dictionary.users.nationalIdNote || 'This will be used as the login username'}
               </p>
             </div>
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <p className="text-sm font-semibold text-blue-900">
+            <div className="bg-[#DDDDDD] dark:bg-[#262626] p-3 rounded-lg">
+              <p className="text-sm font-semibold text-[#262626] dark:text-white">
                 {dictionary.users.defaultPassword || 'Default Password'}: 11111111
               </p>
             </div>
@@ -248,7 +249,7 @@ export function ParentProfileClient({
             </Button>
             <Button
               onClick={handleAddChild}
-              className="bg-[#F2574C] hover:bg-[#d94841] text-white"
+              className="bg-[#FF5F02] hover:bg-[#262626] text-white"
               disabled={loading}
             >
               {loading ? dictionary.common.loading : (dictionary.users.addChild || 'Add Child')}
@@ -256,6 +257,7 @@ export function ParentProfileClient({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

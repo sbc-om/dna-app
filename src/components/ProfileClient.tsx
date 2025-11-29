@@ -149,10 +149,11 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
 
   return (
     <>
-      <div className="p-6 space-y-6 max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-[#1E3A8A]">
+      <div className="min-h-screen bg-[#DDDDDD] dark:bg-[#000000]">
+        <div className="p-6 space-y-6 max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-bold text-[#262626] dark:text-white">
             {dictionary.users?.profile || 'My Profile'}
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -162,10 +163,10 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Profile Picture Section */}
-          <Card className="border-2 border-[#30B2D2]/30">
-            <CardHeader className="bg-[#DDDDDD]">
-              <CardTitle className="text-xl font-bold text-[#262626] flex items-center gap-2">
-                <Camera className="h-6 w-6" />
+          <Card className="border-2 border-[#DDDDDD] dark:border-[#262626] bg-white dark:bg-[#262626]">
+            <CardHeader className="bg-white dark:bg-[#262626] border-b border-[#DDDDDD] dark:border-[#262626]">
+              <CardTitle className="text-xl font-bold text-[#262626] dark:text-white flex items-center gap-2">
+                <Camera className="h-6 w-6 text-[#FF5F02]" />
                 {dictionary.users?.profilePicture || 'Profile Picture'}
               </CardTitle>
             </CardHeader>
@@ -181,10 +182,10 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
           </Card>
 
           {/* Personal Information */}
-          <Card className="border-2 border-[#30B2D2]/30">
-            <CardHeader className="bg-[#DDDDDD]">
-              <CardTitle className="text-xl font-bold text-[#262626] flex items-center gap-2">
-                <UserCircle className="h-6 w-6" />
+          <Card className="border-2 border-[#DDDDDD] dark:border-[#262626] bg-white dark:bg-[#262626]">
+            <CardHeader className="bg-white dark:bg-[#262626] border-b border-[#DDDDDD] dark:border-[#262626]">
+              <CardTitle className="text-xl font-bold text-[#262626] dark:text-white flex items-center gap-2">
+                <UserCircle className="h-6 w-6 text-[#FF5F02]" />
                 {dictionary.users?.personalInfo || 'Personal Information'}
               </CardTitle>
             </CardHeader>
@@ -192,7 +193,7 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="fullName" className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-[#30B2D2]" />
+                    <User className="h-4 w-4 text-[#FF5F02]" />
                     {dictionary.common.fullName}
                   </Label>
                   <Input
@@ -202,13 +203,13 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
                       setFormData({ ...formData, fullName: e.target.value })
                     }
                     placeholder={dictionary.common.fullName}
-                    className="border-gray-300 focus:border-[#30B2D2]"
+                    className="border-[#DDDDDD] focus:border-[#FF5F02] focus:ring-[#FF5F02]"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="email" className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-[#30B2D2]" />
+                    <Mail className="h-4 w-4 text-[#FF5F02]" />
                     {dictionary.common.email}
                   </Label>
                   <Input
@@ -224,7 +225,7 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
 
                 <div className="space-y-2">
                   <Label htmlFor="phoneNumber" className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-[#30B2D2]" />
+                    <Phone className="h-4 w-4 text-[#FF5F02]" />
                     {dictionary.common.phoneNumber}
                   </Label>
                   <Input
@@ -234,13 +235,13 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
                       setFormData({ ...formData, phoneNumber: e.target.value })
                     }
                     placeholder={dictionary.common.phoneNumber}
-                    className="border-gray-300 focus:border-[#30B2D2]"
+                    className="border-[#DDDDDD] focus:border-[#FF5F02] focus:ring-[#FF5F02]"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="username" className="flex items-center gap-2">
-                    <UserCircle className="h-4 w-4 text-[#30B2D2]" />
+                    <UserCircle className="h-4 w-4 text-[#FF5F02]" />
                     {dictionary.common.username}
                   </Label>
                   <Input
@@ -266,6 +267,7 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
             </Button>
           </div>
         </form>
+        </div>
       </div>
 
       <ConfirmDialog />

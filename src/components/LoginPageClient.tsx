@@ -27,20 +27,11 @@ export default function LoginPageClient({ dictionary, locale }: LoginPageClientP
         </Link>
         
         <Card className="w-full shadow-2xl border-3 border-[#DDDDDD] dark:border-[#262626] rounded-3xl overflow-hidden bg-white dark:bg-[#262626]">
-          <CardHeader className="text-center bg-[#FF5F02] py-6">
-            <Link href={`/${locale}`} className="flex items-center justify-center mb-4">
-              <Image 
-                src="/logo.png" 
-                alt="DNA Logo" 
-                width={80} 
-                height={80}
-                className="h-20 w-20 object-contain"
-              />
-            </Link>
-            <CardTitle className="text-2xl font-bold text-white">
+          <CardHeader className="text-center bg-[#FF5F02] py-8">
+            <CardTitle className="text-3xl font-bold text-white">
               {dictionary.auth.loginTitle}
             </CardTitle>
-            <CardDescription className="text-sm font-medium text-white mt-1">
+            <CardDescription className="text-sm font-medium text-white mt-2 opacity-90">
               Enter your credentials
             </CardDescription>
           </CardHeader>

@@ -47,8 +47,8 @@ export function RegisterForm({ dictionary, locale }: RegisterFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-2">
-        <Label htmlFor="fullName" className="text-base font-bold text-blue-800 dark:text-blue-200 flex items-center gap-2">
-          <User className="w-5 h-5 text-purple-500" />
+        <Label htmlFor="fullName" className="text-base font-bold text-[#262626] dark:text-white flex items-center gap-2">
+          <User className="w-5 h-5 text-[#FF5F02]" />
           {dictionary.common.fullName}
         </Label>
         <div className="relative">
@@ -59,15 +59,15 @@ export function RegisterForm({ dictionary, locale }: RegisterFormProps) {
             value={formData.fullName}
             onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
             required
-            className="h-12 text-base rounded-2xl border-3 border-blue-300 dark:border-blue-600 focus:border-purple-400 dark:focus:border-purple-500 focus:ring-4 focus:ring-purple-200 dark:focus:ring-purple-900/50 pl-11 font-medium transition-all"
+            className="h-12 text-base rounded-2xl border-2 border-[#DDDDDD] dark:border-[#262626] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] focus:ring-2 focus:ring-[#FF5F02] pl-11 font-medium transition-all"
           />
-          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400" />
+          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#FF5F02]" />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="username" className="text-base font-bold text-blue-800 dark:text-blue-200 flex items-center gap-2">
-          <AtSign className="w-5 h-5 text-purple-500" />
+        <Label htmlFor="username" className="text-base font-bold text-[#262626] dark:text-white flex items-center gap-2">
+          <AtSign className="w-5 h-5 text-[#FF5F02]" />
           {dictionary.common.username}
         </Label>
         <div className="relative">
@@ -78,15 +78,15 @@ export function RegisterForm({ dictionary, locale }: RegisterFormProps) {
             value={formData.username}
             onChange={(e) => setFormData({ ...formData, username: e.target.value })}
             required
-            className="h-12 text-base rounded-2xl border-3 border-blue-300 dark:border-blue-600 focus:border-purple-400 dark:focus:border-purple-500 focus:ring-4 focus:ring-purple-200 dark:focus:ring-purple-900/50 pl-11 font-medium transition-all"
+            className="h-12 text-base rounded-2xl border-2 border-[#DDDDDD] dark:border-[#262626] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] focus:ring-2 focus:ring-[#FF5F02] pl-11 font-medium transition-all"
           />
-          <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400" />
+          <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#FF5F02]" />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email" className="text-base font-bold text-blue-800 dark:text-blue-200 flex items-center gap-2">
-          <Mail className="w-5 h-5 text-purple-500" />
+        <Label htmlFor="email" className="text-base font-bold text-[#262626] dark:text-white flex items-center gap-2">
+          <Mail className="w-5 h-5 text-[#FF5F02]" />
           {dictionary.common.email}
         </Label>
         <div className="relative">
@@ -97,15 +97,15 @@ export function RegisterForm({ dictionary, locale }: RegisterFormProps) {
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
-            className="h-12 text-base rounded-2xl border-3 border-blue-300 dark:border-blue-600 focus:border-purple-400 dark:focus:border-purple-500 focus:ring-4 focus:ring-purple-200 dark:focus:ring-purple-900/50 pl-11 font-medium transition-all"
+            className="h-12 text-base rounded-2xl border-2 border-[#DDDDDD] dark:border-[#262626] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] focus:ring-2 focus:ring-[#FF5F02] pl-11 font-medium transition-all"
           />
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400" />
+          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#FF5F02]" />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="phoneNumber" className="text-base font-bold text-blue-800 dark:text-blue-200 flex items-center gap-2">
-          <Phone className="w-5 h-5 text-purple-500" />
+        <Label htmlFor="phoneNumber" className="text-base font-bold text-[#262626] dark:text-white flex items-center gap-2">
+          <Phone className="w-5 h-5 text-[#FF5F02]" />
           {dictionary.common.phoneNumber}
         </Label>
         <div className="relative">
@@ -115,15 +115,15 @@ export function RegisterForm({ dictionary, locale }: RegisterFormProps) {
             placeholder={dictionary.auth.phoneNumberPlaceholder}
             value={formData.phoneNumber}
             onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-            className="h-12 text-base rounded-2xl border-3 border-blue-300 dark:border-blue-600 focus:border-purple-400 dark:focus:border-purple-500 focus:ring-4 focus:ring-purple-200 dark:focus:ring-purple-900/50 pl-11 font-medium transition-all"
+            className="h-12 text-base rounded-2xl border-2 border-[#DDDDDD] dark:border-[#262626] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] focus:ring-2 focus:ring-[#FF5F02] pl-11 font-medium transition-all"
           />
-          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400" />
+          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#FF5F02]" />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password" className="text-base font-bold text-blue-800 dark:text-blue-200 flex items-center gap-2">
-          <Lock className="w-5 h-5 text-purple-500" />
+        <Label htmlFor="password" className="text-base font-bold text-[#262626] dark:text-white flex items-center gap-2">
+          <Lock className="w-5 h-5 text-[#FF5F02]" />
           {dictionary.common.password}
         </Label>
         <div className="relative">
@@ -134,9 +134,9 @@ export function RegisterForm({ dictionary, locale }: RegisterFormProps) {
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             required
-            className="h-12 text-base rounded-2xl border-3 border-blue-300 dark:border-blue-600 focus:border-purple-400 dark:focus:border-purple-500 focus:ring-4 focus:ring-purple-200 dark:focus:ring-purple-900/50 pl-11 font-medium transition-all"
+            className="h-12 text-base rounded-2xl border-2 border-[#DDDDDD] dark:border-[#262626] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] focus:ring-2 focus:ring-[#FF5F02] pl-11 font-medium transition-all"
           />
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400" />
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#FF5F02]" />
         </div>
       </div>
 

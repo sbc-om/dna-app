@@ -13,6 +13,7 @@ import { UserCircle, Trophy, Activity, Star, Calendar, CreditCard, Edit, BookOpe
 import { PlayerCardGenerator } from '@/components/PlayerCardGenerator';
 import { PlayerCardDisplay } from '@/components/PlayerCardDisplay';
 import { ImageUpload } from '@/components/ImageUpload';
+import { StudentMedalsDisplay } from '@/components/StudentMedalsDisplay';
 import { getPlayerCardAction } from '@/lib/actions/playerCardActions';
 import { updateUserProfilePictureAction } from '@/lib/actions/userActions';
 import { getEnrollmentsByStudentIdAction, updateEnrollmentCourseAction, createEnrollmentAction, deleteEnrollmentAction } from '@/lib/actions/enrollmentActions';
@@ -415,6 +416,14 @@ export function KidProfileClient({
               )}
             </CardContent>
           </Card>
+
+      {/* Achievements (Medals) Section */}
+      <StudentMedalsDisplay
+        studentId={currentKid.id}
+        title={locale === 'ar' ? 'الإنجازات' : 'Achievements'}
+        description={locale === 'ar' ? 'الميداليات التي حصل عليها الطالب' : 'Medals earned by the student'}
+        locale={locale}
+      />
 
       {/* Player Card Section - Admin Only */}
       {currentUser.role === 'admin' && (

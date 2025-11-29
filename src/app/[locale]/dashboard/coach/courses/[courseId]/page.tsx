@@ -95,6 +95,7 @@ export default async function CoachCourseDetailPage({
     loading: dictionary.common.loading,
     playerLabel: dictionary.coachCourse.player,
     emptyState: dictionary.coachCourse.noPlayers,
+    awardMedal: dictionary.courses?.awardMedal || (locale === 'ar' ? 'منح ميدالية' : 'Award Medal'),
   };
 
   return (
@@ -241,6 +242,8 @@ export default async function CoachCourseDetailPage({
         text={attendanceText}
         courseId={course.id}
         roster={attendanceRoster}
+        dictionary={dictionary}
+        locale={locale}
       />
     </div>
   );

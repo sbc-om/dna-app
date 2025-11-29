@@ -220,10 +220,10 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
     <>
       <div className="h-full flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b bg-white">
+        <div className="p-6 border-b bg-white dark:bg-[#262626]">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-[#1E3A8A]">
+              <h1 className="text-3xl font-bold text-[#262626] dark:text-white">
                 {dictionary.messages?.title || 'Messages'}
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
@@ -232,7 +232,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
             </div>
             <div className="flex gap-2">
               {isAdmin && (
-                <Button onClick={() => setShowUserSelectDialog(true)} className="bg-[#30B2D2] hover:bg-[#1E3A8A]">
+                <Button onClick={() => setShowUserSelectDialog(true)} className="bg-[#FF5F02] hover:bg-[#262626]">
                   <MessageSquare className="mr-2 h-4 w-4" />
                   {dictionary.messages?.newMessage || 'New Message'}
                 </Button>
@@ -250,7 +250,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden">
           {/* Sidebar - Conversations List */}
-          <div className="w-80 border-r bg-gray-50 overflow-y-auto">
+          <div className="w-80 border-r bg-[#DDDDDD] dark:bg-[#000000] overflow-y-auto">
             <Tabs defaultValue="conversations" className="w-full">
               <TabsList className="w-full grid grid-cols-2">
                 <TabsTrigger value="conversations">{dictionary.messages?.conversations || 'Conversations'}</TabsTrigger>
@@ -269,8 +269,8 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                       onClick={() => handleSelectConversation({ type: 'user', id: conv.userId, name: conv.user?.fullName || conv.user?.email || '' })}
                       className={`w-full p-3 rounded-lg text-left transition-colors ${
                         selectedConversation?.id === conv.userId && selectedConversation?.type === 'user'
-                          ? 'bg-[#30B2D2] text-white'
-                          : 'hover:bg-white'
+                          ? 'bg-[#FF5F02] text-white'
+                          : 'hover:bg-white dark:hover:bg-[#262626]'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -299,8 +299,8 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                       onClick={() => handleSelectConversation({ type: 'group', id: group.id, name: group.name })}
                       className={`w-full p-3 rounded-lg text-left transition-colors ${
                         selectedConversation?.id === group.id && selectedConversation?.type === 'group'
-                          ? 'bg-[#30B2D2] text-white'
-                          : 'hover:bg-white'
+                          ? 'bg-[#FF5F02] text-white'
+                          : 'hover:bg-white dark:hover:bg-[#262626]'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -320,7 +320,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
           </div>
 
           {/* Chat Area */}
-          <div className="flex-1 flex flex-col bg-white">
+          <div className="flex-1 flex flex-col bg-white dark:bg-[#262626]">
             {selectedConversation ? (
               <>
                 {/* Chat Header */}
@@ -342,9 +342,9 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                     const isOwn = message.senderId === currentUser.id;
                     return (
                       <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[70%] ${isOwn ? 'bg-[#30B2D2] text-white' : 'bg-gray-100'} rounded-lg p-3`}>
+                        <div className={`max-w-[70%] ${isOwn ? 'bg-[#FF5F02] text-white' : 'bg-[#DDDDDD] dark:bg-[#000000] dark:text-white'} rounded-lg p-3`}>
                           <p>{message.content}</p>
-                          <p className={`text-xs mt-1 ${isOwn ? 'text-white/70' : 'text-gray-500'}`}>
+                          <p className={`text-xs mt-1 ${isOwn ? 'text-white opacity-70' : 'text-gray-500'}`}>
                             {new Date(message.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
@@ -364,7 +364,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                       placeholder={dictionary.messages?.typeMessage || 'Type your message...'}
                       className="flex-1"
                     />
-                    <Button onClick={handleSendMessage} disabled={loading || !messageText.trim()} className="bg-[#30B2D2] hover:bg-[#1E3A8A]">
+                    <Button onClick={handleSendMessage} disabled={loading || !messageText.trim()} className="bg-[#FF5F02] hover:bg-[#262626]">
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>
@@ -423,7 +423,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
             <Button variant="outline" onClick={() => setShowNewGroupDialog(false)}>
               {dictionary.common.cancel}
             </Button>
-            <Button onClick={handleCreateGroup} disabled={loading} className="bg-[#30B2D2] hover:bg-[#1E3A8A]">
+            <Button onClick={handleCreateGroup} disabled={loading} className="bg-[#FF5F02] hover:bg-[#262626]">
               {loading ? dictionary.common.loading : dictionary.messages?.createGroup}
             </Button>
           </DialogFooter>
@@ -457,7 +457,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                   onClick={() => handleSelectUser(user.id)}
                   className="w-full p-3 hover:bg-gray-50 rounded-lg text-left transition-colors flex items-center gap-3"
                 >
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center text-white font-semibold">
+                  <div className="h-10 w-10 rounded-full bg-[#FF5F02] flex items-center justify-center text-white font-semibold">
                     {user.fullName?.[0]?.toUpperCase() || 'U'}
                   </div>
                   <div className="flex-1">

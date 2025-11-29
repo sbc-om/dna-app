@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, Database, Download, Upload, Trash2, Clock, Bell, UserCog } from 'lucide-react';
+import { Settings, Database, Download, Upload, Trash2, Clock, Bell, UserCog, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,6 +11,7 @@ import { useConfirm } from '@/components/ConfirmDialog';
 import { PushNotificationSetup } from '@/components/PushNotificationSetup';
 import { RolePermission } from '@/lib/db/repositories/rolePermissionRepository';
 import AdminSettingsClient from '@/components/AdminSettingsClient';
+import { MedalsManagement } from '@/components/MedalsManagement';
 
 interface SettingsClientProps {
   dictionary: Dictionary;
@@ -144,8 +145,8 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-[#1E3A8A] flex items-center gap-2">
-            <Settings className="h-8 w-8" />
+          <h1 className="text-3xl font-bold text-[#262626] dark:text-white flex items-center gap-2">
+            <Settings className="h-8 w-8 text-[#FF5F02]" />
             {dictionary.nav.settings || 'Settings'}
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -154,7 +155,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
         </div>
 
         <Tabs defaultValue="notifications" className="space-y-4">
-          <TabsList className="w-full">
+          <TabsList className="w-full bg-white dark:bg-[#262626] border border-[#DDDDDD] dark:border-[#000000]">
             <TabsTrigger value="notifications" className="flex-1 min-w-fit">
               <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">{dictionary.settings?.notifications || 'Notifications'}</span>
@@ -165,6 +166,13 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                 <Database className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">{dictionary.settings?.backupRestore || 'Backup & Restore'}</span>
                 <span className="sm:hidden">Backup</span>
+              </TabsTrigger>
+            )}
+            {permissions.canManageBackups && (
+              <TabsTrigger value="medals" className="flex-1 min-w-fit">
+                <Award className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{dictionary.settings?.medals || 'Medals'}</span>
+                <span className="sm:hidden">Medals</span>
               </TabsTrigger>
             )}
             {permissions.canManageBackups && (
@@ -183,19 +191,32 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
 
           {/* Notifications Tab */}
           <TabsContent value="notifications" className="space-y-4">
-            <PushNotificationSetup
-              title={dictionary.settings?.pushNotifications || 'Push Notifications'}
-              description={dictionary.settings?.pushNotificationsDescription || 'Get notified instantly when you receive new messages'}
-            />
+            <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] overflow-hidden">
+              <CardHeader className="bg-white dark:bg-[#262626] border-b border-[#DDDDDD] dark:border-[#000000]">
+                <CardTitle className="text-xl font-bold text-[#262626] dark:text-white flex items-center gap-2">
+                  <Bell className="h-6 w-6 text-[#FF5F02]" />
+                  {dictionary.settings?.pushNotifications || 'Push Notifications'}
+                </CardTitle>
+                <CardDescription>
+                  {dictionary.settings?.pushNotificationsDescription || 'Get notified instantly when you receive new messages'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <PushNotificationSetup
+                  title=""
+                  description=""
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Backup & Restore Tab */}
           {permissions.canManageBackups && (
           <TabsContent value="backup" className="space-y-4">
-            <Card className="border-2 border-[#30B2D2]/30">
-              <CardHeader className="bg-linear-to-r from-[#30B2D2]/10 to-[#1E3A8A]/10">
-                <CardTitle className="text-xl font-bold text-[#1E3A8A] flex items-center gap-2">
-                  <Database className="h-6 w-6" />
+            <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] overflow-hidden">
+              <CardHeader className="bg-white dark:bg-[#262626] border-b border-[#DDDDDD] dark:border-[#000000]">
+                <CardTitle className="text-xl font-bold text-[#262626] dark:text-white flex items-center gap-2">
+                  <Database className="h-6 w-6 text-[#FF5F02]" />
                   {dictionary.settings?.backupManagement || 'Backup Management'}
                 </CardTitle>
                 <CardDescription>
@@ -204,19 +225,19 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
               </CardHeader>
               <CardContent className="pt-6 space-y-6">
                 {/* Create Backup */}
-                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between p-4 bg-[#DDDDDD] dark:bg-[#262626] rounded-lg border border-[#DDDDDD] dark:border-[#000000]">
                   <div className="space-y-1">
-                    <h3 className="font-semibold text-blue-900">
+                    <h3 className="font-semibold text-[#262626] dark:text-white">
                       {dictionary.settings?.createNewBackup || 'Create New Backup'}
                     </h3>
-                    <p className="text-sm text-blue-700">
+                    <p className="text-sm text-muted-foreground">
                       {dictionary.settings?.createBackupDesc || 'Backup includes database and all uploaded files'}
                     </p>
                   </div>
                   <Button
                     onClick={handleCreateBackup}
                     disabled={loading}
-                    className="bg-[#30B2D2] hover:bg-[#1E3A8A]"
+                    className="bg-[#FF5F02] hover:bg-[#262626] text-white"
                   >
                     <Download className="mr-2 h-4 w-4" />
                     {loading ? dictionary.common.loading : dictionary.settings?.create || 'Create'}
@@ -224,19 +245,19 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                 </div>
 
                 {/* Restore Backup */}
-                <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
+                <div className="flex items-center justify-between p-4 bg-white dark:bg-[#262626] rounded-lg border-2 border-[#FF5F02]">
                   <div className="space-y-1">
-                    <h3 className="font-semibold text-orange-900">
+                    <h3 className="font-semibold text-[#FF5F02]">
                       {dictionary.settings?.restoreFromBackup || 'Restore from Backup'}
                     </h3>
-                    <p className="text-sm text-orange-700">
+                    <p className="text-sm text-muted-foreground">
                       {dictionary.settings?.restoreDesc || 'Upload a backup file to restore data'}
                     </p>
                   </div>
                   <Button
                     onClick={handleRestoreBackup}
                     disabled={restoring}
-                    variant="destructive"
+                    className="bg-[#262626] hover:bg-[#000000] text-white"
                   >
                     <Upload className="mr-2 h-4 w-4" />
                     {restoring ? dictionary.common.loading : dictionary.settings?.restore || 'Restore'}
@@ -245,8 +266,8 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
 
                 {/* Backup List */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold text-[#262626] dark:text-white mb-4 flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-[#FF5F02]" />
                     {dictionary.settings?.backupHistory || 'Backup History'}
                   </h3>
                   {backups.length === 0 ? (
@@ -258,12 +279,12 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                       {backups.map((backup) => (
                         <div
                           key={backup.filename}
-                          className="flex items-center justify-between p-4 bg-white rounded-lg border hover:border-[#30B2D2] transition-colors"
+                          className="flex items-center justify-between p-4 bg-white dark:bg-[#262626] rounded-lg border border-[#DDDDDD] dark:border-[#000000] hover:border-[#FF5F02] transition-colors"
                         >
                           <div className="flex items-center gap-3">
-                            <Database className="h-5 w-5 text-[#30B2D2]" />
+                            <Database className="h-5 w-5 text-[#FF5F02]" />
                             <div>
-                              <p className="font-medium text-gray-900">{backup.filename}</p>
+                              <p className="font-medium text-[#262626] dark:text-white">{backup.filename}</p>
                               <p className="text-xs text-muted-foreground">
                                 {new Date(backup.timestamp.replace(/-/g, ':')).toLocaleString(locale === 'ar' ? 'ar-SA' : 'en-US')}
                               </p>
@@ -273,6 +294,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                             size="sm"
                             variant="outline"
                             onClick={() => handleDownloadBackup(backup.filename)}
+                            className="border-[#FF5F02] text-[#FF5F02] hover:bg-[#FF5F02] hover:text-white"
                           >
                             <Download className="h-4 w-4" />
                           </Button>
@@ -286,28 +308,140 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
           </TabsContent>
           )}
 
+          {/* Medals Tab */}
+          {permissions.canManageBackups && (
+          <TabsContent value="medals" className="space-y-4">
+            <MedalsManagement dictionary={dictionary} />
+          </TabsContent>
+          )}
+
           {/* Admin Settings Tab */}
           {permissions.canManageBackups && (
           <TabsContent value="admin" className="space-y-4">
-            <AdminSettingsClient locale={locale} dict={dictionary} />
+            <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] overflow-hidden">
+              <CardHeader className="bg-white dark:bg-[#262626] border-b border-[#DDDDDD] dark:border-[#000000]">
+                <CardTitle className="text-xl font-bold text-[#262626] dark:text-white flex items-center gap-2">
+                  <UserCog className="h-6 w-6 text-[#FF5F02]" />
+                  {dictionary.settings?.adminSettings || 'Admin Settings'}
+                </CardTitle>
+                <CardDescription>
+                  {dictionary.settings?.adminSettingsDescription || 'Manage administrative settings and configurations'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <AdminSettingsClient locale={locale} dict={dictionary} />
+              </CardContent>
+            </Card>
           </TabsContent>
           )}
 
           {/* General Settings Tab */}
           <TabsContent value="general" className="space-y-4">
-            <Card className="border-2 border-[#30B2D2]/30">
-              <CardHeader className="bg-linear-to-r from-[#30B2D2]/10 to-[#1E3A8A]/10">
-                <CardTitle className="text-xl font-bold text-[#1E3A8A]">
+            <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] overflow-hidden">
+              <CardHeader className="bg-white dark:bg-[#262626] border-b border-[#DDDDDD] dark:border-[#000000]">
+                <CardTitle className="text-xl font-bold text-[#262626] dark:text-white flex items-center gap-2">
+                  <Settings className="h-6 w-6 text-[#FF5F02]" />
                   {dictionary.settings?.generalSettings || 'General Settings'}
                 </CardTitle>
                 <CardDescription>
                   {dictionary.settings?.generalDescription || 'Configure general application settings'}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground py-8">
-                  {dictionary.settings?.comingSoon || 'More settings coming soon...'}
-                </p>
+              <CardContent className="pt-6 space-y-6">
+                {/* Language Settings */}
+                <div className="p-4 bg-white dark:bg-[#262626] rounded-lg border border-[#DDDDDD] dark:border-[#000000]">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <h3 className="font-semibold text-[#262626] dark:text-white">
+                        {dictionary.settings?.language || 'Language'}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {dictionary.settings?.languageDesc || 'Choose your preferred language'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-[#FF5F02]">
+                        {locale === 'ar' ? 'العربية' : 'English'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Theme Settings */}
+                <div className="p-4 bg-white dark:bg-[#262626] rounded-lg border border-[#DDDDDD] dark:border-[#000000]">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <h3 className="font-semibold text-[#262626] dark:text-white">
+                        {dictionary.settings?.theme || 'Theme'}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {dictionary.settings?.themeDesc || 'Choose your preferred theme mode'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-[#FF5F02]">
+                        {dictionary.settings?.system || 'System'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Time Zone */}
+                <div className="p-4 bg-white dark:bg-[#262626] rounded-lg border border-[#DDDDDD] dark:border-[#000000]">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <h3 className="font-semibold text-[#262626] dark:text-white">
+                        {dictionary.settings?.timezone || 'Time Zone'}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {dictionary.settings?.timezoneDesc || 'Set your local time zone'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-[#FF5F02]">
+                        {Intl.DateTimeFormat().resolvedOptions().timeZone}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Date Format */}
+                <div className="p-4 bg-white dark:bg-[#262626] rounded-lg border border-[#DDDDDD] dark:border-[#000000]">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <h3 className="font-semibold text-[#262626] dark:text-white">
+                        {dictionary.settings?.dateFormat || 'Date Format'}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {dictionary.settings?.dateFormatDesc || 'Choose how dates are displayed'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-[#FF5F02]">
+                        {new Date().toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Application Version */}
+                <div className="p-4 bg-[#DDDDDD] dark:bg-[#000000] rounded-lg border border-[#DDDDDD] dark:border-[#000000]">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <h3 className="font-semibold text-[#262626] dark:text-white">
+                        {dictionary.settings?.version || 'Application Version'}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {dictionary.settings?.versionDesc || 'Current version of the application'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-[#FF5F02]">
+                        v1.0.0
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
