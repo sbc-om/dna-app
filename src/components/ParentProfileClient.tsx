@@ -212,7 +212,7 @@ export function ParentProfileClient({
                       <Calendar className="h-6 w-6 text-[#FF5F02]" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-muted-foreground">{dictionary.users.dateOfBirth || 'Date of Birth'}</p>
+                      <p className="text-sm font-medium text-muted-foreground">{locale === 'ar' ? 'تاريخ الميلاد' : 'Date of Birth'}</p>
                       <p className="text-lg font-bold text-[#262626] dark:text-white">
                         {children[0].dateOfBirth ? new Date(children[0].dateOfBirth).toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US') : 'N/A'}
                       </p>
@@ -223,7 +223,7 @@ export function ParentProfileClient({
                       <Mail className="h-6 w-6 text-[#FF5F02]" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-muted-foreground">{dictionary.users.email || 'Email'}</p>
+                      <p className="text-sm font-medium text-muted-foreground">{locale === 'ar' ? 'البريد الإلكتروني' : 'Email'}</p>
                       <p className="text-lg font-bold text-[#262626] dark:text-white truncate">{children[0].email || 'N/A'}</p>
                     </div>
                   </div>

@@ -19,7 +19,7 @@ import { SessionPlan } from '@/lib/db/repositories/sessionPlanRepository';
 import { CourseCalendar } from './CourseCalendar';
 
 interface EditCourseClientProps {
-  locale: string;
+  locale: 'en' | 'ar';
   dict: any;
   course: Course;
 }
