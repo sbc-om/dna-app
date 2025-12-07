@@ -14,6 +14,8 @@ import { ImageUpload } from '@/components/ImageUpload';
 import { createCourseAction } from '@/lib/actions/courseActions';
 import { getCoachesAction } from '@/lib/actions/userActions';
 import { bulkCreateSessionPlansAction } from '@/lib/actions/sessionPlanActions';
+import { getAllCategoriesAction } from '@/lib/actions/categoryActions';
+import type { Category } from '@/lib/db/repositories/categoryRepository';
 
 interface CreateCourseClientProps {
   locale: string;
@@ -31,13 +33,16 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
   const [loading, setLoading] = useState(false);
   const [currentTab, setCurrentTab] = useState('basic');
   const [coaches, setCoaches] = useState<Array<{ id: string; fullName?: string; username: string; email: string }>>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [sessionTemplates, setSessionTemplates] = useState<SessionTemplate[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
     nameAr: '',
     description: '',
     descriptionAr: '',
+    category: '',
     price: 0,
     currency: 'OMR',
     duration: 1,
@@ -62,6 +67,13 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
     { key: 'saturday', label: dict.courses?.saturday || 'Saturday', value: 6 },
   ];
 
+  // Sync category
+  useEffect(() => {
+    if (selectedCategory) {
+      setFormData(prev => ({ ...prev, category: selectedCategory }));
+    }
+  }, [selectedCategory]);
+
   // Load coaches on mount
   useEffect(() => {
     async function loadCoaches() {
@@ -71,6 +83,17 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
       }
     }
     loadCoaches();
+  }, []);
+
+  // Load categories on mount
+  useEffect(() => {
+    async function loadCategories() {
+      const result = await getAllCategoriesAction();
+      if (result.success && result.categories) {
+        setCategories(result.categories);
+      }
+    }
+    loadCategories();
   }, []);
 
   // Generate session templates when dates and training days change
@@ -313,6 +336,30 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                       dir="rtl"
                       rows={4}
                     />
+                  </div>
+                </div>
+
+                {/* Category Selection */}
+                <div className="space-y-2">
+                  <Label>{locale === 'ar' ? 'فئة الدورة' : 'Course Category'} <span className="text-red-500">*</span></Label>
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <Select
+                        value={selectedCategory}
+                        onValueChange={setSelectedCategory}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={locale === 'ar' ? 'اختر فئة' : 'Select category'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.name}>
+                              {locale === 'ar' ? (category.nameAr || category.name) : category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 

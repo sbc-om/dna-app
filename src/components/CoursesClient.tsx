@@ -22,6 +22,7 @@ export default function CoursesClient({ locale, dict }: CoursesClientProps) {
   const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   useEffect(() => {
     loadCourses();
@@ -35,6 +36,11 @@ export default function CoursesClient({ locale, dict }: CoursesClientProps) {
     }
     setLoading(false);
   };
+
+  const categories = ['All', ...Array.from(new Set(courses.map(c => c.category).filter(Boolean)))];
+  const filteredCourses = selectedCategory === 'All' 
+    ? courses 
+    : courses.filter(c => c.category === selectedCategory);
 
   const handleEditNavigate = (courseId: string) => {
     router.push(`/${locale}/dashboard/courses/${courseId}/edit`);
@@ -73,8 +79,25 @@ export default function CoursesClient({ locale, dict }: CoursesClientProps) {
         </Button>
       </div>
 
+      {/* Category Filter */}
+      {categories.length > 1 && (
+        <div className="flex flex-wrap gap-2 pb-2">
+          {categories.map((category) => (
+            <Button
+              key={category as string}
+              variant={selectedCategory === category ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedCategory(category as string)}
+              className="rounded-full"
+            >
+              {category === 'All' ? (locale === 'ar' ? 'الكل' : 'All') : category}
+            </Button>
+          ))}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {courses.map((course) => (
+        {filteredCourses.map((course) => (
           <Card key={course.id}>
             <CardHeader>
               <div className="flex justify-between items-start">
@@ -85,6 +108,11 @@ export default function CoursesClient({ locale, dict }: CoursesClientProps) {
                   <CardDescription className="mt-2">
                     {locale === 'ar' ? course.descriptionAr : course.description}
                   </CardDescription>
+                  {course.category && (
+                    <Badge variant="outline" className="mt-2">
+                      {course.category}
+                    </Badge>
+                  )}
                 </div>
                 <Badge variant={course.isActive ? 'default' : 'secondary'}>
                   {course.isActive ? (locale === 'ar' ? 'نشط' : 'Active') : (locale === 'ar' ? 'غير نشط' : 'Inactive')}

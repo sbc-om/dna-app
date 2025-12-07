@@ -14,8 +14,10 @@ import { ImageUpload } from '@/components/ImageUpload';
 import { updateCourseAction } from '@/lib/actions/courseActions';
 import { getCoachesAction } from '@/lib/actions/userActions';
 import { getSessionPlansAction } from '@/lib/actions/sessionPlanActions';
+import { getAllCategoriesAction } from '@/lib/actions/categoryActions';
 import { Course } from '@/lib/db/repositories/courseRepository';
 import { SessionPlan } from '@/lib/db/repositories/sessionPlanRepository';
+import { Category } from '@/lib/db/repositories/categoryRepository';
 import { CourseCalendar } from './CourseCalendar';
 
 interface EditCourseClientProps {
@@ -29,14 +31,17 @@ export default function EditCourseClient({ locale, dict, course }: EditCourseCli
   const [loading, setLoading] = useState(false);
   const [currentTab, setCurrentTab] = useState('basic');
   const [coaches, setCoaches] = useState<Array<{ id: string; fullName?: string; username: string; email: string }>>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [sessionPlans, setSessionPlans] = useState<SessionPlan[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
 
   const [formData, setFormData] = useState({
     name: course.name || '',
     nameAr: course.nameAr || '',
     description: course.description || '',
     descriptionAr: course.descriptionAr || '',
+    category: course.category || '',
     price: course.price || 0,
     currency: course.currency || 'OMR',
     duration: course.duration || 1,
@@ -62,16 +67,41 @@ export default function EditCourseClient({ locale, dict, course }: EditCourseCli
     { key: 'saturday', label: dict.courses?.saturday || 'Saturday', value: 6 },
   ];
 
-  // Load coaches on mount
+  // Load data on mount
   useEffect(() => {
-    async function loadCoaches() {
-      const result = await getCoachesAction();
-      if (result.success && result.coaches) {
-        setCoaches(result.coaches);
+    async function loadData() {
+      // Load coaches
+      const coachesResult = await getCoachesAction();
+      if (coachesResult.success && coachesResult.coaches) {
+        setCoaches(coachesResult.coaches);
+      }
+
+      // Load categories
+      const categoriesResult = await getAllCategoriesAction();
+      if (categoriesResult.success && categoriesResult.categories) {
+        setCategories(categoriesResult.categories);
+        
+        // Initialize category selection
+        if (course.category) {
+          const categoryExists = categoriesResult.categories.some(c => c.name === course.category);
+          if (categoryExists) {
+            setSelectedCategory(course.category);
+          }
+        }
       }
     }
-    loadCoaches();
+    loadData();
+    loadSessionPlans();
+  }, []);
 
+  // Sync category
+  useEffect(() => {
+    if (selectedCategory) {
+      setFormData(prev => ({ ...prev, category: selectedCategory }));
+    }
+  }, [selectedCategory]);
+
+  useEffect(() => {
     // Check for tab query parameter
     const searchParams = new URLSearchParams(window.location.search);
     const tab = searchParams.get('tab');
@@ -270,6 +300,30 @@ export default function EditCourseClient({ locale, dict, course }: EditCourseCli
                       dir="rtl"
                       rows={4}
                     />
+                  </div>
+                </div>
+
+                {/* Category Selection */}
+                <div className="space-y-2">
+                  <Label>{locale === 'ar' ? 'فئة الدورة' : 'Course Category'} <span className="text-red-500">*</span></Label>
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <Select
+                        value={selectedCategory}
+                        onValueChange={setSelectedCategory}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={locale === 'ar' ? 'اختر فئة' : 'Select category'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.name}>
+                              {locale === 'ar' ? (category.nameAr || category.name) : category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 

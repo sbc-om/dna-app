@@ -7,6 +7,8 @@ import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import { PushNotificationInit } from '@/components/PushNotificationInit';
 import { useNotificationFallback } from '@/lib/notifications/fallback';
+import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
+import "overlayscrollbars/styles/overlayscrollbars.css";
 
 interface DashboardLayoutClientProps {
   children: ReactNode;
@@ -83,9 +85,19 @@ export function DashboardLayoutClient({
           onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         />
 
-        <main className="flex-1 overflow-y-auto min-h-0 overscroll-y-contain pb-20 lg:pb-0">
+        <OverlayScrollbarsComponent
+          element="main"
+          className="flex-1 min-h-0 overscroll-y-contain pb-20 lg:pb-0"
+          options={{ 
+            scrollbars: { 
+              autoHide: 'leave',
+              theme: 'os-theme-dark'
+            } 
+          }}
+          defer
+        >
           {children}
-        </main>
+        </OverlayScrollbarsComponent>
 
         {/* Mobile Bottom Navigation */}
         <MobileBottomNav locale={locale} userRole={user.role} />

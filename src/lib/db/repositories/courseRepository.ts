@@ -6,6 +6,7 @@ export interface Course {
   nameAr: string;
   description?: string;
   descriptionAr?: string;
+  category?: string; // Course category (e.g., "Football", "Swimming", "Fitness")
   price: number;
   currency: string; // e.g., "USD", "SAR", "IQD"
   duration: number; // in months
@@ -28,6 +29,7 @@ export interface CreateCourseInput {
   nameAr: string;
   description?: string;
   descriptionAr?: string;
+  category?: string;
   price: number;
   currency?: string;
   duration: number;
@@ -93,6 +95,7 @@ export async function createCourse(input: CreateCourseInput): Promise<Course> {
     nameAr: input.nameAr,
     description: input.description,
     descriptionAr: input.descriptionAr,
+    category: input.category,
     price: input.price,
     currency: input.currency || 'USD',
     duration: input.duration,
