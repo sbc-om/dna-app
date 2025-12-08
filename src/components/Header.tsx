@@ -29,6 +29,7 @@ interface HeaderProps {
   user?: {
     fullName?: string;
     email: string;
+    role?: string;
   } | null;
 }
 
@@ -144,6 +145,20 @@ export function Header({ dictionary, locale, user }: HeaderProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                
+                {/* Dashboard Links */}
+                {user.role && user.role !== 'kid' && (
+                  <>
+                    <Link href={`/${locale}/dashboard`}>
+                      <DropdownMenuItem className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>{dictionary.nav?.dashboard || 'Dashboard'}</span>
+                      </DropdownMenuItem>
+                    </Link>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                
                 <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>{dictionary.common.logout}</span>

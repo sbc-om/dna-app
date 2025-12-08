@@ -9,14 +9,13 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
-  output: 'standalone',
   serverExternalPackages: ['lmdb', 'argon2', 'cbor-x', 'msgpackr'],
   
-  // Disable all caching
+  // Minimal caching (Next.js requires static to be at least 30)
   experimental: {
     staleTimes: {
       dynamic: 0,
-      static: 0,
+      static: 30,
     },
   },
 };

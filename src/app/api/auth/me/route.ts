@@ -19,6 +19,8 @@ export async function GET() {
         username: user.username,
         fullName: user.fullName,
         phoneNumber: user.phoneNumber,
+        role: user.role,
+        profilePicture: user.profilePicture,
       },
     });
   } catch (error) {
