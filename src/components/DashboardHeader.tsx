@@ -3,6 +3,7 @@
 import { LogOut, User, Menu, X, Download, Bell, Globe } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { ThemeToggle } from './ThemeToggle';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
@@ -153,6 +154,7 @@ export function DashboardHeader({ dictionary, user, onMobileMenuToggle }: Dashbo
             </Button>
           </Link>
 
+          <ThemeToggle />
           <LanguageSwitcher />
 
           {/* Install App Button */}

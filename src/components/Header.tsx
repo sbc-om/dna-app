@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
 import { Bell, Download, LogOut, User } from 'lucide-react';
@@ -95,6 +96,7 @@ export function Header({ dictionary, locale, user }: HeaderProps) {
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <ThemeToggle />
           <LanguageSwitcher />
 
           {/* Install App Button */}

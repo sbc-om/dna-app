@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from 'react-hot-toast';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -47,15 +48,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const theme = localStorage.getItem('theme') || 
+                  (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.classList.remove('light', 'dark');
+                document.documentElement.classList.add(theme);
+              } catch (e) {}
+            `,
+          }}
+        />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-y-auto`}>
-        <Toaster />
-        {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-y-auto transition-colors duration-300`} suppressHydrationWarning>
+        <ThemeProvider>
+          <Toaster />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
