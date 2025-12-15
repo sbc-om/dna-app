@@ -79,7 +79,7 @@ export function UsersTable({ users, dictionary, onUsersChange, locale }: UsersTa
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="hover:bg-purple-100 dark:hover:bg-purple-900/30"
+            className="px-0 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] text-[#262626] dark:text-white"
           >
             {dictionary.users.name}
             <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -117,7 +117,7 @@ export function UsersTable({ users, dictionary, onUsersChange, locale }: UsersTa
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="hover:bg-purple-100 dark:hover:bg-purple-900/30"
+            className="px-0 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] text-[#262626] dark:text-white"
           >
             {dictionary.common.email}
             <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -135,7 +135,7 @@ export function UsersTable({ users, dictionary, onUsersChange, locale }: UsersTa
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="hover:bg-purple-100 dark:hover:bg-purple-900/30"
+            className="px-0 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] text-[#262626] dark:text-white"
           >
             {dictionary.common.username}
             <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -152,7 +152,10 @@ export function UsersTable({ users, dictionary, onUsersChange, locale }: UsersTa
       cell: ({ row }) => {
         const role = row.getValue('role') as string;
         return (
-          <Badge variant="outline" className="font-medium">
+          <Badge
+            variant="outline"
+            className="font-semibold border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#1a1a1a] text-gray-800 dark:text-gray-200"
+          >
             {role?.toUpperCase() || '-'}
           </Badge>
         );
@@ -245,14 +248,12 @@ export function UsersTable({ users, dictionary, onUsersChange, locale }: UsersTa
 
   return (
     <>
-      <div className="rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000] overflow-hidden bg-white dark:bg-[#262626] p-6">
-        <DataTable
-          columns={columns}
-          data={users}
-          searchKey="email"
-          searchPlaceholder={`${dictionary.common.search} ${dictionary.common.email.toLowerCase()}...`}
-        />
-      </div>
+      <DataTable
+        columns={columns}
+        data={users}
+        searchKey="email"
+        searchPlaceholder={`${dictionary.common.search} ${dictionary.common.email.toLowerCase()}...`}
+      />
 
       {editingUser && (
         <EditUserDialog

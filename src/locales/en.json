@@ -325,6 +325,7 @@
     "defaultPassword": "Default Password",
     "roles": {
       "admin": "Administrator",
+      "manager": "Manager",
       "parent": "Parent",
       "coach": "Coach",
       "kid": "Kid"
@@ -349,6 +350,103 @@
     "roleName": "Role Name",
     "description": "Description",
     "permissions": "Permissions",
+    "permissionsEditor": {
+      "subtitle": "Manage permissions for each role",
+      "permissionColumn": "Permission",
+      "enabledColumn": "Enabled",
+      "searchPlaceholder": "Search permissions...",
+      "enableAll": "Enable all",
+      "disableAll": "Disable all",
+      "reset": "Reset",
+      "noResults": "No results.",
+      "noRoleData": "No role data.",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "saved": "Saved",
+      "saveSuccess": "Permissions saved successfully",
+      "saveError": "Failed to save permissions",
+      "lastUpdated": "Last updated",
+      "hint": "Changes apply immediately after saving.",
+      "groups": {
+        "core": "CORE ACCESS",
+        "management": "MANAGEMENT",
+        "communication": "COMMUNICATION"
+      }
+    },
+    "permissionLabels": {
+      "canAccessDashboard": {
+        "title": "Access dashboard",
+        "description": "Allow the role to open the dashboard area."
+      },
+      "canViewReports": {
+        "title": "View reports",
+        "description": "Allow access to analytics and reporting screens."
+      },
+      "canViewProfile": {
+        "title": "View profile",
+        "description": "Allow viewing the user profile."
+      },
+      "canEditProfile": {
+        "title": "Edit profile",
+        "description": "Allow updating profile information."
+      },
+      "canAccessSettings": {
+        "title": "Access settings",
+        "description": "Allow access to system settings pages."
+      },
+      "canManageUsers": {
+        "title": "Manage users",
+        "description": "Create, edit, deactivate, and delete users."
+      },
+      "canManageRoles": {
+        "title": "Manage roles",
+        "description": "View and update permissions for roles."
+      },
+      "canManageAcademies": {
+        "title": "Manage academies",
+        "description": "Create and manage academies and assignments."
+      },
+      "canManageAppointments": {
+        "title": "Manage appointments",
+        "description": "View, confirm, complete, and cancel appointments."
+      },
+      "canManageSchedules": {
+        "title": "Manage schedules",
+        "description": "Create and manage appointment schedules."
+      },
+      "canManageCourses": {
+        "title": "Manage courses",
+        "description": "Create, edit, and manage courses."
+      },
+      "canViewPayments": {
+        "title": "View payments",
+        "description": "View payment details and payment status."
+      },
+      "canManageNotifications": {
+        "title": "Manage notifications",
+        "description": "Send and manage in-app and push notifications."
+      },
+      "canManageBackups": {
+        "title": "Manage backups",
+        "description": "Create and restore backups."
+      },
+      "canAccessMessages": {
+        "title": "Access messages",
+        "description": "View and use the messaging module."
+      },
+      "canCreateGroup": {
+        "title": "Create groups",
+        "description": "Create new group conversations."
+      },
+      "canSendPushNotifications": {
+        "title": "Send push notifications",
+        "description": "Send push notifications to subscribed users."
+      },
+      "canSendWhatsApp": {
+        "title": "Send WhatsApp messages",
+        "description": "Send WhatsApp messages from the system."
+      }
+    },
     "assignPermissions": "Assign Permissions",
     "roleList": "Role List",
     "confirmDelete": "Are you sure you want to delete this role?",

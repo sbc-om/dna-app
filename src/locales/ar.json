@@ -325,6 +325,7 @@
     "defaultPassword": "كلمة المرور الافتراضية",
     "roles": {
       "admin": "مدير",
+      "manager": "مدير الأكاديمية",
       "parent": "والد",
       "coach": "مدرب",
       "kid": "طفل"
@@ -349,6 +350,103 @@
     "roleName": "اسم الدور",
     "description": "الوصف",
     "permissions": "الصلاحيات",
+    "permissionsEditor": {
+      "subtitle": "إدارة صلاحيات كل دور",
+      "permissionColumn": "الصلاحية",
+      "enabledColumn": "مفعّل",
+      "searchPlaceholder": "ابحث في الصلاحيات...",
+      "enableAll": "تفعيل الكل",
+      "disableAll": "تعطيل الكل",
+      "reset": "إعادة تعيين",
+      "noResults": "لا توجد نتائج.",
+      "noRoleData": "لا توجد بيانات للدور.",
+      "save": "حفظ التغييرات",
+      "saving": "جارٍ الحفظ...",
+      "saved": "تم الحفظ",
+      "saveSuccess": "تم حفظ الصلاحيات بنجاح",
+      "saveError": "تعذر حفظ الصلاحيات",
+      "lastUpdated": "آخر تحديث",
+      "hint": "تُطبق التغييرات فور الحفظ.",
+      "groups": {
+        "core": "الوصول الأساسي",
+        "management": "الإدارة",
+        "communication": "التواصل"
+      }
+    },
+    "permissionLabels": {
+      "canAccessDashboard": {
+        "title": "الوصول إلى لوحة التحكم",
+        "description": "السماح بفتح منطقة لوحة التحكم."
+      },
+      "canViewReports": {
+        "title": "عرض التقارير",
+        "description": "السماح بالوصول إلى صفحات التحليلات والتقارير."
+      },
+      "canViewProfile": {
+        "title": "عرض الملف الشخصي",
+        "description": "السماح بعرض الملف الشخصي."
+      },
+      "canEditProfile": {
+        "title": "تعديل الملف الشخصي",
+        "description": "السماح بتحديث معلومات الملف الشخصي."
+      },
+      "canAccessSettings": {
+        "title": "الوصول إلى الإعدادات",
+        "description": "السماح بالوصول إلى صفحات إعدادات النظام."
+      },
+      "canManageUsers": {
+        "title": "إدارة المستخدمين",
+        "description": "إنشاء المستخدمين وتعديلهم وتعطيلهم وحذفهم."
+      },
+      "canManageRoles": {
+        "title": "إدارة الأدوار",
+        "description": "عرض صلاحيات الأدوار وتحديثها."
+      },
+      "canManageAcademies": {
+        "title": "إدارة الأكاديميات",
+        "description": "إنشاء الأكاديميات وإدارتها وتعيين المسؤوليات."
+      },
+      "canManageAppointments": {
+        "title": "إدارة المواعيد",
+        "description": "عرض المواعيد وتأكيدها وإكمالها وإلغاؤها."
+      },
+      "canManageSchedules": {
+        "title": "إدارة الجداول",
+        "description": "إنشاء جداول المواعيد وإدارتها."
+      },
+      "canManageCourses": {
+        "title": "إدارة الدورات",
+        "description": "إنشاء الدورات وتعديلها وإدارتها."
+      },
+      "canViewPayments": {
+        "title": "عرض المدفوعات",
+        "description": "عرض تفاصيل المدفوعات وحالة الدفع."
+      },
+      "canManageNotifications": {
+        "title": "إدارة الإشعارات",
+        "description": "إرسال وإدارة الإشعارات داخل التطبيق وإشعارات الدفع."
+      },
+      "canManageBackups": {
+        "title": "إدارة النسخ الاحتياطي",
+        "description": "إنشاء النسخ الاحتياطية واستعادتها."
+      },
+      "canAccessMessages": {
+        "title": "الوصول إلى الرسائل",
+        "description": "عرض واستخدام نظام الرسائل."
+      },
+      "canCreateGroup": {
+        "title": "إنشاء مجموعات",
+        "description": "إنشاء محادثات جماعية جديدة."
+      },
+      "canSendPushNotifications": {
+        "title": "إرسال إشعارات الدفع",
+        "description": "إرسال إشعارات الدفع للمستخدمين المشتركين."
+      },
+      "canSendWhatsApp": {
+        "title": "إرسال رسائل واتساب",
+        "description": "إرسال رسائل واتساب من داخل النظام."
+      }
+    },
     "assignPermissions": "تعيين الصلاحيات",
     "roleList": "قائمة الأدوار",
     "confirmDelete": "هل أنت متأكد من حذف هذا الدور؟",
