@@ -35,25 +35,25 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="sm:max-w-[500px]">
+      <AlertDialogContent className="sm:max-w-[520px] rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#1a1a1a]">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-2xl font-bold text-[#1E3A8A]">
+          <AlertDialogTitle className="text-xl sm:text-2xl font-bold text-[#262626] dark:text-white">
             {title}
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-base text-gray-700 whitespace-pre-line">
+          <AlertDialogDescription className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="hover:bg-gray-100">
+          <AlertDialogCancel className="border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#262626] hover:bg-gray-50 dark:hover:bg-[#000000]">
             {cancelText}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             className={
               variant === 'destructive'
-                ? 'bg-red-600 hover:bg-red-700'
-                : 'bg-[#30B2D2] hover:bg-[#1E3A8A]'
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : 'bg-[#262626] dark:bg-white text-white dark:text-[#262626] hover:bg-black dark:hover:bg-gray-100'
             }
           >
             {confirmText}

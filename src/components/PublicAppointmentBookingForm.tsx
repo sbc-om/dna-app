@@ -37,10 +37,10 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
   });
 
   const steps: { id: WizardStep; title: string; icon: any }[] = [
-    { id: 'personal', title: locale === 'ar' ? 'المعلومات الشخصية' : 'Personal Info', icon: User },
-    { id: 'date', title: locale === 'ar' ? 'اختر التاريخ' : 'Select Date', icon: Calendar },
-    { id: 'time', title: locale === 'ar' ? 'اختر الوقت' : 'Select Time', icon: Clock },
-    { id: 'confirm', title: locale === 'ar' ? 'تأكيد' : 'Confirm', icon: CheckCircle2 },
+    { id: 'personal', title: dictionary.appointments?.stepPersonal || 'Personal Info', icon: User },
+    { id: 'date', title: dictionary.appointments?.stepDate || dictionary.appointments?.preferredDate || 'Select Date', icon: Calendar },
+    { id: 'time', title: dictionary.appointments?.stepTime || dictionary.appointments?.preferredTime || 'Select Time', icon: Clock },
+    { id: 'confirm', title: dictionary.appointments?.stepConfirm || 'Confirm', icon: CheckCircle2 },
   ];
 
   // Load available dates on mount
@@ -148,12 +148,12 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
 
   if (isSuccess) {
     return (
-      <Card className="border-2 border-[#DDDDDD] bg-white dark:bg-[#262626]">
+      <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#262626]">
         <CardContent className="pt-6">
           <div className="text-center space-y-6 py-8">
             <div className="flex justify-center">
-              <div className="rounded-full bg-[#FF5F02] p-6">
-                <CheckCircle2 className="h-20 w-20 text-white" />
+              <div className="rounded-full bg-gray-50 dark:bg-[#1a1a1a] p-6 border-2 border-[#DDDDDD] dark:border-[#000000]">
+                <CheckCircle2 className="h-20 w-20 text-[#262626] dark:text-white" />
               </div>
             </div>
             <h3 className="text-3xl font-bold text-[#262626] dark:text-white">
@@ -165,7 +165,7 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
             <Button 
               onClick={() => setIsSuccess(false)} 
               size="lg"
-              className="bg-[#FF5F02] hover:bg-[#262626] text-white shadow-lg"
+              className="bg-[#262626] dark:bg-white text-white dark:text-[#262626] hover:bg-black dark:hover:bg-gray-100 transition-colors"
             >
               {dictionary.appointments?.bookAnother || 'Book Another Appointment'}
             </Button>
@@ -176,7 +176,7 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
   }
 
   return (
-    <Card className="border-2 border-[#DDDDDD] dark:border-[#262626] shadow-xl">
+    <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#262626]">
       <CardHeader className="space-y-6">
         <div>
           <CardTitle className="text-2xl md:text-3xl">
@@ -202,9 +202,9 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300 ${
                         isActive
-                          ? 'bg-[#FF5F02] border-[#FF5F02] text-white shadow-md'
+                          ? 'bg-[#262626] dark:bg-white border-[#262626] dark:border-white text-white dark:text-[#262626]'
                           : isCompleted
-                          ? 'bg-green-500 border-green-500 text-white'
+                          ? 'bg-[#262626] dark:bg-white border-[#262626] dark:border-white text-white dark:text-[#262626]'
                           : 'bg-white border-gray-300 text-gray-400'
                       }`}
                     >
@@ -212,7 +212,7 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
                     </div>
                     <span
                       className={`text-[10px] mt-1.5 font-medium text-center whitespace-nowrap transition-colors duration-300 ${
-                        isActive ? 'text-[#FF5F02]' : isCompleted ? 'text-[#FF5F02]' : 'text-gray-400'
+                        isActive ? 'text-[#262626] dark:text-white' : isCompleted ? 'text-[#262626] dark:text-white' : 'text-gray-500 dark:text-gray-400'
                       }`}
                     >
                       {step.title}
@@ -225,7 +225,7 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
                       <div className="h-px bg-gray-200 rounded-full"></div>
                       <div 
                         className={`absolute top-0 left-0 h-px rounded-full transition-all duration-500 ${
-                          isCompleted ? 'bg-green-500 w-full' : 'bg-gray-200 w-0'
+                          isCompleted ? 'bg-[#262626] dark:bg-white w-full' : 'bg-gray-200 dark:bg-[#262626] w-0'
                         }`}
                       ></div>
                     </div>
@@ -243,16 +243,16 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <div className="text-center mb-6">
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  {locale === 'ar' ? 'أخبرنا عن نفسك' : 'Tell Us About Yourself'}
+                  {dictionary.appointments?.personalInfoTitle || 'Tell Us About Yourself'}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {locale === 'ar' ? 'نحتاج بعض المعلومات للاتصال بك' : 'We need some information to contact you'}
+                  {dictionary.appointments?.personalInfoDescription || 'We need some information to contact you'}
                 </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="fullName" className="flex items-center gap-2 text-base">
-                  <User className="h-5 w-5 text-[#FF5F02]" />
+                  <User className="h-5 w-5 text-gray-600 dark:text-gray-300" />
                   {dictionary.common?.fullName || 'Full Name'} *
                 </Label>
                 <Input
@@ -261,13 +261,13 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   placeholder={dictionary.appointments?.enterFullName || 'Enter your full name'}
-                  className="text-lg h-12"
+                  className="text-lg h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-black/30 dark:focus:border-white/20"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email" className="flex items-center gap-2 text-base">
-                  <Mail className="h-5 w-5 text-[#FF5F02]" />
+                  <Mail className="h-5 w-5 text-gray-600 dark:text-gray-300" />
                   {dictionary.common?.email || 'Email'} *
                 </Label>
                 <Input
@@ -276,13 +276,13 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder={dictionary.appointments?.enterEmail || 'Enter your email'}
-                  className="text-lg h-12"
+                  className="text-lg h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-black/30 dark:focus:border-white/20"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="phoneNumber" className="flex items-center gap-2 text-base">
-                  <Phone className="h-5 w-5 text-[#FF5F02]" />
+                  <Phone className="h-5 w-5 text-gray-600 dark:text-gray-300" />
                   {dictionary.common?.phoneNumber || 'Phone Number'} *
                 </Label>
                 <Input
@@ -291,7 +291,7 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
                   value={formData.phoneNumber}
                   onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                   placeholder={dictionary.appointments?.enterPhone || 'Enter your phone number'}
-                  className="text-lg h-12"
+                  className="text-lg h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-black/30 dark:focus:border-white/20"
                 />
               </div>
             </div>
@@ -301,10 +301,10 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <div className="text-center mb-6">
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  {locale === 'ar' ? 'اختر التاريخ المناسب' : 'Choose Your Preferred Date'}
+                  {dictionary.appointments?.dateTitle || 'Choose Your Preferred Date'}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {locale === 'ar' ? 'اختر اليوم الذي يناسبك' : 'Select the day that works best for you'}
+                  {dictionary.appointments?.dateDescription || 'Select the day that works best for you'}
                 </p>
               </div>
 
@@ -327,13 +327,13 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
                         onClick={() => setFormData({ ...formData, date, time: '' })}
                         className={`p-4 rounded-xl border-2 text-left transition-all ${
                           isSelected
-                            ? 'border-[#FF5F02] bg-white dark:bg-[#262626] shadow-md'
-                            : 'border-gray-200 hover:border-[#FF5F02] hover:bg-[#DDDDDD]'
+                            ? 'border-[#262626] dark:border-white bg-gray-50 dark:bg-[#1a1a1a]'
+                            : 'border-[#DDDDDD] dark:border-[#000000] hover:bg-gray-50 dark:hover:bg-[#1a1a1a]'
                         }`}
                       >
                         <div className="flex items-center gap-4">
                           <div className={`flex-shrink-0 w-14 h-14 rounded-lg flex flex-col items-center justify-center ${
-                            isSelected ? 'bg-[#FF5F02] text-white' : 'bg-gray-100 text-gray-900'
+                            isSelected ? 'bg-[#262626] dark:bg-white text-white dark:text-[#262626]' : 'bg-gray-100 dark:bg-[#262626] text-gray-900 dark:text-gray-100'
                           }`}>
                             <span className="text-xs font-medium uppercase">
                               {dateObj.toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', { month: 'short' })}
@@ -355,7 +355,7 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
                             </p>
                           </div>
                           {isSelected && (
-                            <CheckCircle2 className="h-6 w-6 text-[#FF5F02]" />
+                            <CheckCircle2 className="h-6 w-6 text-[#262626] dark:text-white" />
                           )}
                         </div>
                       </button>
@@ -370,16 +370,16 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <div className="text-center mb-6">
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  {locale === 'ar' ? 'اختر الوقت المناسب' : 'Pick Your Time Slot'}
+                  {dictionary.appointments?.timeTitle || 'Pick Your Time Slot'}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {locale === 'ar' ? 'المواعيد المحجوزة باللون الأحمر' : 'Booked slots are shown in red'}
+                  {dictionary.appointments?.bookedSlotsHint || 'Booked slots are shown in red'}
                 </p>
               </div>
 
               {loadingSlots ? (
                 <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#FF5F02] border-t-transparent mx-auto"></div>
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#262626] dark:border-white border-t-transparent mx-auto"></div>
                   <p className="mt-4 text-gray-600">{dictionary.common?.loading || 'Loading...'}</p>
                 </div>
               ) : timeSlots.length === 0 ? (
@@ -401,14 +401,14 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
                         disabled={slot.isBooked}
                         className={`relative p-4 rounded-xl border-2 text-center font-semibold transition-all duration-200 ${
                           isSelected
-                            ? 'border-[#FF5F02] bg-[#FF5F02] text-white shadow-lg scale-105'
+                            ? 'border-[#262626] dark:border-white bg-[#262626] dark:bg-white text-white dark:text-[#262626]'
                             : slot.isBooked
                             ? 'border-red-500 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 cursor-not-allowed opacity-70'
-                            : 'border-gray-200 hover:border-[#FF5F02] hover:bg-[#DDDDDD] hover:scale-105 active:scale-95'
+                            : 'border-[#DDDDDD] dark:border-[#000000] hover:bg-gray-50 dark:hover:bg-[#1a1a1a] active:scale-[0.99]'
                         }`}
                       >
                         <Clock className={`h-5 w-5 mx-auto mb-2 transition-colors ${
-                          isSelected ? 'text-white' : slot.isBooked ? 'text-red-500 dark:text-red-400' : 'text-gray-600'
+                          isSelected ? 'text-white dark:text-[#262626]' : slot.isBooked ? 'text-red-500 dark:text-red-400' : 'text-gray-600 dark:text-gray-300'
                         }`} />
                         <span className="text-sm block">{slot.time}</span>
                         {slot.isBooked && (
@@ -416,11 +416,11 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
                             <div className="absolute -top-1 -right-1 z-10">
                               <div className="relative flex h-4 w-4">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 shadow-lg"></span>
+                                <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500"></span>
                               </div>
                             </div>
                             <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wide">
-                              {locale === 'ar' ? 'محجوز' : 'Booked'}
+                              {dictionary.appointments?.booked || 'Booked'}
                             </span>
                           </>
                         )}
@@ -436,39 +436,39 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <div className="text-center mb-6">
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  {locale === 'ar' ? 'تأكيد الحجز' : 'Confirm Your Booking'}
+                  {dictionary.appointments?.confirmTitle || 'Confirm Your Booking'}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {locale === 'ar' ? 'تحقق من التفاصيل قبل التأكيد' : 'Review your details before confirming'}
+                  {dictionary.appointments?.confirmDescription || 'Review your details before confirming'}
                 </p>
               </div>
 
               <div className="space-y-4">
-                <div className="p-4 rounded-lg bg-white dark:bg-[#262626] border border-[#DDDDDD]">
+                <div className="p-4 rounded-lg bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000]">
                   <div className="flex items-center gap-3 mb-3">
-                    <User className="h-5 w-5 text-[#FF5F02]" />
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">{locale === 'ar' ? 'المعلومات الشخصية' : 'Personal Information'}</span>
+                    <User className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{dictionary.appointments?.sectionPersonal || 'Personal Information'}</span>
                   </div>
                   <div className="space-y-2 text-sm">
-                    <p><strong>{locale === 'ar' ? 'الاسم:' : 'Name:'}</strong> {formData.fullName}</p>
-                    <p><strong>{locale === 'ar' ? 'البريد الإلكتروني:' : 'Email:'}</strong> {formData.email}</p>
-                    <p><strong>{locale === 'ar' ? 'الهاتف:' : 'Phone:'}</strong> {formData.phoneNumber}</p>
+                    <p><strong>{dictionary.appointments?.labelName || 'Name:'}</strong> {formData.fullName}</p>
+                    <p><strong>{dictionary.appointments?.labelEmail || 'Email:'}</strong> {formData.email}</p>
+                    <p><strong>{dictionary.appointments?.labelPhone || 'Phone:'}</strong> {formData.phoneNumber}</p>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-lg bg-white dark:bg-[#262626] border border-[#DDDDDD]">
+                <div className="p-4 rounded-lg bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000]">
                   <div className="flex items-center gap-3 mb-3">
-                    <Calendar className="h-5 w-5 text-[#FF5F02]" />
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">{locale === 'ar' ? 'التاريخ والوقت' : 'Date & Time'}</span>
+                    <Calendar className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{dictionary.appointments?.sectionSchedule || 'Date & Time'}</span>
                   </div>
                   <div className="space-y-2 text-sm">
-                    <p><strong>{locale === 'ar' ? 'التاريخ:' : 'Date:'}</strong> {new Date(formData.date + 'T00:00:00').toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', {
+                    <p><strong>{dictionary.appointments?.labelDate || 'Date:'}</strong> {new Date(formData.date + 'T00:00:00').toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', {
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
                     })}</p>
-                    <p><strong>{locale === 'ar' ? 'الوقت:' : 'Time:'}</strong> {formData.time}</p>
+                    <p><strong>{dictionary.appointments?.labelTime || 'Time:'}</strong> {formData.time}</p>
                   </div>
                 </div>
 
@@ -482,7 +482,7 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     placeholder={dictionary.appointments?.notesPlaceholder || 'Any additional information...'}
-                    className="w-full min-h-[100px] px-4 py-3 text-base border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5F02]"
+                    className="w-full min-h-[100px] px-4 py-3 text-base bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] rounded-lg focus:outline-none focus:border-black/30 dark:focus:border-white/20"
                     rows={4}
                   />
                 </div>
@@ -497,11 +497,11 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
                 type="button"
                 variant="outline"
                 onClick={handleBack}
-                className="flex-1 h-12 text-base"
+                className="flex-1 h-12 text-base border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#262626]"
                 disabled={isSubmitting}
               >
                 <ArrowLeft className="h-5 w-5 me-2" />
-                {locale === 'ar' ? 'السابق' : 'Back'}
+                {dictionary.common?.back || 'Back'}
               </Button>
             )}
             
@@ -510,9 +510,9 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
                 type="button"
                 onClick={handleNext}
                 disabled={!canProceedToNext()}
-                className="flex-1 h-12 text-base bg-[#FF5F02] hover:bg-[#262626] text-white shadow-lg disabled:opacity-50"
+                className="flex-1 h-12 text-base bg-[#262626] dark:bg-white text-white dark:text-[#262626] hover:bg-black dark:hover:bg-gray-100 transition-colors disabled:opacity-50"
               >
-                {locale === 'ar' ? 'التالي' : 'Next'}
+                {dictionary.common?.next || 'Next'}
                 <ArrowRight className="h-5 w-5 ms-2" />
               </Button>
             ) : (
@@ -520,12 +520,12 @@ export function PublicAppointmentBookingForm({ dictionary, locale }: PublicAppoi
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="flex-1 h-12 text-base bg-[#FF5F02] hover:bg-[#262626] text-white shadow-lg"
+                className="flex-1 h-12 text-base bg-[#262626] dark:bg-white text-white dark:text-[#262626] hover:bg-black dark:hover:bg-gray-100 transition-colors"
               >
                 <CheckCircle2 className="h-5 w-5 me-2" />
                 {isSubmitting 
                   ? (dictionary.common?.loading || 'Submitting...') 
-                  : (locale === 'ar' ? 'تأكيد الحجز' : 'Confirm Booking')}
+                  : (dictionary.appointments?.submitBooking || 'Confirm Booking')}
               </Button>
             )}
           </div>

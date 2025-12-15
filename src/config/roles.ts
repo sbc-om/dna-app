@@ -5,6 +5,7 @@
 
 export const ROLES = {
   ADMIN: 'admin',
+  MANAGER: 'manager',
   COACH: 'coach',
   PARENT: 'parent',
   KID: 'kid',
@@ -16,6 +17,10 @@ export const ROLE_LABELS = {
   [ROLES.ADMIN]: {
     en: 'Administrator',
     ar: 'مدير',
+  },
+  [ROLES.MANAGER]: {
+    en: 'Academy Manager',
+    ar: 'مدير الأكاديمية',
   },
   [ROLES.COACH]: {
     en: 'Coach',
@@ -43,6 +48,15 @@ export const ROLE_PERMISSIONS = {
     canManageAppointments: true,
     canManageSchedules: true,
     canViewAllData: true,
+  },
+  [ROLES.MANAGER]: {
+    canAccessDashboard: true,
+    canManageUsers: true,
+    canManageRoles: true,
+    canViewReports: true,
+    canManageAppointments: true,
+    canManageSchedules: true,
+    canViewAllData: false,
   },
   [ROLES.COACH]: {
     canAccessDashboard: true,
@@ -85,6 +99,13 @@ export function hasPermission(role: UserRole, permission: keyof typeof ROLE_PERM
  */
 export function isAdmin(role: UserRole): boolean {
   return role === ROLES.ADMIN;
+}
+
+/**
+ * Check if role is academy manager
+ */
+export function isManager(role: UserRole): boolean {
+  return role === ROLES.MANAGER;
 }
 
 /**

@@ -130,18 +130,18 @@ export function MedalsManagement({ dictionary }: MedalsManagementProps) {
 
   return (
     <>
-      <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 border-b-2 border-[#DDDDDD] dark:border-[#000000] py-4">
+      <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
+        <CardHeader className="bg-gray-50 dark:bg-[#1a1a1a] border-b-2 border-[#DDDDDD] dark:border-[#000000] py-4">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-bold text-[#262626] dark:text-white flex items-center gap-3">
-              <div className="p-2 bg-[#FF5F02]/10 dark:bg-[#FF5F02]/20 rounded-lg">
-                <Award className="h-5 w-5 text-[#FF5F02]" />
+              <div className="p-2 bg-black/5 dark:bg-white/5 rounded-lg">
+                <Award className="h-5 w-5 text-gray-700 dark:text-gray-200" />
               </div>
               {dictionary.settings.medals}
             </CardTitle>
             <Button
               onClick={() => handleOpenDialog()}
-              className="h-12 bg-gradient-to-r from-[#FF5F02] to-[#FF8534] hover:from-[#FF8534] hover:to-[#FF5F02] text-white shadow-lg active:scale-95 transition-all"
+              className="h-12 bg-[#262626] hover:bg-black text-white dark:bg-white dark:hover:bg-gray-200 dark:text-black active:scale-95 transition-transform"
             >
               <Plus className="w-4 h-4 mr-2" />
               {dictionary.settings.createMedal}
@@ -161,10 +161,10 @@ export function MedalsManagement({ dictionary }: MedalsManagementProps) {
               {medals.map((medal) => (
                 <div
                   key={medal.id}
-                  className="p-5 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-gradient-to-br from-white to-gray-50 dark:from-[#1a1a1a] dark:to-[#0a0a0a] hover:border-[#FF5F02] hover:shadow-xl transition-all shadow-md"
+                  className="p-5 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-gray-800 transition-colors"
                 >
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="text-4xl flex-shrink-0">{medal.icon}</div>
+                    <div className="text-4xl shrink-0">{medal.icon}</div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-[#262626] dark:text-white truncate">
                         {medal.name}
@@ -176,7 +176,7 @@ export function MedalsManagement({ dictionary }: MedalsManagementProps) {
                   </div>
                   <div className="flex items-center justify-between mt-3 pt-3 border-t-2 border-[#DDDDDD] dark:border-[#000000]">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-white px-2 py-1 rounded bg-[#FF5F02]">
+                      <span className="text-xs font-semibold text-white px-2 py-1 rounded bg-[#262626] dark:bg-white dark:text-black">
                         +{medal.points} pts
                       </span>
                       {!medal.isActive && (
@@ -190,15 +190,15 @@ export function MedalsManagement({ dictionary }: MedalsManagementProps) {
                         size="sm"
                         variant="ghost"
                         onClick={() => handleOpenDialog(medal)}
-                        className="h-8 w-8 p-0 hover:bg-[#FF5F02]/10 dark:hover:bg-[#FF5F02]/20 active:scale-95 transition-all"
+                        className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-white/5 active:scale-95 transition-transform"
                       >
-                        <Edit className="w-4 h-4 text-[#FF5F02]" />
+                        <Edit className="w-4 h-4 text-gray-700 dark:text-gray-200" />
                       </Button>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => openDeleteConfirm(medal.id)}
-                        className="h-8 w-8 p-0 hover:bg-red-100 dark:hover:bg-red-950/30 active:scale-95 transition-all"
+                        className="h-8 w-8 p-0 hover:bg-red-100 dark:hover:bg-red-950/30 active:scale-95 transition-transform"
                       >
                         <Trash2 className="w-4 h-4 text-red-600 dark:text-red-500" />
                       </Button>
@@ -230,7 +230,7 @@ export function MedalsManagement({ dictionary }: MedalsManagementProps) {
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  className="h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-gray-400 dark:focus:border-gray-600 text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
               </div>
               <div className="space-y-2">
@@ -241,7 +241,7 @@ export function MedalsManagement({ dictionary }: MedalsManagementProps) {
                   id="nameAr"
                   value={formData.nameAr}
                   onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
-                  className="h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  className="h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-gray-400 dark:focus:border-gray-600 text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   dir="rtl"
                 />
               </div>
@@ -255,7 +255,7 @@ export function MedalsManagement({ dictionary }: MedalsManagementProps) {
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="resize-none bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                className="resize-none bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-gray-400 dark:focus:border-gray-600 text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 rows={3}
               />
             </div>
@@ -268,7 +268,7 @@ export function MedalsManagement({ dictionary }: MedalsManagementProps) {
                 id="descriptionAr"
                 value={formData.descriptionAr}
                 onChange={(e) => setFormData({ ...formData, descriptionAr: e.target.value })}
-                className="resize-none bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                className="resize-none bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-gray-400 dark:focus:border-gray-600 text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 dir="rtl"
                 rows={3}
               />
@@ -283,7 +283,7 @@ export function MedalsManagement({ dictionary }: MedalsManagementProps) {
                   id="icon"
                   value={formData.icon}
                   onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                  className="h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  className="h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-gray-400 dark:focus:border-gray-600 text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   placeholder="🏆"
                 />
               </div>
@@ -296,7 +296,7 @@ export function MedalsManagement({ dictionary }: MedalsManagementProps) {
                   type="number"
                   value={formData.points}
                   onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) || 0 })}
-                  className="h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  className="h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-gray-400 dark:focus:border-gray-600 text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
               </div>
             </div>
@@ -325,7 +325,7 @@ export function MedalsManagement({ dictionary }: MedalsManagementProps) {
             <Button
               onClick={handleSave}
               disabled={!formData.name || !formData.nameAr}
-              className="h-12 bg-gradient-to-r from-[#FF5F02] to-[#FF8534] hover:from-[#FF8534] hover:to-[#FF5F02] text-white shadow-lg active:scale-95 transition-all disabled:opacity-50"
+              className="h-12 bg-[#262626] hover:bg-black text-white dark:bg-white dark:hover:bg-gray-200 dark:text-black active:scale-95 transition-transform disabled:opacity-50"
             >
               {dictionary.common.save}
             </Button>

@@ -60,7 +60,7 @@ export function MobileBottomNav({ locale, userRole }: MobileBottomNavProps) {
 
   return (
     <nav 
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200 dark:border-gray-800 shadow-lg safe-bottom"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#1a1a1a] border-t-2 border-[#DDDDDD] dark:border-[#000000] safe-bottom"
       role="navigation"
       aria-label="Mobile bottom navigation"
     >
@@ -78,11 +78,11 @@ export function MobileBottomNav({ locale, userRole }: MobileBottomNavProps) {
               key={item.key}
               href={href}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 touch-manipulation min-w-16 group",
+                "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors duration-200 touch-manipulation min-w-16 group",
                 "active:scale-95 active:bg-gray-100 dark:active:bg-gray-800",
                 isActive 
-                  ? "text-[#FF5F02]" 
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                  ? "text-[#262626] dark:text-white" 
+                  : "text-gray-600 dark:text-gray-400 hover:text-[#262626] dark:hover:text-white"
               )}
               aria-current={isActive ? 'page' : undefined}
             >
@@ -91,11 +91,10 @@ export function MobileBottomNav({ locale, userRole }: MobileBottomNavProps) {
                 isActive && "scale-110"
               )}>
                 <Icon className={cn(
-                  "h-5 w-5 transition-colors duration-200",
-                  isActive && "drop-shadow-sm"
+                  "h-5 w-5 transition-colors duration-200"
                 )} />
                 {isActive && (
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#FF5F02] animate-pulse" />
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#262626] dark:bg-white" />
                 )}
               </div>
               <span className={cn(

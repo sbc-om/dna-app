@@ -20,46 +20,39 @@ export default function LoginPageClient({ dictionary, locale }: LoginPageClientP
       <div className="w-full max-w-md">
         <Link 
           href={`/${locale}`}
-          className="inline-flex items-center gap-2 text-sm font-medium text-[#FF5F02] hover:text-[#262626] dark:hover:text-white mb-6 transition-all hover:gap-3"
+          className="inline-flex items-center gap-2 text-sm font-medium text-[#262626] dark:text-white hover:underline mb-6"
         >
           <ArrowLeft className="h-5 w-5" />
           {dictionary.nav.home}
         </Link>
         
-        <Card className="w-full shadow-2xl border-3 border-[#DDDDDD] dark:border-[#262626] rounded-3xl overflow-hidden bg-white dark:bg-[#262626]">
-          <CardHeader className="text-center bg-[#FF5F02] py-8">
-            <CardTitle className="text-3xl font-bold text-white">
+        <Card className="w-full border-2 border-[#DDDDDD] dark:border-[#000000] rounded-2xl overflow-hidden bg-white dark:bg-[#262626]">
+          <CardHeader className="text-center bg-gray-50 dark:bg-[#1a1a1a] border-b-2 border-[#DDDDDD] dark:border-[#000000] py-8">
+            <div className="flex justify-center mb-4">
+              <div className="h-14 w-14 rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#262626] flex items-center justify-center">
+                <Image src="/logo.png" alt="DNA" width={40} height={40} priority />
+              </div>
+            </div>
+            <CardTitle className="text-2xl font-bold text-[#262626] dark:text-white">
               {dictionary.auth.loginTitle}
             </CardTitle>
-            <CardDescription className="text-sm font-medium text-white mt-2 opacity-90">
-              Enter your credentials
+            <CardDescription className="text-sm font-medium text-gray-600 dark:text-gray-400 mt-2">
+              {dictionary.auth?.loginSubtitle || dictionary.auth?.loginTitle}
             </CardDescription>
           </CardHeader>
           
           <CardContent className="p-6">
-            <Suspense fallback={<div className="text-center text-purple-600">Loading...</div>}>
+            <Suspense fallback={<div className="text-center text-sm text-gray-600 dark:text-gray-400">{dictionary.common.loading}</div>}>
               <LoginForm dictionary={dictionary} locale={locale} />
             </Suspense>
 
             <div className="mt-4 text-center">
               <Link 
                 href={`/${locale}/auth/forgot-password`}
-                className="text-sm font-semibold text-[#FF5F02] hover:text-[#262626] dark:hover:text-white transition-colors"
+                className="text-sm font-semibold text-[#262626] dark:text-white hover:underline"
               >
                 {dictionary.auth.forgotPassword}
               </Link>
-            </div>
-
-            <div className="mt-5 text-center p-3 bg-[#DDDDDD] dark:bg-[#262626] rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000]">
-              <p className="text-sm font-medium text-[#000000] dark:text-white">
-                {dictionary.auth.dontHaveAccount}{' '}
-                <Link 
-                  href={`/${locale}/book-appointment`}
-                  className="text-[#FF5F02] hover:text-[#262626] dark:hover:text-white font-bold underline underline-offset-2 transition-colors"
-                >
-                  {dictionary.auth.signupButton}
-                </Link>
-              </p>
             </div>
           </CardContent>
         </Card>

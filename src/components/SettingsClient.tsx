@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, Database, Download, Upload, Trash2, Clock, Bell, UserCog, Award } from 'lucide-react';
+import { Settings, Database, Download, Upload, Clock, Bell, UserCog, Award, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
@@ -12,6 +12,7 @@ import { PushNotificationSetup } from '@/components/PushNotificationSetup';
 import { RolePermission } from '@/lib/db/repositories/rolePermissionRepository';
 import AdminSettingsClient from '@/components/AdminSettingsClient';
 import { MedalsManagement } from '@/components/MedalsManagement';
+import { AcademiesManagement } from '@/components/AcademiesManagement';
 
 interface SettingsClientProps {
   dictionary: Dictionary;
@@ -146,8 +147,8 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
         {/* Header */}
         <div className="space-y-3">
           <h1 className="text-3xl font-bold text-[#262626] dark:text-white flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-[#FF5F02] to-[#FF8534] rounded-xl shadow-lg">
-              <Settings className="h-6 w-6 text-white" />
+            <div className="p-2 bg-white dark:bg-[#262626] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
+              <Settings className="h-6 w-6 text-[#262626] dark:text-white" />
             </div>
             {dictionary.nav.settings || 'Settings'}
           </h1>
@@ -157,47 +158,61 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
         </div>
 
         <Tabs defaultValue="notifications" className="space-y-6">
-          <TabsList className="w-full bg-gray-100 dark:bg-[#1a1a1a] p-1.5 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] shadow-md">
-            <TabsTrigger value="notifications" className="flex-1 min-w-fit gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[#262626] data-[state=active]:shadow-lg rounded-lg transition-all text-gray-600 dark:text-gray-400 data-[state=active]:text-[#FF5F02] font-semibold">
+          <TabsList className="w-full bg-gray-100 dark:bg-[#1a1a1a] p-1.5 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
+            <TabsTrigger value="notifications" className="flex-1 min-w-fit gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[#262626] rounded-lg transition-colors text-gray-600 dark:text-gray-400 data-[state=active]:text-[#262626] dark:data-[state=active]:text-white font-semibold">
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">{dictionary.settings?.notifications || 'Notifications'}</span>
               <span className="sm:hidden">Notif</span>
             </TabsTrigger>
+            {permissions.canManageAcademies && (
+              <TabsTrigger value="academies" className="flex-1 min-w-fit gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[#262626] rounded-lg transition-colors text-gray-600 dark:text-gray-400 data-[state=active]:text-[#262626] dark:data-[state=active]:text-white font-semibold">
+                <Building2 className="h-4 w-4" />
+                <span className="hidden sm:inline">{dictionary.settings?.academies || 'Academies'}</span>
+                <span className="sm:hidden">Academies</span>
+              </TabsTrigger>
+            )}
             {permissions.canManageBackups && (
-              <TabsTrigger value="backup" className="flex-1 min-w-fit gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[#262626] data-[state=active]:shadow-lg rounded-lg transition-all text-gray-600 dark:text-gray-400 data-[state=active]:text-[#FF5F02] font-semibold">
+              <TabsTrigger value="backup" className="flex-1 min-w-fit gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[#262626] rounded-lg transition-colors text-gray-600 dark:text-gray-400 data-[state=active]:text-[#262626] dark:data-[state=active]:text-white font-semibold">
                 <Database className="h-4 w-4" />
                 <span className="hidden sm:inline">{dictionary.settings?.backupRestore || 'Backup & Restore'}</span>
                 <span className="sm:hidden">Backup</span>
               </TabsTrigger>
             )}
             {permissions.canManageBackups && (
-              <TabsTrigger value="medals" className="flex-1 min-w-fit gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[#262626] data-[state=active]:shadow-lg rounded-lg transition-all text-gray-600 dark:text-gray-400 data-[state=active]:text-[#FF5F02] font-semibold">
+              <TabsTrigger value="medals" className="flex-1 min-w-fit gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[#262626] rounded-lg transition-colors text-gray-600 dark:text-gray-400 data-[state=active]:text-[#262626] dark:data-[state=active]:text-white font-semibold">
                 <Award className="h-4 w-4" />
                 <span className="hidden sm:inline">{dictionary.settings?.medals || 'Achievements'}</span>
                 <span className="sm:hidden">Achievements</span>
               </TabsTrigger>
             )}
             {permissions.canManageBackups && (
-              <TabsTrigger value="admin" className="flex-1 min-w-fit gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[#262626] data-[state=active]:shadow-lg rounded-lg transition-all text-gray-600 dark:text-gray-400 data-[state=active]:text-[#FF5F02] font-semibold">
+              <TabsTrigger value="admin" className="flex-1 min-w-fit gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[#262626] rounded-lg transition-colors text-gray-600 dark:text-gray-400 data-[state=active]:text-[#262626] dark:data-[state=active]:text-white font-semibold">
                 <UserCog className="h-4 w-4" />
                 <span className="hidden sm:inline">{dictionary.settings?.adminSettings || 'Admin Settings'}</span>
                 <span className="sm:hidden">Admin</span>
               </TabsTrigger>
             )}
-            <TabsTrigger value="general" className="flex-1 min-w-fit gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[#262626] data-[state=active]:shadow-lg rounded-lg transition-all text-gray-600 dark:text-gray-400 data-[state=active]:text-[#FF5F02] font-semibold">
+            <TabsTrigger value="general" className="flex-1 min-w-fit gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[#262626] rounded-lg transition-colors text-gray-600 dark:text-gray-400 data-[state=active]:text-[#262626] dark:data-[state=active]:text-white font-semibold">
               <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">{dictionary.settings?.general || 'General'}</span>
               <span className="sm:hidden">General</span>
             </TabsTrigger>
           </TabsList>
 
+          {/* Academies Tab */}
+          {permissions.canManageAcademies && (
+            <TabsContent value="academies" className="space-y-4">
+              <AcademiesManagement locale={locale} dictionary={dictionary} />
+            </TabsContent>
+          )}
+
           {/* Notifications Tab */}
           <TabsContent value="notifications" className="space-y-4">
-            <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] shadow-lg overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 border-b-2 border-[#DDDDDD] dark:border-[#000000] py-4">
+            <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] overflow-hidden">
+              <CardHeader className="bg-gray-50 dark:bg-[#1a1a1a] border-b-2 border-[#DDDDDD] dark:border-[#000000] py-4">
                 <CardTitle className="text-xl font-bold text-[#262626] dark:text-white flex items-center gap-3">
-                  <div className="p-2 bg-[#FF5F02]/10 dark:bg-[#FF5F02]/20 rounded-lg">
-                    <Bell className="h-5 w-5 text-[#FF5F02]" />
+                  <div className="p-2 bg-black/5 dark:bg-white/5 rounded-lg">
+                    <Bell className="h-5 w-5 text-[#262626] dark:text-white" />
                   </div>
                   {dictionary.settings?.pushNotifications || 'Push Notifications'}
                 </CardTitle>
@@ -214,18 +229,18 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
           {/* Backup & Restore Tab */}
           {permissions.canManageBackups && (
           <TabsContent value="backup" className="space-y-4">
-            <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] shadow-lg overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 border-b-2 border-[#DDDDDD] dark:border-[#000000] py-4">
+            <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] overflow-hidden">
+              <CardHeader className="bg-gray-50 dark:bg-[#1a1a1a] border-b-2 border-[#DDDDDD] dark:border-[#000000] py-4">
                 <CardTitle className="text-xl font-bold text-[#262626] dark:text-white flex items-center gap-3">
-                  <div className="p-2 bg-[#FF5F02]/10 dark:bg-[#FF5F02]/20 rounded-lg">
-                    <Database className="h-5 w-5 text-[#FF5F02]" />
+                  <div className="p-2 bg-black/5 dark:bg-white/5 rounded-lg">
+                    <Database className="h-5 w-5 text-[#262626] dark:text-white" />
                   </div>
                   {dictionary.settings?.backupManagement || 'Backup Management'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6 space-y-6 bg-white dark:bg-[#262626]">
                 {/* Create Backup */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-xl border-2 border-green-200 dark:border-green-900 shadow-md">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
                   <div className="space-y-1 flex-1">
                     <h3 className="font-bold text-[#262626] dark:text-white flex items-center gap-2">
                       <Download className="h-5 w-5 text-green-600 dark:text-green-500" />
@@ -238,7 +253,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                   <Button
                     onClick={handleCreateBackup}
                     disabled={loading}
-                    className="h-12 px-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg active:scale-95 transition-all disabled:opacity-50"
+                    className="h-12 px-6 bg-[#262626] hover:bg-black text-white active:scale-95 transition-colors disabled:opacity-50"
                   >
                     <Download className="mr-2 h-4 w-4" />
                     {loading ? dictionary.common.loading : dictionary.settings?.create || 'Create'}
@@ -246,9 +261,9 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                 </div>
 
                 {/* Restore Backup */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 rounded-xl border-2 border-[#FF5F02] shadow-md">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
                   <div className="space-y-1 flex-1">
-                    <h3 className="font-bold text-[#FF5F02] flex items-center gap-2">
+                    <h3 className="font-bold text-[#262626] dark:text-white flex items-center gap-2">
                       <Upload className="h-5 w-5" />
                       {dictionary.settings?.restoreFromBackup || 'Restore from Backup'}
                     </h3>
@@ -259,7 +274,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                   <Button
                     onClick={handleRestoreBackup}
                     disabled={restoring}
-                    className="h-12 px-6 bg-gradient-to-r from-[#FF5F02] to-[#FF8534] hover:from-[#FF8534] hover:to-[#FF5F02] text-white shadow-lg active:scale-95 transition-all disabled:opacity-50"
+                    className="h-12 px-6 bg-[#262626] hover:bg-black text-white active:scale-95 transition-colors disabled:opacity-50"
                   >
                     <Upload className="mr-2 h-4 w-4" />
                     {restoring ? dictionary.common.loading : dictionary.settings?.restore || 'Restore'}
@@ -269,8 +284,8 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                 {/* Backup List */}
                 <div>
                   <h3 className="text-lg font-bold text-[#262626] dark:text-white mb-4 flex items-center gap-2">
-                    <div className="p-2 bg-[#FF5F02]/10 dark:bg-[#FF5F02]/20 rounded-lg">
-                      <Clock className="h-5 w-5 text-[#FF5F02]" />
+                    <div className="p-2 bg-black/5 dark:bg-white/5 rounded-lg">
+                      <Clock className="h-5 w-5 text-[#262626] dark:text-white" />
                     </div>
                     {dictionary.settings?.backupHistory || 'Backup History'}
                   </h3>
@@ -286,11 +301,11 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                       {backups.map((backup) => (
                         <div
                           key={backup.filename}
-                          className="flex items-center justify-between p-4 bg-gradient-to-br from-white to-gray-50 dark:from-[#1a1a1a] dark:to-[#0a0a0a] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] hover:border-[#FF5F02] hover:shadow-lg transition-all shadow-md"
+                          className="flex items-center justify-between p-4 bg-white dark:bg-[#1a1a1a] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]"
                         >
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-[#FF5F02]/10 dark:bg-[#FF5F02]/20 rounded-lg">
-                              <Database className="h-5 w-5 text-[#FF5F02]" />
+                              <Database className="h-5 w-5 text-[#262626] dark:text-white" />
                             </div>
                             <div>
                               <p className="font-semibold text-[#262626] dark:text-white">{backup.filename}</p>
@@ -302,7 +317,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                           <Button
                             size="sm"
                             onClick={() => handleDownloadBackup(backup.filename)}
-                            className="h-10 bg-gradient-to-r from-[#FF5F02] to-[#FF8534] hover:from-[#FF8534] hover:to-[#FF5F02] text-white shadow-md active:scale-95 transition-all"
+                            className="h-10 bg-[#262626] hover:bg-black text-white active:scale-95 transition-colors"
                           >
                             <Download className="h-4 w-4" />
                           </Button>
@@ -326,11 +341,11 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
           {/* Admin Settings Tab */}
           {permissions.canManageBackups && (
           <TabsContent value="admin" className="space-y-4">
-            <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] shadow-lg overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 border-b-2 border-[#DDDDDD] dark:border-[#000000] py-4">
+            <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] overflow-hidden">
+              <CardHeader className="bg-gray-50 dark:bg-[#1a1a1a] border-b-2 border-[#DDDDDD] dark:border-[#000000] py-4">
                 <CardTitle className="text-xl font-bold text-[#262626] dark:text-white flex items-center gap-3">
-                  <div className="p-2 bg-[#FF5F02]/10 dark:bg-[#FF5F02]/20 rounded-lg">
-                    <UserCog className="h-5 w-5 text-[#FF5F02]" />
+                  <div className="p-2 bg-black/5 dark:bg-white/5 rounded-lg">
+                    <UserCog className="h-5 w-5 text-[#262626] dark:text-white" />
                   </div>
                   {dictionary.settings?.adminSettings || 'Admin Settings'}
                 </CardTitle>
@@ -344,18 +359,18 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
 
           {/* General Settings Tab */}
           <TabsContent value="general" className="space-y-4">
-            <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] shadow-lg overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 border-b-2 border-[#DDDDDD] dark:border-[#000000] py-4">
+            <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] overflow-hidden">
+              <CardHeader className="bg-gray-50 dark:bg-[#1a1a1a] border-b-2 border-[#DDDDDD] dark:border-[#000000] py-4">
                 <CardTitle className="text-xl font-bold text-[#262626] dark:text-white flex items-center gap-3">
-                  <div className="p-2 bg-[#FF5F02]/10 dark:bg-[#FF5F02]/20 rounded-lg">
-                    <Settings className="h-5 w-5 text-[#FF5F02]" />
+                  <div className="p-2 bg-black/5 dark:bg-white/5 rounded-lg">
+                    <Settings className="h-5 w-5 text-[#262626] dark:text-white" />
                   </div>
                   {dictionary.settings?.generalSettings || 'General Settings'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6 space-y-4 bg-white dark:bg-[#262626]">
                 {/* Language Settings */}
-                <div className="p-5 bg-gradient-to-br from-white to-gray-50 dark:from-[#1a1a1a] dark:to-[#0a0a0a] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] hover:border-[#FF5F02] hover:shadow-lg transition-all shadow-md">
+                <div className="p-5 bg-white dark:bg-[#1a1a1a] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1 flex-1">
                       <h3 className="font-bold text-[#262626] dark:text-white">
@@ -366,7 +381,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-[#FF5F02] px-3 py-1.5 bg-[#FF5F02]/10 dark:bg-[#FF5F02]/20 rounded-lg">
+                      <span className="text-sm font-semibold text-[#262626] dark:text-white px-3 py-1.5 bg-black/5 dark:bg-white/5 rounded-lg">
                         {locale === 'ar' ? 'العربية' : 'English'}
                       </span>
                     </div>
@@ -374,7 +389,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                 </div>
 
                 {/* Theme Settings */}
-                <div className="p-5 bg-gradient-to-br from-white to-gray-50 dark:from-[#1a1a1a] dark:to-[#0a0a0a] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] hover:border-[#FF5F02] hover:shadow-lg transition-all shadow-md">
+                <div className="p-5 bg-white dark:bg-[#1a1a1a] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1 flex-1">
                       <h3 className="font-bold text-[#262626] dark:text-white">
@@ -385,7 +400,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-[#FF5F02] px-3 py-1.5 bg-[#FF5F02]/10 dark:bg-[#FF5F02]/20 rounded-lg">
+                      <span className="text-sm font-semibold text-[#262626] dark:text-white px-3 py-1.5 bg-black/5 dark:bg-white/5 rounded-lg">
                         {dictionary.settings?.system || 'System'}
                       </span>
                     </div>
@@ -393,7 +408,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                 </div>
 
                 {/* Time Zone */}
-                <div className="p-5 bg-gradient-to-br from-white to-gray-50 dark:from-[#1a1a1a] dark:to-[#0a0a0a] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] hover:border-[#FF5F02] hover:shadow-lg transition-all shadow-md">
+                <div className="p-5 bg-white dark:bg-[#1a1a1a] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1 flex-1">
                       <h3 className="font-bold text-[#262626] dark:text-white">
@@ -404,7 +419,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-[#FF5F02] px-3 py-1.5 bg-[#FF5F02]/10 dark:bg-[#FF5F02]/20 rounded-lg">
+                      <span className="text-sm font-semibold text-[#262626] dark:text-white px-3 py-1.5 bg-black/5 dark:bg-white/5 rounded-lg">
                         {Intl.DateTimeFormat().resolvedOptions().timeZone}
                       </span>
                     </div>
@@ -412,7 +427,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                 </div>
 
                 {/* Date Format */}
-                <div className="p-5 bg-gradient-to-br from-white to-gray-50 dark:from-[#1a1a1a] dark:to-[#0a0a0a] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] hover:border-[#FF5F02] hover:shadow-lg transition-all shadow-md">
+                <div className="p-5 bg-white dark:bg-[#1a1a1a] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1 flex-1">
                       <h3 className="font-bold text-[#262626] dark:text-white">
@@ -423,7 +438,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-[#FF5F02] px-3 py-1.5 bg-[#FF5F02]/10 dark:bg-[#FF5F02]/20 rounded-lg">
+                      <span className="text-sm font-semibold text-[#262626] dark:text-white px-3 py-1.5 bg-black/5 dark:bg-white/5 rounded-lg">
                         {new Date().toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}
                       </span>
                     </div>
@@ -431,7 +446,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                 </div>
 
                 {/* Application Version */}
-                <div className="p-5 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 rounded-xl border-2 border-[#FF5F02] shadow-lg">
+                <div className="p-5 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1 flex-1">
                       <h3 className="font-bold text-[#262626] dark:text-white">
@@ -442,7 +457,7 @@ export function SettingsClient({ dictionary, locale, permissions }: SettingsClie
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-base font-bold text-white px-4 py-2 bg-gradient-to-r from-[#FF5F02] to-[#FF8534] rounded-lg shadow-md">
+                      <span className="text-base font-semibold text-[#262626] dark:text-white px-4 py-2 bg-black/5 dark:bg-white/5 rounded-lg">
                         v1.0.0
                       </span>
                     </div>

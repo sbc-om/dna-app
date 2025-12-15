@@ -58,10 +58,10 @@ export function StudentMedalsDisplay({
 
   if (loading) {
     return (
-      <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20">
+      <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
+        <CardHeader className="bg-gray-50 dark:bg-[#1a1a1a]">
           <CardTitle className="text-[#262626] dark:text-white flex items-center gap-2">
-            <Award className="w-5 h-5 text-[#FF5F02]" />
+            <Award className="w-5 h-5 text-gray-700 dark:text-gray-200" />
             {title}
           </CardTitle>
         </CardHeader>
@@ -76,10 +76,10 @@ export function StudentMedalsDisplay({
 
   if (medals.length === 0) {
     return (
-      <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20">
+      <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
+        <CardHeader className="bg-gray-50 dark:bg-[#1a1a1a]">
           <CardTitle className="text-[#262626] dark:text-white flex items-center gap-2">
-            <Award className="w-5 h-5 text-[#FF5F02]" />
+            <Award className="w-5 h-5 text-gray-700 dark:text-gray-200" />
             {title}
           </CardTitle>
           {description && (
@@ -116,10 +116,10 @@ export function StudentMedalsDisplay({
   const uniqueMedals = Object.values(medalCounts);
 
   return (
-    <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] shadow-lg overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20">
+    <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] overflow-hidden">
+      <CardHeader className="bg-gray-50 dark:bg-[#1a1a1a]">
         <CardTitle className="text-[#262626] dark:text-white flex items-center gap-2">
-          <Award className="w-5 h-5 text-[#FF5F02]" />
+          <Award className="w-5 h-5 text-gray-700 dark:text-gray-200" />
           {title}
         </CardTitle>
         {description && (
@@ -131,10 +131,10 @@ export function StudentMedalsDisplay({
           {uniqueMedals.map(({ medal, count, lastAwarded }) => (
             <div
               key={medal.id}
-              className="p-4 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-gradient-to-br from-white to-gray-50 dark:from-[#1a1a1a] dark:to-[#0a0a0a] hover:border-[#FF5F02] hover:shadow-xl transition-all shadow-md"
+              className="p-4 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-gray-800 transition-colors"
             >
               <div className="flex items-start gap-3">
-                <div className="text-4xl flex-shrink-0">{medal.icon}</div>
+                <div className="text-4xl shrink-0">{medal.icon}</div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-[#262626] dark:text-white truncate">
                     {locale === 'ar' ? medal.nameAr : medal.name}
@@ -143,7 +143,7 @@ export function StudentMedalsDisplay({
                     {locale === 'ar' ? medal.descriptionAr : medal.description}
                   </p>
                   <div className="flex items-center gap-2 mt-3">
-                    <span className="text-xs font-semibold text-white px-2 py-1 rounded bg-[#FF5F02]">
+                    <span className="text-xs font-semibold text-white px-2 py-1 rounded bg-[#262626] dark:bg-white dark:text-black">
                       +{medal.points} pts
                     </span>
                     {count > 1 && (
@@ -166,13 +166,13 @@ export function StudentMedalsDisplay({
         </div>
 
         {/* Total Points */}
-        <div className="mt-6 p-5 rounded-xl bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30 border-2 border-[#FF5F02] shadow-lg">
+        <div className="mt-6 p-5 rounded-xl bg-gray-50 dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000]">
           <div className="flex items-center justify-between">
             <span className="font-bold text-[#262626] dark:text-white text-lg">
               {locale === 'ar' ? 'إجمالي النقاط من الميداليات:' : 'Total Medal Points:'}
             </span>
-            <span className="text-3xl font-bold text-[#FF5F02] flex items-center gap-2">
-              <Award className="w-7 h-7" />
+            <span className="text-3xl font-bold text-[#262626] dark:text-white flex items-center gap-2">
+              <Award className="w-7 h-7 text-gray-700 dark:text-gray-200" />
               {medals.reduce((sum, sm) => sum + (sm.medal?.points || 0), 0)}
             </span>
           </div>

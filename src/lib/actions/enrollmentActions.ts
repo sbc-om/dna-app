@@ -2,11 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import {
-  getAllEnrollments,
+  getEnrollmentsByAcademyId,
   findEnrollmentById,
-  getEnrollmentsByStudentId,
-  getEnrollmentsByParentId,
-  getPendingPaymentsByParentId,
+  getEnrollmentsByStudentIdAndAcademyId,
+  getEnrollmentsByParentIdAndAcademyId,
+  getPendingPaymentsByParentIdAndAcademyId,
   createEnrollment,
   updateEnrollment,
   updatePaymentStatus,
@@ -14,20 +14,17 @@ import {
   type CreateEnrollmentInput,
   type Enrollment,
 } from '../db/repositories/enrollmentRepository';
-import { getCurrentUser } from '../auth/auth';
+import { requireAcademyContext, isAcademyAdmin } from '../academies/academyContext';
 import { findUserById } from '../db/repositories/userRepository';
 import { findCourseById } from '../db/repositories/courseRepository';
 
 // Get all enrollments (admin only)
 export async function getAllEnrollmentsAction() {
-  const user = await getCurrentUser();
-  
-  if (!user || user.role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const ctx = await requireAcademyContext('en');
+  if (!isAcademyAdmin(ctx)) return { success: false, error: 'Unauthorized' };
   
   try {
-    const enrollments = await getAllEnrollments();
+    const enrollments = await getEnrollmentsByAcademyId(ctx.academyId);
     
     // Enrich enrollments with course and student details
     const enrichedEnrollments = await Promise.all(
@@ -51,11 +48,8 @@ export async function getAllEnrollmentsAction() {
 
 // Get enrollments by student ID
 export async function getEnrollmentsByStudentIdAction(studentId: string) {
-  const user = await getCurrentUser();
-  
-  if (!user) {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const ctx = await requireAcademyContext('en');
+  const user = ctx.user;
   
   // Parents can only see their own children's enrollments
   if (user.role === 'parent') {
@@ -66,7 +60,7 @@ export async function getEnrollmentsByStudentIdAction(studentId: string) {
   }
   
   try {
-    const enrollments = await getEnrollmentsByStudentId(studentId);
+    const enrollments = await getEnrollmentsByStudentIdAndAcademyId(studentId, ctx.academyId);
     
     // Enrich enrollments with course details
     const enrichedEnrollments = await Promise.all(
@@ -88,19 +82,16 @@ export async function getEnrollmentsByStudentIdAction(studentId: string) {
 
 // Get enrollments for current user (parent sees their children's enrollments)
 export async function getMyEnrollmentsAction() {
-  const user = await getCurrentUser();
-  
-  if (!user) {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const ctx = await requireAcademyContext('en');
+  const user = ctx.user;
   
   try {
     let enrollments: Enrollment[];
     
-    if (user.role === 'admin') {
-      enrollments = await getAllEnrollments();
+    if (isAcademyAdmin(ctx)) {
+      enrollments = await getEnrollmentsByAcademyId(ctx.academyId);
     } else if (user.role === 'parent') {
-      enrollments = await getEnrollmentsByParentId(user.id);
+      enrollments = await getEnrollmentsByParentIdAndAcademyId(user.id, ctx.academyId);
     } else {
       return { success: false, error: 'Unauthorized' };
     }
@@ -127,20 +118,17 @@ export async function getMyEnrollmentsAction() {
 
 // Get pending payments for parent
 export async function getPendingPaymentsAction() {
-  const user = await getCurrentUser();
-  
-  if (!user) {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const ctx = await requireAcademyContext('en');
+  const user = ctx.user;
   
   try {
     let enrollments: Enrollment[];
     
-    if (user.role === 'admin') {
-      const allEnrollments = await getAllEnrollments();
-      enrollments = allEnrollments.filter(e => e.paymentStatus === 'pending');
+    if (isAcademyAdmin(ctx)) {
+      const allEnrollments = await getEnrollmentsByAcademyId(ctx.academyId);
+      enrollments = allEnrollments.filter((e) => e.paymentStatus === 'pending');
     } else if (user.role === 'parent') {
-      enrollments = await getPendingPaymentsByParentId(user.id);
+      enrollments = await getPendingPaymentsByParentIdAndAcademyId(user.id, ctx.academyId);
     } else {
       return { success: false, error: 'Unauthorized' };
     }
@@ -154,11 +142,8 @@ export async function getPendingPaymentsAction() {
 
 // Create enrollment (admin only)
 export async function createEnrollmentAction(input: CreateEnrollmentInput) {
-  const user = await getCurrentUser();
-  
-  if (!user || user.role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const ctx = await requireAcademyContext('en');
+  if (!isAcademyAdmin(ctx)) return { success: false, error: 'Unauthorized' };
   
   try {
     // Validate student exists
@@ -172,6 +157,10 @@ export async function createEnrollmentAction(input: CreateEnrollmentInput) {
     if (!course) {
       return { success: false, error: 'Invalid course' };
     }
+
+    if (course.academyId !== ctx.academyId) {
+      return { success: false, error: 'Invalid course for current academy' };
+    }
     
     // Validate parent exists
     const parent = await findUserById(input.parentId);
@@ -179,7 +168,7 @@ export async function createEnrollmentAction(input: CreateEnrollmentInput) {
       return { success: false, error: 'Invalid parent' };
     }
     
-    const enrollment = await createEnrollment(input);
+    const enrollment = await createEnrollment({ ...input, academyId: ctx.academyId });
     revalidatePath('/[locale]/dashboard/enrollments');
     revalidatePath('/[locale]/dashboard/kids');
     return { success: true, enrollment };
@@ -191,17 +180,19 @@ export async function createEnrollmentAction(input: CreateEnrollmentInput) {
 
 // Upload payment proof (parent only)
 export async function uploadPaymentProofAction(enrollmentId: string, proofUrl: string) {
-  const user = await getCurrentUser();
-  
-  if (!user || user.role !== 'parent') {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const ctx = await requireAcademyContext('en');
+  const user = ctx.user;
+  if (user.role !== 'parent') return { success: false, error: 'Unauthorized' };
   
   try {
     const enrollment = await findEnrollmentById(enrollmentId);
     
     if (!enrollment) {
       return { success: false, error: 'Enrollment not found' };
+    }
+
+    if (enrollment.academyId !== ctx.academyId) {
+      return { success: false, error: 'Unauthorized' };
     }
     
     // Verify parent owns this enrollment
@@ -228,13 +219,18 @@ export async function updatePaymentStatusAction(
   status: 'pending' | 'paid' | 'rejected',
   notes?: string
 ) {
-  const user = await getCurrentUser();
-  
-  if (!user || user.role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const ctx = await requireAcademyContext('en');
+  if (!isAcademyAdmin(ctx)) return { success: false, error: 'Unauthorized' };
   
   try {
+    const existing = await findEnrollmentById(enrollmentId);
+    if (!existing) {
+      return { success: false, error: 'Enrollment not found' };
+    }
+    if (existing.academyId !== ctx.academyId) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
     const updates: any = {
       paymentStatus: status,
     };
@@ -265,17 +261,26 @@ export async function updatePaymentStatusAction(
 
 // Update enrollment course (admin only)
 export async function updateEnrollmentCourseAction(enrollmentId: string, courseId: string) {
-  const user = await getCurrentUser();
-  
-  if (!user || user.role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const ctx = await requireAcademyContext('en');
+  if (!isAcademyAdmin(ctx)) return { success: false, error: 'Unauthorized' };
   
   try {
     // Validate course exists
     const course = await findCourseById(courseId);
     if (!course) {
       return { success: false, error: 'Invalid course' };
+    }
+
+    if (course.academyId !== ctx.academyId) {
+      return { success: false, error: 'Invalid course for current academy' };
+    }
+
+    const existing = await findEnrollmentById(enrollmentId);
+    if (!existing) {
+      return { success: false, error: 'Enrollment not found' };
+    }
+    if (existing.academyId !== ctx.academyId) {
+      return { success: false, error: 'Unauthorized' };
     }
     
     const enrollment = await updateEnrollment(enrollmentId, { courseId });
@@ -296,13 +301,18 @@ export async function updateEnrollmentCourseAction(enrollmentId: string, courseI
 
 // Delete enrollment (admin only)
 export async function deleteEnrollmentAction(id: string) {
-  const user = await getCurrentUser();
-  
-  if (!user || user.role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const ctx = await requireAcademyContext('en');
+  if (!isAcademyAdmin(ctx)) return { success: false, error: 'Unauthorized' };
   
   try {
+    const existing = await findEnrollmentById(id);
+    if (!existing) {
+      return { success: false, error: 'Enrollment not found' };
+    }
+    if (existing.academyId !== ctx.academyId) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
     const deleted = await deleteEnrollment(id);
     
     if (!deleted) {

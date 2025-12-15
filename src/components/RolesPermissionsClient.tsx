@@ -71,6 +71,12 @@ export function RolesPermissionsClient({ dictionary, initialRolePermissions }: R
       icon: Crown, 
       color: 'bg-orange-600' 
     },
+    manager: {
+      en: 'Academy Manager',
+      ar: 'مدير الأكاديمية',
+      icon: Shield,
+      color: 'bg-orange-500'
+    },
     coach: { 
       en: 'Coach', 
       ar: 'مدرب', 
@@ -98,6 +104,7 @@ export function RolesPermissionsClient({ dictionary, initialRolePermissions }: R
     canViewReports: { en: 'View Reports', ar: 'عرض التقارير' },
     canManageSchedules: { en: 'Manage Schedules', ar: 'إدارة الجداول' },
     canManageAppointments: { en: 'Manage Appointments', ar: 'إدارة المواعيد' },
+    canManageAcademies: { en: 'Manage Academies', ar: 'إدارة الأكاديميات' },
     canManageNotifications: { en: 'Manage Notifications', ar: 'إدارة الإشعارات' },
     canViewProfile: { en: 'View Profile', ar: 'عرض الملف الشخصي' },
     canEditProfile: { en: 'Edit Profile', ar: 'تعديل الملف الشخصي' },

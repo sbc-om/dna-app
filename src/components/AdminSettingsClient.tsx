@@ -139,7 +139,7 @@ export default function AdminSettingsClient({ locale, dict }: AdminSettingsClien
         </TabsList>
 
         <TabsContent value="general" className="space-y-6">
-          <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#262626] shadow-lg">
+          <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#262626]">
             <CardHeader className="py-4">
               <CardTitle className="text-[#262626] dark:text-white">{locale === 'ar' ? 'المعلومات الشخصية' : 'Personal Information'}</CardTitle>
             </CardHeader>
@@ -257,7 +257,7 @@ export default function AdminSettingsClient({ locale, dict }: AdminSettingsClien
                   onChange={(e) => setFormData({ ...formData, paymentInstructions: e.target.value })}
                   placeholder="Please transfer the amount to the account above and upload the receipt..."
                   rows={4}
-                  className="resize-none bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  className="resize-none bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-gray-400 dark:focus:border-gray-600 text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
               </div>
               <div>
@@ -269,14 +269,14 @@ export default function AdminSettingsClient({ locale, dict }: AdminSettingsClien
                   placeholder="يرجى تحويل المبلغ إلى الحساب أعلاه ورفع إيصال الدفع..."
                   dir="rtl"
                   rows={4}
-                  className="resize-none bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  className="resize-none bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-gray-400 dark:focus:border-gray-600 text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
               </div>
             </CardContent>
           </Card>
 
           <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={saving} className="h-12 bg-gradient-to-r from-[#FF5F02] to-[#FF8534] hover:from-[#FF8534] hover:to-[#FF5F02] text-white shadow-lg active:scale-95 transition-all">
+            <Button onClick={handleSave} disabled={saving} className="h-12 bg-[#262626] hover:bg-black text-white dark:bg-white dark:hover:bg-gray-200 dark:text-black active:scale-95 transition-transform">
               <Save className="h-4 w-4 mr-2" />
               {saving ? (locale === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (locale === 'ar' ? 'حفظ الإعدادات' : 'Save Settings')}
             </Button>
@@ -284,7 +284,7 @@ export default function AdminSettingsClient({ locale, dict }: AdminSettingsClien
         </TabsContent>
 
         <TabsContent value="categories">
-          <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#262626] shadow-lg">
+          <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#262626]">
             <CardHeader className="py-4">
               <CardTitle className="text-[#262626] dark:text-white">{locale === 'ar' ? 'إدارة الفئات' : 'Category Management'}</CardTitle>
             </CardHeader>
@@ -297,7 +297,7 @@ export default function AdminSettingsClient({ locale, dict }: AdminSettingsClien
                     value={newCategory.name}
                     onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
                     placeholder="e.g. Football"
-                    className="h-12 bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                    className="h-12 bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-gray-400 dark:focus:border-gray-600 text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   />
                 </div>
                 <div className="flex-1 space-y-2 w-full">
@@ -307,10 +307,10 @@ export default function AdminSettingsClient({ locale, dict }: AdminSettingsClien
                     onChange={(e) => setNewCategory({ ...newCategory, nameAr: e.target.value })}
                     placeholder="مثال: كرة القدم"
                     dir="rtl"
-                    className="h-12 bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                    className="h-12 bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-gray-400 dark:focus:border-gray-600 text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   />
                 </div>
-                <Button onClick={handleAddCategory} disabled={addingCategory} className="h-12 bg-gradient-to-r from-[#FF5F02] to-[#FF8534] hover:from-[#FF8534] hover:to-[#FF5F02] text-white shadow-lg active:scale-95 transition-all">
+                <Button onClick={handleAddCategory} disabled={addingCategory} className="h-12 bg-[#262626] hover:bg-black text-white dark:bg-white dark:hover:bg-gray-200 dark:text-black active:scale-95 transition-transform">
                   <Plus className="w-4 h-4 mr-2" />
                   {addingCategory ? (locale === 'ar' ? 'جاري الإضافة...' : 'Adding...') : (locale === 'ar' ? 'إضافة' : 'Add')}
                 </Button>
@@ -324,7 +324,7 @@ export default function AdminSettingsClient({ locale, dict }: AdminSettingsClien
                     className="flex items-center justify-between p-4 border-2 border-[#DDDDDD] dark:border-[#000000] rounded-lg bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="p-2 bg-[#FF5F02]/10 dark:bg-[#FF5F02]/20 rounded-full text-[#FF5F02]">
+                      <div className="p-2 bg-black/5 dark:bg-white/5 rounded-full text-gray-700 dark:text-gray-200">
                         <Tag className="w-4 h-4" />
                       </div>
                       <div>

@@ -13,6 +13,7 @@ export interface RolePermission {
     canAccessDashboard: boolean;
     canManageUsers: boolean;
     canManageRoles: boolean;
+    canManageAcademies: boolean;
     canViewReports: boolean;
     canManageSchedules: boolean;
     canManageAppointments: boolean;
@@ -34,13 +35,150 @@ export interface RolePermission {
 
 const ROLE_PERMISSIONS_PREFIX = 'role_permissions:';
 
+const DEFAULT_PERMISSIONS: Record<UserRole, RolePermission['permissions']> = {
+  [ROLES.ADMIN]: {
+    canAccessDashboard: true,
+    canManageUsers: true,
+    canManageRoles: true,
+    canManageAcademies: true,
+    canViewReports: true,
+    canManageSchedules: true,
+    canManageAppointments: true,
+    canManageNotifications: true,
+    canViewProfile: true,
+    canEditProfile: true,
+    canAccessSettings: true,
+    canManageBackups: true,
+    canAccessMessages: true,
+    canCreateGroup: true,
+    canSendPushNotifications: true,
+    canManageCourses: true,
+    canViewPayments: true,
+    canSendWhatsApp: true,
+  },
+  [ROLES.MANAGER]: {
+    canAccessDashboard: true,
+    canManageUsers: true,
+    canManageRoles: true,
+    canManageAcademies: false,
+    canViewReports: true,
+    canManageSchedules: true,
+    canManageAppointments: true,
+    canManageNotifications: true,
+    canViewProfile: true,
+    canEditProfile: true,
+    canAccessSettings: true,
+    canManageBackups: true,
+    canAccessMessages: true,
+    canCreateGroup: true,
+    canSendPushNotifications: true,
+    canManageCourses: true,
+    canViewPayments: true,
+    canSendWhatsApp: true,
+  },
+  [ROLES.COACH]: {
+    canAccessDashboard: true,
+    canManageUsers: false,
+    canManageRoles: false,
+    canManageAcademies: false,
+    canViewReports: true,
+    canManageSchedules: true,
+    canManageAppointments: true,
+    canManageNotifications: true,
+    canViewProfile: true,
+    canEditProfile: true,
+    canAccessSettings: false,
+    canManageBackups: false,
+    canAccessMessages: true,
+    canCreateGroup: true,
+    canSendPushNotifications: true,
+    canManageCourses: false,
+    canViewPayments: false,
+    canSendWhatsApp: true,
+  },
+  [ROLES.PARENT]: {
+    canAccessDashboard: true,
+    canManageUsers: false,
+    canManageRoles: false,
+    canManageAcademies: false,
+    canViewReports: false,
+    canManageSchedules: false,
+    canManageAppointments: true,
+    canManageNotifications: false,
+    canViewProfile: true,
+    canEditProfile: true,
+    canAccessSettings: false,
+    canManageBackups: false,
+    canAccessMessages: true,
+    canCreateGroup: false,
+    canSendPushNotifications: false,
+    canManageCourses: false,
+    canViewPayments: true,
+    canSendWhatsApp: false,
+  },
+  [ROLES.KID]: {
+    canAccessDashboard: true,
+    canManageUsers: false,
+    canManageRoles: false,
+    canManageAcademies: false,
+    canViewReports: false,
+    canManageSchedules: false,
+    canManageAppointments: false,
+    canManageNotifications: false,
+    canViewProfile: true,
+    canEditProfile: false,
+    canAccessSettings: false,
+    canManageBackups: false,
+    canAccessMessages: true,
+    canCreateGroup: false,
+    canSendPushNotifications: false,
+    canManageCourses: false,
+    canViewPayments: false,
+    canSendWhatsApp: false,
+  },
+};
+
+function mergeWithDefaultPermissions(role: UserRole, stored: any): { merged: RolePermission['permissions']; changed: boolean } {
+  const defaults = DEFAULT_PERMISSIONS[role];
+  const storedPerms = (stored || {}) as Partial<RolePermission['permissions']>;
+  const merged = { ...defaults, ...storedPerms };
+  const changed = (Object.keys(defaults) as Array<keyof RolePermission['permissions']>).some(
+    (k) => typeof storedPerms[k] !== 'boolean'
+  );
+  return { merged, changed };
+}
+
 /**
  * Get permissions for a specific role
  */
 export async function getRolePermissions(role: UserRole): Promise<RolePermission | null> {
   const db = getDatabase();
   const permissions = await db.get(`${ROLE_PERMISSIONS_PREFIX}${role}`);
-  return permissions || null;
+  if (!permissions) {
+    const seeded: RolePermission = {
+      id: generateId(),
+      role,
+      permissions: DEFAULT_PERMISSIONS[role],
+      updatedAt: new Date().toISOString(),
+      updatedBy: 'system',
+    };
+    await db.put(`${ROLE_PERMISSIONS_PREFIX}${role}`, seeded);
+    return seeded;
+  }
+
+  const existing = permissions as RolePermission;
+  const { merged, changed } = mergeWithDefaultPermissions(role, (existing as any).permissions);
+
+  if (!changed) return existing;
+
+  const backfilled: RolePermission = {
+    ...existing,
+    permissions: merged,
+    updatedAt: new Date().toISOString(),
+    updatedBy: existing.updatedBy || 'system',
+  };
+  await db.put(`${ROLE_PERMISSIONS_PREFIX}${role}`, backfilled);
+  return backfilled;
 }
 
 /**
@@ -89,86 +227,7 @@ export async function updateRolePermissions(
  * Initialize default permissions for all roles if not exists
  */
 export async function initializeDefaultRolePermissions(): Promise<void> {
-  const defaultPermissions: Record<UserRole, RolePermission['permissions']> = {
-    [ROLES.ADMIN]: {
-      canAccessDashboard: true,
-      canManageUsers: true,
-      canManageRoles: true,
-      canViewReports: true,
-      canManageSchedules: true,
-      canManageAppointments: true,
-      canManageNotifications: true,
-      canViewProfile: true,
-      canEditProfile: true,
-      canAccessSettings: true,
-      canManageBackups: true,
-      canAccessMessages: true,
-      canCreateGroup: true,
-      canSendPushNotifications: true,
-      canManageCourses: true,
-      canViewPayments: true,
-      canSendWhatsApp: true,
-    },
-    [ROLES.COACH]: {
-      canAccessDashboard: true,
-      canManageUsers: false,
-      canManageRoles: false,
-      canViewReports: true,
-      canManageSchedules: true,
-      canManageAppointments: true,
-      canManageNotifications: true,
-      canViewProfile: true,
-      canEditProfile: true,
-      canAccessSettings: false,
-      canManageBackups: false,
-      canAccessMessages: true,
-      canCreateGroup: true,
-      canSendPushNotifications: true,
-      canManageCourses: false,
-      canViewPayments: false,
-      canSendWhatsApp: true,
-    },
-    [ROLES.PARENT]: {
-      canAccessDashboard: true,
-      canManageUsers: false,
-      canManageRoles: false,
-      canViewReports: false,
-      canManageSchedules: false,
-      canManageAppointments: true,
-      canManageNotifications: false,
-      canViewProfile: true,
-      canEditProfile: true,
-      canAccessSettings: false,
-      canManageBackups: false,
-      canAccessMessages: true,
-      canCreateGroup: false,
-      canSendPushNotifications: false,
-      canManageCourses: false,
-      canViewPayments: true,
-      canSendWhatsApp: false,
-    },
-    [ROLES.KID]: {
-      canAccessDashboard: true,
-      canManageUsers: false,
-      canManageRoles: false,
-      canViewReports: false,
-      canManageSchedules: false,
-      canManageAppointments: false,
-      canManageNotifications: false,
-      canViewProfile: true,
-      canEditProfile: false,
-      canAccessSettings: false,
-      canManageBackups: false,
-      canAccessMessages: true,
-      canCreateGroup: false,
-      canSendPushNotifications: false,
-      canManageCourses: false,
-      canViewPayments: false,
-      canSendWhatsApp: false,
-    },
-  };
-
-  for (const [role, permissions] of Object.entries(defaultPermissions)) {
+  for (const [role, permissions] of Object.entries(DEFAULT_PERMISSIONS)) {
     const existing = await getRolePermissions(role as UserRole);
     if (!existing) {
       await updateRolePermissions(role as UserRole, permissions, 'system');

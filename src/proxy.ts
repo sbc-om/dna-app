@@ -28,7 +28,6 @@ const authRoutes = [
 // API routes that don't require auth
 const publicApiRoutes = [
   '/api/auth/login',
-  '/api/auth/register',
   '/api/health',
   '/api/appointments/public',
   '/api/schedules',

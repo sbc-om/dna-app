@@ -6,6 +6,7 @@ import {
   LayoutDashboard, 
   Users, 
   Shield, 
+  Building2,
   Calendar,
   CalendarClock,
   Bell,
@@ -50,6 +51,20 @@ const menuItems: MenuItem[] = [
     labelKey: 'users',
     href: '/dashboard/users',
     icon: Users,
+  },
+  {
+    key: 'roles',
+    resourceKey: 'dashboard.roles',
+    labelKey: 'roles',
+    href: '/dashboard/roles',
+    icon: Shield,
+  },
+  {
+    key: 'academies',
+    resourceKey: 'dashboard.academies',
+    labelKey: 'academies',
+    href: '/dashboard/academies',
+    icon: Building2,
   },
   {
     key: 'messages',
@@ -138,7 +153,7 @@ export function DashboardSidebar({
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <h2 className="text-xl font-bold text-[#FF5F02] truncate">
+              <h2 className="text-xl font-bold text-white truncate">
                 DNA
               </h2>
               <p className="text-xs font-medium text-white truncate">Discover Natural Ability</p>
@@ -162,11 +177,14 @@ export function DashboardSidebar({
                 href={href}
                 onClick={() => onMobileClose && onMobileClose()}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3.5 rounded-lg transition-all duration-200 touch-manipulation",
-                  "active:scale-[0.98] active:brightness-95",
+                  "flex items-center gap-3 px-4 py-3.5 rounded-lg transition-colors duration-200 touch-manipulation",
+                  "active:scale-[0.98]",
                   isActive 
-                    ? "bg-[#FF5F02] text-white shadow-lg shadow-[#FF5F02]/30" 
-                    : "text-white hover:bg-[#000000] hover:shadow-md",
+                    ? cn(
+                        "bg-white/5 text-white border border-white/10",
+                        isRTL ? "border-r-4 border-r-white/40" : "border-l-4 border-l-white/40"
+                      )
+                    : "text-white/80 hover:text-white hover:bg-white/5 border-2 border-transparent",
                   isCollapsed && "lg:justify-center lg:px-3",
                   "min-h-12" // Touch-friendly minimum height
                 )}
@@ -179,9 +197,6 @@ export function DashboardSidebar({
                   </span>
                 )}
                 
-                {!isCollapsed && isActive && (
-                  <div className="h-2 w-2 rounded-full bg-white animate-pulse" />
-                )}
               </Link>
             </div>
           );
@@ -222,7 +237,7 @@ export function DashboardSidebar({
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className={cn(
-            "absolute top-20 -right-3 h-6 w-6 rounded-full bg-[#FF5F02] border border-[#FF5F02] flex items-center justify-center hover:bg-[#262626] transition-all duration-200 z-50 text-white hover:scale-110 active:scale-95",
+            "absolute top-20 -right-3 h-7 w-7 rounded-full bg-[#1a1a1a] border border-white/10 flex items-center justify-center hover:bg-[#0f0f0f] transition-colors duration-200 z-50 text-white active:scale-95",
             isRTL && "-left-3 right-auto"
           )}
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -238,7 +253,7 @@ export function DashboardSidebar({
       {/* Mobile Sidebar */}
       <aside 
         className={cn(
-          "lg:hidden fixed top-0 bottom-0 z-50 bg-[#262626] shadow-2xl transition-all duration-300 ease-out flex flex-col",
+          "lg:hidden fixed top-0 bottom-0 z-50 bg-[#262626] border-r border-[#000000] transition-all duration-300 ease-out flex flex-col",
           "w-[85vw] max-w-[320px] sm:w-80",
           isMobileOpen 
             ? "translate-x-0" 
@@ -259,7 +274,7 @@ export function DashboardSidebar({
               className="h-8 w-8 object-contain"
             />
             <div>
-              <h2 className="text-lg font-bold text-[#FF5F02]">DNA</h2>
+              <h2 className="text-lg font-bold text-white">DNA</h2>
               <p className="text-xs text-white">Menu</p>
             </div>
           </div>

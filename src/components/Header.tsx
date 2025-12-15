@@ -81,16 +81,18 @@ export function Header({ dictionary, locale, user }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-white dark:bg-[#262626] shadow-sm">
+    <header className="sticky top-0 z-40 border-b-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#1a1a1a] backdrop-blur-xl">
       <div className="flex h-16 items-center justify-between px-4 sm:px-6 max-w-7xl mx-auto">
         {/* Logo & Title */}
-        <Link href={`/${locale}`} className="flex items-center gap-3">
-          <img 
-            src="/logo.png" 
-            alt="DNA Logo" 
-            className="h-8 w-8 object-contain"
-          />
-          <h1 className="hidden sm:block text-xl font-bold text-[#FF5F02]">
+        <Link href={`/${locale}`} className="flex items-center gap-3 group">
+          <div className="p-1.5 bg-white dark:bg-[#262626] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
+            <img 
+              src="/logo.png" 
+              alt="DNA Logo" 
+              className="h-7 w-7 object-contain"
+            />
+          </div>
+          <h1 className="hidden sm:block text-xl font-bold text-[#262626] dark:text-white">
             Discover Natural Ability
           </h1>
         </Link>
@@ -105,63 +107,67 @@ export function Header({ dictionary, locale, user }: HeaderProps) {
               variant="ghost"
               size="icon"
               onClick={handleInstall}
-              className="h-10 w-10 rounded-lg hover:bg-[#DDDDDD] text-[#FF5F02]"
+              className="h-10 w-10 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-colors border-2 border-transparent hover:border-black/10 dark:hover:border-white/10"
               title="Install App"
             >
-              <Download className="h-5 w-5" />
+              <Download className="h-5 w-5 text-green-600 dark:text-green-500" />
               <span className="sr-only">Install App</span>
             </Button>
           )}
 
-          {/* Notifications Button */}
-          <Link href={`/${locale}/dashboard/notifications`}>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-lg hover:bg-[#DDDDDD] text-[#FF5F02] relative"
-              title={dictionary.nav.notifications}
-            >
-              <Bell className="h-5 w-5" />
-              <span className="sr-only">{dictionary.nav.notifications}</span>
-            </Button>
-          </Link>
+          {/* Show notifications and dashboard link only for logged-in users */}
+          {user && (
+            <>
+              <Link href={`/${locale}/dashboard/notifications`}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-colors border-2 border-transparent hover:border-black/10 dark:hover:border-white/10 relative"
+                  title={dictionary.nav.notifications}
+                >
+                  <Bell className="h-5 w-5 text-gray-700 dark:text-gray-200" />
+                  <span className="sr-only">{dictionary.nav.notifications}</span>
+                </Button>
+              </Link>
+            </>
+          )}
 
           {/* User Menu or Login Button */}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-[#DDDDDD]">
-                  <div className="h-8 w-8 rounded-full bg-[#FF5F02] flex items-center justify-center text-white text-sm font-semibold shadow-lg">
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full active:scale-95 transition-colors border-2 border-transparent hover:border-black/10 dark:hover:border-white/10">
+                  <div className="h-8 w-8 rounded-full bg-[#262626] dark:bg-[#262626] flex items-center justify-center text-white text-sm font-bold border-2 border-[#DDDDDD] dark:border-[#000000]">
                     {user.fullName?.[0]?.toUpperCase() || 'U'}
                   </div>
                   <span className="sr-only">User menu</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
+                <DropdownMenuLabel className="bg-gray-50 dark:bg-[#1a1a1a]">
                   <div className="flex flex-col space-y-1">
-                    <span className="text-sm font-semibold">
+                    <span className="text-sm font-bold text-[#262626] dark:text-white">
                       {user.fullName || dictionary.common.welcome}
                     </span>
-                    <span className="text-xs text-muted-foreground">{user.email}</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">{user.email}</span>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-[#DDDDDD] dark:bg-[#000000]" />
                 
-                {/* Dashboard Links */}
+                {/* Dashboard Link */}
                 {user.role && user.role !== 'kid' && (
                   <>
                     <Link href={`/${locale}/dashboard`}>
-                      <DropdownMenuItem className="cursor-pointer">
-                        <User className="mr-2 h-4 w-4" />
-                        <span>{dictionary.nav?.dashboard || 'Dashboard'}</span>
+                      <DropdownMenuItem className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 focus:bg-black/5 dark:focus:bg-white/5">
+                        <User className="mr-2 h-4 w-4 text-gray-700 dark:text-gray-200" />
+                        <span className="font-medium">{dictionary.nav?.dashboard || 'Dashboard'}</span>
                       </DropdownMenuItem>
                     </Link>
-                    <DropdownMenuSeparator />
+                    <DropdownMenuSeparator className="bg-[#DDDDDD] dark:bg-[#000000]" />
                   </>
                 )}
                 
-                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 focus:bg-red-50 dark:focus:bg-red-950/20 font-medium">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>{dictionary.common.logout}</span>
                 </DropdownMenuItem>
@@ -169,7 +175,7 @@ export function Header({ dictionary, locale, user }: HeaderProps) {
             </DropdownMenu>
           ) : (
             <Link href={`/${locale}/auth/login`}>
-              <Button className="bg-[#FF5F02] hover:bg-[#262626] text-white">
+              <Button className="h-10 px-6 bg-[#262626] hover:bg-black text-white font-semibold active:scale-95 transition-colors border-2 border-[#262626]">
                 {dictionary.common.login}
               </Button>
             </Link>

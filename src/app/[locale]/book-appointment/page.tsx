@@ -22,9 +22,9 @@ export default async function BookAppointmentPage({ params }: PageProps) {
       <main className="flex-1 overflow-y-auto bg-[#DDDDDD] dark:bg-[#000000]">
         <div className="min-h-full flex flex-col">
           <div className="flex-1">
-            <div className="max-w-2xl mx-auto py-12 px-4">
+            <div className="max-w-3xl mx-auto py-10 px-4">
               <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold text-[#262626] dark:text-white mb-4">
+                <h1 className="text-3xl sm:text-4xl font-bold text-[#262626] dark:text-white mb-3">
                   {dictionary.appointments?.bookAppointment || 'Book an Appointment'}
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">

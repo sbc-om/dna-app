@@ -61,17 +61,17 @@ export function EditKidProfileClient({
             variant="outline" 
             size="icon" 
             onClick={handleCancel}
-            className="bg-white dark:bg-[#262626] hover:bg-gray-50 dark:hover:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] shadow-md hover:shadow-lg transition-all"
+            className="bg-white dark:bg-[#262626] hover:bg-gray-50 dark:hover:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] transition-colors"
           >
-            <ArrowLeft className="h-5 w-5 text-[#FF5F02]" />
+            <ArrowLeft className="h-5 w-5 text-gray-700 dark:text-gray-200" />
           </Button>
           <div className="flex-1">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-[#FF5F02] to-[#FF8534] rounded-xl shadow-lg">
-                <Sparkles className="h-6 w-6 text-white" />
+              <div className="p-2 bg-black/5 dark:bg-white/5 rounded-xl">
+                <Sparkles className="h-6 w-6 text-gray-700 dark:text-gray-200" />
               </div>
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#FF5F02] to-[#FF8534] bg-clip-text text-transparent">
+                <h1 className="text-3xl md:text-4xl font-bold text-[#262626] dark:text-white">
                   {dictionary.users?.editUser || 'Edit Profile'}
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -84,11 +84,11 @@ export function EditKidProfileClient({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] shadow-xl hover:shadow-2xl transition-all overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-[#FF5F02]/10 to-[#FF8534]/10 dark:from-[#FF5F02]/20 dark:to-[#FF8534]/20 border-b-2 border-[#DDDDDD] dark:border-[#000000]">
+          <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] overflow-hidden">
+            <CardHeader className="bg-gray-50 dark:bg-[#1a1a1a] border-b-2 border-[#DDDDDD] dark:border-[#000000]">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#FF5F02] rounded-lg">
-                  <UserIcon className="h-5 w-5 text-white" />
+                <div className="p-2 bg-black/5 dark:bg-white/5 rounded-lg">
+                  <UserIcon className="h-5 w-5 text-gray-700 dark:text-gray-200" />
                 </div>
                 <div>
                   <CardTitle className="text-xl font-bold text-[#262626] dark:text-white">
@@ -107,7 +107,7 @@ export function EditKidProfileClient({
                   htmlFor="fullName" 
                   className="text-sm font-semibold text-[#262626] dark:text-white flex items-center gap-2"
                 >
-                  <UserIcon className="h-4 w-4 text-[#FF5F02]" />
+                  <UserIcon className="h-4 w-4 text-gray-700 dark:text-gray-200" />
                   {dictionary.common?.fullName || 'Full Name'}
                 </Label>
                 <Input
@@ -115,7 +115,7 @@ export function EditKidProfileClient({
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   placeholder={locale === 'ar' ? 'أدخل الاسم الكامل' : 'Enter full name'}
-                  className="bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white h-12 text-base transition-all"
+                  className="bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-gray-400 dark:focus:border-gray-600 text-[#262626] dark:text-white h-12 text-base transition-colors"
                 />
               </div>
 
@@ -125,7 +125,7 @@ export function EditKidProfileClient({
                   htmlFor="email" 
                   className="text-sm font-semibold text-[#262626] dark:text-white flex items-center gap-2"
                 >
-                  <Mail className="h-4 w-4 text-[#FF5F02]" />
+                  <Mail className="h-4 w-4 text-gray-700 dark:text-gray-200" />
                   {dictionary.common?.email || 'Email'}
                 </Label>
                 <Input
@@ -134,7 +134,7 @@ export function EditKidProfileClient({
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder={dictionary.auth?.emailPlaceholder || 'Enter email'}
-                  className="bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white h-12 text-base transition-all"
+                  className="bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-gray-400 dark:focus:border-gray-600 text-[#262626] dark:text-white h-12 text-base transition-colors"
                 />
               </div>
 
@@ -144,7 +144,7 @@ export function EditKidProfileClient({
                   htmlFor="phoneNumber" 
                   className="text-sm font-semibold text-[#262626] dark:text-white flex items-center gap-2"
                 >
-                  <Phone className="h-4 w-4 text-[#FF5F02]" />
+                  <Phone className="h-4 w-4 text-gray-700 dark:text-gray-200" />
                   {dictionary.common?.phoneNumber || 'Phone Number'}
                 </Label>
                 <Input
@@ -152,7 +152,7 @@ export function EditKidProfileClient({
                   value={formData.phoneNumber}
                   onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                   placeholder={locale === 'ar' ? 'أدخل رقم الهاتف' : 'Enter phone number'}
-                  className="bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white h-12 text-base transition-all"
+                  className="bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-gray-400 dark:focus:border-gray-600 text-[#262626] dark:text-white h-12 text-base transition-colors"
                 />
               </div>
 
@@ -162,7 +162,7 @@ export function EditKidProfileClient({
                   htmlFor="nationalId" 
                   className="text-sm font-semibold text-[#262626] dark:text-white flex items-center gap-2"
                 >
-                  <IdCard className="h-4 w-4 text-[#FF5F02]" />
+                  <IdCard className="h-4 w-4 text-gray-700 dark:text-gray-200" />
                   {dictionary.users?.nationalId || 'National ID'}
                 </Label>
                 <Input
@@ -170,7 +170,7 @@ export function EditKidProfileClient({
                   value={formData.nationalId}
                   onChange={(e) => setFormData({ ...formData, nationalId: e.target.value })}
                   placeholder={dictionary.users?.nationalIdPlaceholder || 'Enter national ID'}
-                  className="bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white h-12 text-base transition-all"
+                  className="bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-gray-400 dark:focus:border-gray-600 text-[#262626] dark:text-white h-12 text-base transition-colors"
                 />
               </div>
             </CardContent>
@@ -183,14 +183,14 @@ export function EditKidProfileClient({
               variant="outline" 
               onClick={handleCancel} 
               disabled={loading}
-              className="bg-white dark:bg-[#262626] hover:bg-gray-50 dark:hover:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white h-12 px-8 font-semibold shadow-md hover:shadow-lg transition-all"
+              className="bg-white dark:bg-[#262626] hover:bg-gray-50 dark:hover:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white h-12 px-8 font-semibold transition-colors"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               {dictionary.common?.cancel || 'Cancel'}
             </Button>
             <Button
               type="submit"
-              className="bg-gradient-to-r from-[#FF5F02] to-[#FF8534] hover:from-[#FF8534] hover:to-[#FF5F02] text-white h-12 px-8 font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+              className="bg-[#262626] hover:bg-black text-white dark:bg-white dark:hover:bg-gray-200 dark:text-black h-12 px-8 font-semibold transition-colors disabled:opacity-50"
               disabled={loading}
             >
               <Save className="h-4 w-4 mr-2" />

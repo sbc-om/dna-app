@@ -61,10 +61,10 @@ export function UsersTable({ users, dictionary, onUsersChange, locale }: UsersTa
               <img
                 src={user.profilePicture}
                 alt={fullName}
-                className="w-12 h-12 rounded-full object-cover border-2 border-orange-500 shadow-md"
+                className="w-12 h-12 rounded-full object-cover border-2 border-[#DDDDDD] dark:border-[#000000]"
               />
             ) : (
-              <div className="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-base border-2 border-orange-400 shadow-md">
+              <div className="w-12 h-12 rounded-full bg-[#262626] dark:bg-white flex items-center justify-center text-white dark:text-[#262626] font-bold text-base border-2 border-[#DDDDDD] dark:border-[#000000]">
                 {fullName.charAt(0).toUpperCase()}
               </div>
             )}
@@ -168,8 +168,8 @@ export function UsersTable({ users, dictionary, onUsersChange, locale }: UsersTa
             variant={isActive ? 'default' : 'secondary'}
             className={
               isActive
-                ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                ? 'bg-green-600/10 text-green-700 dark:text-green-400 border border-green-600/30'
+                : 'bg-gray-100 dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 border border-[#DDDDDD] dark:border-[#000000]'
             }
           >
             {isActive ? dictionary.users.active : dictionary.users.inactive}
@@ -220,9 +220,9 @@ export function UsersTable({ users, dictionary, onUsersChange, locale }: UsersTa
 
   if (users.length === 0) {
     return (
-      <div className="text-center py-16 px-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur rounded-2xl shadow-xl border-0">
+      <div className="text-center py-16 px-4 bg-white dark:bg-[#262626] rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000]">
         <div className="max-w-md mx-auto">
-          <div className="h-16 w-16 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center mx-auto mb-4">
+          <div className="h-16 w-16 rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-gray-50 dark:bg-[#1a1a1a] flex items-center justify-center mx-auto mb-4">
             <svg
               className="h-8 w-8 text-purple-600"
               fill="none"
@@ -245,7 +245,7 @@ export function UsersTable({ users, dictionary, onUsersChange, locale }: UsersTa
 
   return (
     <>
-      <div className="rounded-2xl border-0 shadow-xl overflow-hidden bg-white/80 dark:bg-gray-900/80 backdrop-blur p-6">
+      <div className="rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000] overflow-hidden bg-white dark:bg-[#262626] p-6">
         <DataTable
           columns={columns}
           data={users}

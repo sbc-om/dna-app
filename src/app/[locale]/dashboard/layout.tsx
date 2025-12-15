@@ -58,6 +58,9 @@ export default async function DashboardLayout({
   if (permissions?.canAccessSettings) {
     accessibleResources.push('dashboard.settings');
   }
+  if (permissions?.canManageAcademies) {
+    accessibleResources.push('dashboard.academies');
+  }
 
   // Transform user for DashboardHeader
   const headerUser = {

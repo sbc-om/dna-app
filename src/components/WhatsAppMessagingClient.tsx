@@ -369,7 +369,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
             <Button
               onClick={handleSendMessages}
               disabled={isLoading || selectedUsers.size === 0 || !message.trim()}
-              className="w-full h-12 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+              className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold transition-colors disabled:opacity-50"
             >
               {isLoading ? (
                 <>

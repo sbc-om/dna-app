@@ -4,6 +4,8 @@ import { revalidatePath, unstable_noStore as noStore } from 'next/cache';
 import {
   getAllCourses,
   getActiveCourses,
+  getCoursesByAcademyId,
+  getActiveCoursesByAcademyId,
   findCourseById,
   createCourse,
   updateCourse,
@@ -11,19 +13,16 @@ import {
   type CreateCourseInput,
   type Course,
 } from '../db/repositories/courseRepository';
-import { getCurrentUser } from '../auth/auth';
+import { requireAcademyContext, isAcademyAdmin } from '../academies/academyContext';
 
 // Get all courses (admin only)
 export async function getAllCoursesAction() {
   noStore();
-  const user = await getCurrentUser();
-  
-  if (!user || user.role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const ctx = await requireAcademyContext('en');
+  if (!isAcademyAdmin(ctx)) return { success: false, error: 'Unauthorized' };
   
   try {
-    const courses = await getAllCourses();
+    const courses = await getCoursesByAcademyId(ctx.academyId);
     return { success: true, courses };
   } catch (error) {
     console.error('Error getting courses:', error);
@@ -34,14 +33,10 @@ export async function getAllCoursesAction() {
 // Get active courses (accessible to all authenticated users)
 export async function getActiveCoursesAction() {
   noStore();
-  const user = await getCurrentUser();
-  
-  if (!user) {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const ctx = await requireAcademyContext('en');
   
   try {
-    const courses = await getActiveCourses();
+    const courses = await getActiveCoursesByAcademyId(ctx.academyId);
     return { success: true, courses };
   } catch (error) {
     console.error('Error getting active courses:', error);
@@ -52,17 +47,17 @@ export async function getActiveCoursesAction() {
 // Get course by ID
 export async function getCourseByIdAction(id: string) {
   noStore();
-  const user = await getCurrentUser();
-  
-  if (!user) {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const ctx = await requireAcademyContext('en');
   
   try {
     const course = await findCourseById(id);
     
     if (!course) {
       return { success: false, error: 'Course not found' };
+    }
+
+    if (ctx.user.role !== 'admin' && course.academyId !== ctx.academyId) {
+      return { success: false, error: 'Unauthorized' };
     }
     
     return { success: true, course };
@@ -74,14 +69,11 @@ export async function getCourseByIdAction(id: string) {
 
 // Create course (admin only)
 export async function createCourseAction(input: CreateCourseInput) {
-  const user = await getCurrentUser();
-  
-  if (!user || user.role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const ctx = await requireAcademyContext('en');
+  if (!isAcademyAdmin(ctx)) return { success: false, error: 'Unauthorized' };
   
   try {
-    const course = await createCourse(input);
+    const course = await createCourse({ ...input, academyId: ctx.academyId });
     revalidatePath('/[locale]/dashboard/courses', 'page');
     return { success: true, course };
   } catch (error) {
@@ -95,13 +87,18 @@ export async function updateCourseAction(
   id: string,
   updates: Partial<CreateCourseInput & { isActive: boolean }>
 ) {
-  const user = await getCurrentUser();
-  
-  if (!user || user.role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const ctx = await requireAcademyContext('en');
+  if (!isAcademyAdmin(ctx)) return { success: false, error: 'Unauthorized' };
   
   try {
+    const existing = await findCourseById(id);
+    if (!existing) {
+      return { success: false, error: 'Course not found' };
+    }
+    if (ctx.user.role !== 'admin' && existing.academyId !== ctx.academyId) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
     const course = await updateCourse(id, updates);
     
     if (!course) {
@@ -119,13 +116,18 @@ export async function updateCourseAction(
 
 // Delete course (admin only)
 export async function deleteCourseAction(id: string) {
-  const user = await getCurrentUser();
-  
-  if (!user || user.role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const ctx = await requireAcademyContext('en');
+  if (!isAcademyAdmin(ctx)) return { success: false, error: 'Unauthorized' };
   
   try {
+    const existing = await findCourseById(id);
+    if (!existing) {
+      return { success: false, error: 'Course not found' };
+    }
+    if (ctx.user.role !== 'admin' && existing.academyId !== ctx.academyId) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
     const deleted = await deleteCourse(id);
     
     if (!deleted) {

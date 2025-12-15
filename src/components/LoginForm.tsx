@@ -35,14 +35,14 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
     setError('');
     
     if (!formData.email) {
-      setError('Please enter your email address');
+      setError(dictionary.auth?.emailRequired || dictionary.errors.validationError);
       return;
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address');
+      setError(dictionary.auth?.invalidEmail || dictionary.errors.validationError);
       return;
     }
 
@@ -54,8 +54,6 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
-
-    console.log('🔐 Attempting login with:', formData.email);
 
     try {
       const response = await fetch('/api/auth/login', {
@@ -69,14 +67,9 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
         }),
       });
 
-      console.log('📡 Response status:', response.status);
-
       const data = await response.json();
-      console.log('📦 Response data:', data);
 
       if (!response.ok) {
-        console.error('❌ Login failed:', data.error);
-        
         // Check if 2FA is required
         if (data.requiresTwoFactor) {
           setNeedsTwoFactor(true);
@@ -90,12 +83,10 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
 
       // Get redirect URL from query params or default to dashboard
       const redirectUrl = searchParams.get('redirect') || `/${locale}/dashboard`;
-      console.log('✅ Login successful! Redirecting to:', redirectUrl);
       
       // Force a full page reload to ensure cookie is available
       window.location.href = redirectUrl;
     } catch (err) {
-      console.error('💥 Login error:', err);
       setError(dictionary.errors.serverError);
     } finally {
       setIsSubmitting(false);
@@ -152,16 +143,16 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
         }`}>
           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
             currentStep !== 'email' 
-              ? 'bg-[#FF5F02] text-white' 
-              : 'bg-white dark:bg-[#262626] border-2 border-[#FF5F02] text-[#FF5F02]'
+              ? 'bg-[#262626] text-white dark:bg-white dark:text-[#262626]' 
+              : 'bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white'
           }`}>
             {currentStep !== 'email' ? <CheckCircle className="w-5 h-5" /> : '1'}
           </div>
-          <span className="text-sm font-semibold text-[#262626] dark:text-white">Email</span>
+          <span className="text-sm font-semibold text-[#262626] dark:text-white">{dictionary.common.email}</span>
         </div>
         
         <div className={`w-12 h-1 transition-all ${
-          currentStep !== 'email' ? 'bg-[#FF5F02]' : 'bg-[#DDDDDD]'
+          currentStep !== 'email' ? 'bg-[#262626] dark:bg-white' : 'bg-[#DDDDDD] dark:bg-[#262626]'
         }`} />
         
         <div className={`flex items-center gap-2 transition-all duration-300 ${
@@ -171,20 +162,20 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
         }`}>
           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
             currentStep === 'twoFactor'
-              ? 'bg-[#FF5F02] text-white' 
+              ? 'bg-[#262626] text-white dark:bg-white dark:text-[#262626]' 
               : currentStep === 'password'
-              ? 'bg-white dark:bg-[#262626] border-2 border-[#FF5F02] text-[#FF5F02]'
-              : 'bg-[#DDDDDD] text-white'
+              ? 'bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white'
+              : 'bg-[#DDDDDD] dark:bg-[#1a1a1a] text-[#262626] dark:text-white'
           }`}>
             {currentStep === 'twoFactor' ? <CheckCircle className="w-5 h-5" /> : '2'}
           </div>
-          <span className="text-sm font-semibold text-[#262626] dark:text-white">Password</span>
+          <span className="text-sm font-semibold text-[#262626] dark:text-white">{dictionary.common.password}</span>
         </div>
 
         {needsTwoFactor && (
           <>
             <div className={`w-12 h-1 transition-all ${
-              currentStep === 'twoFactor' ? 'bg-[#FF5F02]' : 'bg-[#DDDDDD]'
+              currentStep === 'twoFactor' ? 'bg-[#262626] dark:bg-white' : 'bg-[#DDDDDD] dark:bg-[#262626]'
             }`} />
             
             <div className={`flex items-center gap-2 transition-all duration-300 ${
@@ -194,8 +185,8 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
             }`}>
               <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
                 currentStep === 'twoFactor'
-                  ? 'bg-white dark:bg-[#262626] border-2 border-[#FF5F02] text-[#FF5F02]'
-                  : 'bg-[#DDDDDD] text-white'
+                  ? 'bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white'
+                  : 'bg-[#DDDDDD] dark:bg-[#1a1a1a] text-[#262626] dark:text-white'
               }`}>
                 3
               </div>
@@ -213,7 +204,7 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
               {dictionary.common.email}
             </Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#FF5F02]" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-300" />
               <Input
                 id="email"
                 type="email"
@@ -222,7 +213,7 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
                 autoFocus
-                className="pl-10 h-12 border-[#DDDDDD] dark:border-[#262626] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] focus:ring-[#FF5F02] dark:focus:ring-[#FF5F02]"
+                className="pl-10 h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-black/30 dark:focus:border-white/20"
               />
             </div>
           </div>
@@ -236,10 +227,10 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
 
           <Button 
             type="submit" 
-            className="w-full h-12 bg-[#FF5F02] hover:bg-[#262626] text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+            className="w-full h-12 bg-[#262626] dark:bg-white text-white dark:text-[#262626] hover:bg-black dark:hover:bg-gray-100 font-semibold transition-colors"
           >
             <span className="flex items-center justify-center gap-2">
-              Continue
+              {dictionary.common?.continue || 'Continue'}
               <ArrowRight className="w-5 h-5" />
             </span>
           </Button>
@@ -249,9 +240,9 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
       {/* Step 2: Password */}
       {currentStep === 'password' && (
         <form onSubmit={handlePasswordSubmit} className="space-y-6">
-          <div className="p-3 bg-[#DDDDDD] dark:bg-[#262626] rounded-lg">
+          <div className="p-3 bg-gray-50 dark:bg-[#1a1a1a] rounded-lg border-2 border-[#DDDDDD] dark:border-[#000000]">
             <p className="text-sm text-[#262626] dark:text-white font-medium truncate">
-              <Mail className="w-4 h-4 inline mr-2 text-[#FF5F02]" />
+              <Mail className="w-4 h-4 inline mr-2 text-gray-500 dark:text-gray-300" />
               {formData.email}
             </p>
           </div>
@@ -261,7 +252,7 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
               {dictionary.common.password}
             </Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#FF5F02]" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-300" />
               <Input
                 id="password"
                 type="password"
@@ -270,7 +261,7 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
                 autoFocus
-                className="pl-10 h-12 border-[#DDDDDD] dark:border-[#262626] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] focus:ring-[#FF5F02] dark:focus:ring-[#FF5F02]"
+                className="pl-10 h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-black/30 dark:focus:border-white/20"
               />
             </div>
           </div>
@@ -285,7 +276,7 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
           <div className="flex items-center justify-between">
             <Link 
               href={`/${locale}/auth/forgot-password`}
-              className="text-sm text-[#FF5F02] hover:text-[#262626] dark:hover:text-white hover:underline"
+              className="text-sm text-[#262626] dark:text-white hover:underline"
             >
               {dictionary.auth.forgotPassword}
             </Link>
@@ -296,13 +287,13 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
               type="button"
               onClick={goBack}
               variant="outline"
-              className="h-12 border-[#DDDDDD] dark:border-[#262626] hover:bg-[#DDDDDD] dark:hover:bg-[#262626]"
+              className="h-12 border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#262626]"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <Button 
               type="submit" 
-              className="flex-1 h-12 bg-[#FF5F02] hover:bg-[#262626] text-white font-semibold shadow-lg hover:shadow-xl transition-all" 
+              className="flex-1 h-12 bg-[#262626] dark:bg-white text-white dark:text-[#262626] hover:bg-black dark:hover:bg-gray-100 font-semibold transition-colors" 
               disabled={isSubmitting}
             >
               {isSubmitting ? (
@@ -322,23 +313,23 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
       {currentStep === 'twoFactor' && (
         <form onSubmit={handleTwoFactorSubmit} className="space-y-6">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-[#FF5F02] rounded-full flex items-center justify-center mx-auto mb-4">
-              <Shield className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 bg-gray-50 dark:bg-[#1a1a1a] rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-[#DDDDDD] dark:border-[#000000]">
+              <Shield className="w-8 h-8 text-[#262626] dark:text-white" />
             </div>
             <h3 className="text-lg font-bold text-[#262626] dark:text-white mb-2">
-              Two-Factor Authentication
+              {dictionary.auth?.twoFactorTitle || 'Two-Factor Authentication'}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Enter the verification code from your authenticator app
+              {dictionary.auth?.twoFactorDescription || 'Enter the verification code from your authenticator app'}
             </p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="twoFactorCode" className="text-sm font-medium text-[#262626] dark:text-white">
-              Verification Code
+              {dictionary.auth?.verificationCode || 'Verification Code'}
             </Label>
             <div className="relative">
-              <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#FF5F02]" />
+              <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-300" />
               <Input
                 id="twoFactorCode"
                 type="text"
@@ -349,7 +340,7 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
                 autoFocus
                 maxLength={6}
                 pattern="[0-9]{6}"
-                className="pl-10 h-12 text-center text-2xl font-mono tracking-widest border-[#DDDDDD] dark:border-[#262626] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] focus:ring-[#FF5F02] dark:focus:ring-[#FF5F02]"
+                className="pl-10 h-12 text-center text-2xl font-mono tracking-widest bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-black/30 dark:focus:border-white/20"
               />
             </div>
           </div>
@@ -366,40 +357,28 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
               type="button"
               onClick={goBack}
               variant="outline"
-              className="h-12 border-[#DDDDDD] dark:border-[#262626] hover:bg-[#DDDDDD] dark:hover:bg-[#262626]"
+              className="h-12 border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#262626]"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <Button 
               type="submit" 
-              className="flex-1 h-12 bg-[#FF5F02] hover:bg-[#262626] text-white font-semibold shadow-lg hover:shadow-xl transition-all" 
+              className="flex-1 h-12 bg-[#262626] dark:bg-white text-white dark:text-[#262626] hover:bg-black dark:hover:bg-gray-100 font-semibold transition-colors" 
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Verifying...
+                  {dictionary.common.loading}
                 </span>
               ) : (
-                'Verify & Login'
+                dictionary.auth?.verifyAndLogin || 'Verify & Login'
               )}
             </Button>
           </div>
         </form>
       )}
 
-      {/* Register Link (only show on first step) */}
-      {currentStep === 'email' && (
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-          {dictionary.auth.noAccount}{' '}
-          <Link 
-            href={`/${locale}/auth/register`}
-            className="text-[#FF5F02] hover:text-[#262626] dark:hover:text-white font-semibold hover:underline"
-          >
-            {dictionary.auth.signupLink}
-          </Link>
-        </p>
-      )}
     </div>
   );
 }

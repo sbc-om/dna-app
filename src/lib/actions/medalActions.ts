@@ -1,16 +1,12 @@
 'use server';
 
-import { getCurrentUser } from '../auth/auth';
+import { requireAcademyContext, isAcademyAdmin } from '../academies/academyContext';
 import * as medalRepo from '../db/repositories/medalRepository';
 
 export async function getMedalsAction() {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'Unauthorized' };
-    }
-
-    const medals = await medalRepo.getAllMedals();
+    const ctx = await requireAcademyContext('en');
+    const medals = await medalRepo.getAllMedals(ctx.academyId);
     return { success: true, medals };
   } catch (error) {
     console.error('Get medals error:', error);
@@ -20,12 +16,8 @@ export async function getMedalsAction() {
 
 export async function getActiveMedalsAction() {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'Unauthorized' };
-    }
-
-    const medals = await medalRepo.getActiveMedals();
+    const ctx = await requireAcademyContext('en');
+    const medals = await medalRepo.getActiveMedals(ctx.academyId);
     return { success: true, medals };
   } catch (error) {
     console.error('Get active medals error:', error);
@@ -43,12 +35,12 @@ export async function createMedalAction(data: {
   isActive: boolean;
 }) {
   try {
-    const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') {
+    const ctx = await requireAcademyContext('en');
+    if (!isAcademyAdmin(ctx)) {
       return { success: false, error: 'Unauthorized' };
     }
 
-    const medal = await medalRepo.createMedal(data);
+    const medal = await medalRepo.createMedal(data, ctx.academyId);
     return { success: true, medal };
   } catch (error) {
     console.error('Create medal error:', error);
@@ -66,12 +58,12 @@ export async function updateMedalAction(id: string, updates: {
   isActive?: boolean;
 }) {
   try {
-    const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') {
+    const ctx = await requireAcademyContext('en');
+    if (!isAcademyAdmin(ctx)) {
       return { success: false, error: 'Unauthorized' };
     }
 
-    const medal = await medalRepo.updateMedal(id, updates);
+    const medal = await medalRepo.updateMedal(id, updates, ctx.academyId);
     if (!medal) {
       return { success: false, error: 'Medal not found' };
     }
@@ -85,12 +77,12 @@ export async function updateMedalAction(id: string, updates: {
 
 export async function deleteMedalAction(id: string) {
   try {
-    const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') {
+    const ctx = await requireAcademyContext('en');
+    if (!isAcademyAdmin(ctx)) {
       return { success: false, error: 'Unauthorized' };
     }
 
-    const deleted = await medalRepo.deleteMedal(id);
+    const deleted = await medalRepo.deleteMedal(id, ctx.academyId);
     if (!deleted) {
       return { success: false, error: 'Medal not found' };
     }
@@ -110,15 +102,16 @@ export async function awardMedalAction(data: {
   notes?: string;
 }) {
   try {
-    const user = await getCurrentUser();
-    if (!user || (user.role !== 'coach' && user.role !== 'admin')) {
+    const ctx = await requireAcademyContext('en');
+    const user = ctx.user;
+    if (!user || (user.role !== 'coach' && !isAcademyAdmin(ctx))) {
       return { success: false, error: 'Unauthorized' };
     }
 
     const studentMedal = await medalRepo.awardMedal({
       ...data,
       awardedBy: user.id,
-    });
+    }, ctx.academyId);
 
     return { success: true, studentMedal };
   } catch (error) {
@@ -129,16 +122,12 @@ export async function awardMedalAction(data: {
 
 export async function getStudentMedalsAction(studentId: string) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'Unauthorized' };
-    }
-
-    const studentMedals = await medalRepo.getStudentMedalsByStudent(studentId);
+    const ctx = await requireAcademyContext('en');
+    const studentMedals = await medalRepo.getStudentMedalsByStudent(studentId, ctx.academyId);
     
     // Enrich with medal details
     const medalsWithDetails = studentMedals.map((sm) => {
-      const medal = medalRepo.getMedalById(sm.medalId);
+      const medal = medalRepo.getMedalById(sm.medalId, ctx.academyId);
       return { ...sm, medal: medal || undefined };
     });
     
@@ -151,16 +140,12 @@ export async function getStudentMedalsAction(studentId: string) {
 
 export async function getStudentCourseMedalsAction(studentId: string, courseId: string) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, error: 'Unauthorized' };
-    }
-
-    const studentMedals = await medalRepo.getStudentMedalsByCourse(studentId, courseId);
+    const ctx = await requireAcademyContext('en');
+    const studentMedals = await medalRepo.getStudentMedalsByCourse(studentId, courseId, ctx.academyId);
     
     // Enrich with medal details
     const medalsWithDetails = studentMedals.map((sm) => {
-      const medal = medalRepo.getMedalById(sm.medalId);
+      const medal = medalRepo.getMedalById(sm.medalId, ctx.academyId);
       return { ...sm, medal: medal || undefined };
     });
     
@@ -173,12 +158,13 @@ export async function getStudentCourseMedalsAction(studentId: string, courseId: 
 
 export async function removeMedalFromStudentAction(id: string) {
   try {
-    const user = await getCurrentUser();
-    if (!user || (user.role !== 'coach' && user.role !== 'admin')) {
+    const ctx = await requireAcademyContext('en');
+    const user = ctx.user;
+    if (!user || (user.role !== 'coach' && !isAcademyAdmin(ctx))) {
       return { success: false, error: 'Unauthorized' };
     }
 
-    const removed = await medalRepo.removeMedalFromStudent(id);
+    const removed = await medalRepo.removeMedalFromStudent(id, ctx.academyId);
     if (!removed) {
       return { success: false, error: 'Medal award not found' };
     }

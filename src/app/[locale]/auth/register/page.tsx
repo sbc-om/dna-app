@@ -1,6 +1,5 @@
-import { getDictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
-import RegisterPageClient from '@/components/RegisterPageClient';
+import { redirect } from 'next/navigation';
 
 interface PageProps {
   params: Promise<{
@@ -11,7 +10,5 @@ interface PageProps {
 export default async function RegisterPage({ params }: PageProps) {
   const { locale: localeParam } = await params;
   const locale = localeParam as Locale;
-  const dictionary = await getDictionary(locale);
-
-  return <RegisterPageClient dictionary={dictionary} locale={locale} />;
+  redirect(`/${locale}/book-appointment`);
 }

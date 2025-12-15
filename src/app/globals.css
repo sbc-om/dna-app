@@ -45,38 +45,38 @@
 
 :root {
   --radius: 0.625rem;
-  /* Orange: #FF5F02, White: #FFFFFF, Light Gray: #DDDDDD, Dark Charcoal: #262626, Black: #000000 */
+  /* Core palette: White #FFFFFF, Light Gray #DDDDDD, Dark Charcoal #262626, Black #000000 */
   --background: #FFFFFF;
   --foreground: #000000;
   --card: #FFFFFF;
   --card-foreground: #000000;
   --popover: #FFFFFF;
   --popover-foreground: #000000;
-  --primary: #FF5F02;
+  --primary: #1E3A8A;
   --primary-foreground: #FFFFFF;
   --secondary: #DDDDDD;
   --secondary-foreground: #000000;
   --muted: #DDDDDD;
   --muted-foreground: #262626;
-  --accent: #FF5F02;
-  --accent-foreground: #FFFFFF;
+  --accent: #30B2D2;
+  --accent-foreground: #000000;
   --destructive: #dc2626;
   --border: #DDDDDD;
   --input: #DDDDDD;
-  --ring: #FF5F02;
-  --chart-1: #FF5F02;
-  --chart-2: #262626;
+  --ring: #1E3A8A;
+  --chart-1: #1E3A8A;
+  --chart-2: #30B2D2;
   --chart-3: #DDDDDD;
   --chart-4: #000000;
   --chart-5: #FFFFFF;
   --sidebar: #262626;
   --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #FF5F02;
+  --sidebar-primary: #1E3A8A;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #FF5F02;
-  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-accent: #30B2D2;
+  --sidebar-accent-foreground: #000000;
   --sidebar-border: #000000;
-  --sidebar-ring: #FF5F02;
+  --sidebar-ring: #30B2D2;
   
   /* Chart colors */
   --grid-color: #e5e7eb;
@@ -91,31 +91,31 @@
   --card-foreground: #FFFFFF;
   --popover: #262626;
   --popover-foreground: #FFFFFF;
-  --primary: #FF5F02;
-  --primary-foreground: #FFFFFF;
+  --primary: #30B2D2;
+  --primary-foreground: #000000;
   --secondary: #262626;
   --secondary-foreground: #FFFFFF;
   --muted: #262626;
   --muted-foreground: #DDDDDD;
-  --accent: #FF5F02;
+  --accent: #1E3A8A;
   --accent-foreground: #FFFFFF;
   --destructive: #ef4444;
   --border: #262626;
   --input: #262626;
-  --ring: #FF5F02;
-  --chart-1: #FF5F02;
+  --ring: #30B2D2;
+  --chart-1: #30B2D2;
   --chart-2: #DDDDDD;
   --chart-3: #262626;
   --chart-4: #FFFFFF;
   --chart-5: #000000;
   --sidebar: #000000;
   --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #FF5F02;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #FF5F02;
+  --sidebar-primary: #30B2D2;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #1E3A8A;
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #262626;
-  --sidebar-ring: #FF5F02;
+  --sidebar-ring: #30B2D2;
   
   /* Chart colors for dark mode */
   --grid-color: #374151;
@@ -132,46 +132,34 @@
   }
 }
 
-/* Modern Gradient Backgrounds */
-.gradient-orange {
-  background: linear-gradient(135deg, #FF5F02 0%, #FF8534 100%);
+/* Visual policy: disable shadows and gradients */
+*,
+*::before,
+*::after {
+  box-shadow: none !important;
 }
 
-.gradient-dark {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+[class*="drop-shadow"],
+[class*="filter"].drop-shadow-none {
+  filter: none !important;
 }
 
-.gradient-light {
-  background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
+/* Disable Tailwind gradient backgrounds (including new `bg-linear-to-*` utilities). */
+[class*="bg-gradient-to-"],
+[class*="bg-linear-to-"] {
+  background-image: none !important;
 }
 
-.gradient-orange-soft {
-  background: linear-gradient(135deg, rgba(255, 95, 2, 0.1) 0%, rgba(255, 133, 52, 0.05) 100%);
+/* Prevent invisible text when a gradient text pattern (`bg-clip-text text-transparent`) is used. */
+[class*="bg-gradient-to-"].text-transparent,
+[class*="bg-linear-to-"].text-transparent {
+  color: inherit !important;
 }
 
-/* Glass Morphism Effect */
-.glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.glass-dark {
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Modern Card Styles */
-.card-modern {
-  @apply rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
-}
-
-.dark .card-modern {
-  background: linear-gradient(135deg, rgba(38, 38, 38, 0.9) 0%, rgba(26, 26, 26, 0.8) 100%);
+/* Keep keyboard focus visible without box-shadows. */
+:focus-visible {
+  outline: 2px solid var(--ring) !important;
+  outline-offset: 2px !important;
 }
 
 /* Smooth Transitions */
@@ -427,19 +415,6 @@
 
 /* Mobile-optimized scrollbars */
 @layer utilities {
-  .scrollbar-thin {
-    scrollbar-width: thin;
-  }
-  
-  .scrollbar-hidden {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  
-  .scrollbar-hidden::-webkit-scrollbar {
-    display: none;
-  }
-  
   /* Custom scrollbar for desktop */
   @media (min-width: 1024px) {
     .scrollbar-custom::-webkit-scrollbar {

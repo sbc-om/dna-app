@@ -73,6 +73,12 @@ export function UserGrowthChart({ locale = 'en' }: UserGrowthChartProps) {
     // Clear canvas
     ctx.clearRect(0, 0, rect.width, rect.height);
 
+    const isDark = document.documentElement.classList.contains('dark');
+    const textColor = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(38,38,38,0.65)';
+    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(38,38,38,0.08)';
+    const lineColor = isDark ? 'rgba(255,255,255,0.85)' : 'rgba(38,38,38,0.9)';
+    const fillColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(38,38,38,0.06)';
+
     // Calculate dimensions
     const padding = { top: 30, right: 30, bottom: 50, left: 50 };
     const chartWidth = rect.width - padding.left - padding.right;
@@ -83,7 +89,7 @@ export function UserGrowthChart({ locale = 'en' }: UserGrowthChartProps) {
     const userRange = maxUsers - minUsers;
 
     // Draw grid lines
-    ctx.strokeStyle = 'rgba(221, 221, 221, 0.3)';
+    ctx.strokeStyle = gridColor;
     ctx.lineWidth = 1;
     
     for (let i = 0; i <= 5; i++) {
@@ -95,14 +101,14 @@ export function UserGrowthChart({ locale = 'en' }: UserGrowthChartProps) {
 
       // Y-axis labels
       const value = maxUsers - (userRange / 5) * i;
-      ctx.fillStyle = '#666';
+      ctx.fillStyle = textColor;
       ctx.font = '12px sans-serif';
       ctx.textAlign = 'right';
       ctx.fillText(Math.round(value).toString(), padding.left - 10, y + 4);
     }
 
     // Draw X-axis labels (every 5 days)
-    ctx.fillStyle = '#666';
+    ctx.fillStyle = textColor;
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'center';
     
@@ -112,11 +118,6 @@ export function UserGrowthChart({ locale = 'en' }: UserGrowthChartProps) {
         ctx.fillText(point.label, x, rect.height - 20);
       }
     });
-
-    // Create gradient for area fill
-    const gradient = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartHeight);
-    gradient.addColorStop(0, 'rgba(255, 95, 2, 0.3)');
-    gradient.addColorStop(1, 'rgba(255, 95, 2, 0.01)');
 
     // Draw smooth curve with area fill
     ctx.beginPath();
@@ -155,7 +156,7 @@ export function UserGrowthChart({ locale = 'en' }: UserGrowthChartProps) {
     ctx.closePath();
 
     // Fill area
-    ctx.fillStyle = gradient;
+    ctx.fillStyle = fillColor;
     ctx.fill();
 
     // Draw line on top
@@ -179,7 +180,7 @@ export function UserGrowthChart({ locale = 'en' }: UserGrowthChartProps) {
       }
     });
 
-    ctx.strokeStyle = '#FF5F02';
+    ctx.strokeStyle = lineColor;
     ctx.lineWidth = 3;
     ctx.stroke();
 
@@ -187,23 +188,17 @@ export function UserGrowthChart({ locale = 'en' }: UserGrowthChartProps) {
     data.forEach((point, i) => {
       const x = padding.left + (chartWidth / (data.length - 1)) * i;
       const y = padding.top + chartHeight - ((point.users - minUsers) / userRange) * chartHeight;
-      
-      // Outer circle (glow)
-      ctx.beginPath();
-      ctx.arc(x, y, 6, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 95, 2, 0.2)';
-      ctx.fill();
 
       // Inner circle
       ctx.beginPath();
       ctx.arc(x, y, 3.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#FF5F02';
+      ctx.fillStyle = lineColor;
       ctx.fill();
       
       // White center
       ctx.beginPath();
       ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-      ctx.fillStyle = 'white';
+      ctx.fillStyle = isDark ? '#0a0a0a' : '#ffffff';
       ctx.fill();
     });
 
@@ -243,12 +238,12 @@ export function UserGrowthChart({ locale = 'en' }: UserGrowthChartProps) {
   const growthRate = ((totalUsers - data[0].users) / data[0].users * 100).toFixed(1);
 
   return (
-    <Card className="shadow-medium hover:shadow-strong transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+    <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
-              <Users className="h-6 w-6 text-white" />
+            <div className="h-12 w-12 rounded-2xl bg-black/5 dark:bg-white/5 flex items-center justify-center">
+              <Users className="h-6 w-6 text-gray-700 dark:text-gray-200" />
             </div>
             <div>
               <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
@@ -290,18 +285,17 @@ export function UserGrowthChart({ locale = 'en' }: UserGrowthChartProps) {
         <div className="relative">
           <canvas
             ref={canvasRef}
-            className="w-full h-[300px] cursor-crosshair"
-            style={{ display: 'block' }}
+            className="block w-full h-[300px] cursor-crosshair"
           />
           
           {/* Hover tooltip */}
           {hoveredPoint && (
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-gray-900 dark:bg-gray-800 text-white px-4 py-2.5 rounded-xl shadow-xl border border-gray-700 animate-scale-in pointer-events-none">
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-gray-800 text-white px-4 py-2.5 rounded-xl border border-gray-700 animate-scale-in pointer-events-none">
               <div className="text-center">
                 <p className="text-xs text-gray-400 mb-1">{hoveredPoint.label}</p>
                 <p className="text-lg font-bold">{hoveredPoint.users} {locale === 'ar' ? 'مستخدمين' : 'users'}</p>
               </div>
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full">
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
                 <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900 dark:border-t-gray-800" />
               </div>
             </div>
@@ -311,13 +305,13 @@ export function UserGrowthChart({ locale = 'en' }: UserGrowthChartProps) {
         {/* Legend */}
         <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg shadow-orange-500/30" />
+            <div className="h-3 w-3 rounded-full bg-gray-900 dark:bg-gray-100" />
             <span className="text-sm text-gray-600 dark:text-gray-400">
               {locale === 'ar' ? 'عدد المستخدمين' : 'User Count'}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-0.5 w-6 bg-gradient-to-r from-orange-500 to-orange-600" />
+            <div className="h-0.5 w-6 bg-gray-900 dark:bg-gray-100" />
             <span className="text-sm text-gray-600 dark:text-gray-400">
               {locale === 'ar' ? 'الاتجاه' : 'Trend'}
             </span>

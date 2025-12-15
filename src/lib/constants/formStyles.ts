@@ -13,4 +13,4 @@ export const STANDARD_TEXTAREA_CLASSES = "bg-white dark:bg-[#1a1a1a] border-2 bo
 
 export const STANDARD_LABEL_CLASSES = "text-[#262626] dark:text-white font-semibold";
 
-export const STANDARD_CARD_CLASSES = "bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] shadow-lg";
+export const STANDARD_CARD_CLASSES = "bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]";

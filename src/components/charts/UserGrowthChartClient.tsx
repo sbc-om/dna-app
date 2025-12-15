@@ -22,8 +22,8 @@ interface Stats {
 
 export function UserGrowthChartClient({ locale }: UserGrowthChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const [hoveredPoint, setHoveredPoint] = useState<DataPoint | null>(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [data, setData] = useState<DataPoint[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -124,7 +124,11 @@ export function UserGrowthChartClient({ locale }: UserGrowthChartProps) {
     }
 
     // Draw smooth sinusoidal curve using Bézier curves
-    ctx.strokeStyle = '#f97316'; // Orange
+    const isDark = document.documentElement.classList.contains('dark');
+    const lineColor = isDark ? 'rgba(255,255,255,0.85)' : 'rgba(38,38,38,0.9)';
+    const fillColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(38,38,38,0.06)';
+
+    ctx.strokeStyle = lineColor;
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -157,15 +161,12 @@ export function UserGrowthChartClient({ locale }: UserGrowthChartProps) {
     ctx.lineTo(lastX, lastY);
     ctx.stroke();
 
-    // Fill area under curve with gradient
+    // Fill area under curve (flat, no gradient)
     ctx.lineTo(lastX, padding.top + chartHeight);
     ctx.lineTo(padding.left, padding.top + chartHeight);
     ctx.closePath();
 
-    const gradient = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartHeight);
-    gradient.addColorStop(0, 'rgba(249, 115, 22, 0.3)');
-    gradient.addColorStop(1, 'rgba(249, 115, 22, 0.05)');
-    ctx.fillStyle = gradient;
+    ctx.fillStyle = fillColor;
     ctx.fill();
 
     // Draw data points
@@ -176,9 +177,9 @@ export function UserGrowthChartClient({ locale }: UserGrowthChartProps) {
       // Draw point
       ctx.beginPath();
       ctx.arc(x, y, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#f97316';
+      ctx.fillStyle = lineColor;
       ctx.fill();
-      ctx.strokeStyle = '#fff';
+      ctx.strokeStyle = isDark ? '#0a0a0a' : '#ffffff';
       ctx.lineWidth = 2;
       ctx.stroke();
     });
@@ -201,7 +202,11 @@ export function UserGrowthChartClient({ locale }: UserGrowthChartProps) {
     
     if (index >= 0 && index < data.length) {
       setHoveredPoint(data[index]);
-      setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+
+      if (tooltipRef.current) {
+        tooltipRef.current.style.left = `${x + 10}px`;
+        tooltipRef.current.style.top = `${y - 40}px`;
+      }
     } else {
       setHoveredPoint(null);
     }
@@ -213,7 +218,7 @@ export function UserGrowthChartClient({ locale }: UserGrowthChartProps) {
 
   if (isLoading) {
     return (
-      <Card className="glass-card">
+      <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
         <CardHeader>
           <CardTitle className="text-2xl font-bold flex items-center gap-2">
             <Users className="w-6 h-6 text-primary" />
@@ -231,7 +236,7 @@ export function UserGrowthChartClient({ locale }: UserGrowthChartProps) {
 
   if (!stats || data.length === 0) {
     return (
-      <Card className="glass-card">
+      <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
         <CardHeader>
           <CardTitle className="text-2xl font-bold flex items-center gap-2">
             <Users className="w-6 h-6 text-primary" />
@@ -248,7 +253,7 @@ export function UserGrowthChartClient({ locale }: UserGrowthChartProps) {
   }
 
   return (
-    <Card className="glass-card">
+    <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
       <CardHeader>
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
@@ -289,20 +294,15 @@ export function UserGrowthChartClient({ locale }: UserGrowthChartProps) {
         <div className="relative">
           <canvas
             ref={canvasRef}
-            className="w-full h-80 cursor-crosshair"
+            className="block w-full h-80 cursor-crosshair"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            style={{ display: 'block' }}
           />
           
           {hoveredPoint && (
             <div
-              className="absolute pointer-events-none bg-background/95 border border-border rounded-lg shadow-lg px-3 py-2 text-sm"
-              style={{
-                left: mousePos.x + 10,
-                top: mousePos.y - 40,
-                transform: isRTL ? 'translateX(-100%)' : 'none',
-              }}
+              ref={tooltipRef}
+              className={`absolute pointer-events-none bg-background border border-border rounded-lg px-3 py-2 text-sm ${isRTL ? '-translate-x-full' : ''}`}
             >
               <div className="flex items-center gap-2">
                 <Calendar className="w-3 h-3 text-muted-foreground" />

@@ -1,7 +1,9 @@
 import { getDatabase, generateId } from '../lmdb';
+import { DEFAULT_ACADEMY_ID } from './academyRepository';
 
 export interface Course {
   id: string;
+  academyId: string;
   name: string;
   nameAr: string;
   description?: string;
@@ -25,6 +27,7 @@ export interface Course {
 }
 
 export interface CreateCourseInput {
+  academyId?: string;
   name: string;
   nameAr: string;
   description?: string;
@@ -44,6 +47,19 @@ export interface CreateCourseInput {
   maxStudents?: number;
 }
 
+function normalizeCourseAcademy(course: Course | any, key?: string): Course {
+  if (!course.academyId) {
+    const normalized: Course = { ...course, academyId: DEFAULT_ACADEMY_ID };
+    if (key) {
+      const db = getDatabase();
+      db.put(key, normalized);
+    }
+    return normalized;
+  }
+
+  return course as Course;
+}
+
 // Get all courses
 export async function getAllCourses(): Promise<Course[]> {
   const db = getDatabase();
@@ -54,17 +70,27 @@ export async function getAllCourses(): Promise<Course[]> {
   for (const { key, value } of range) {
     const keyStr = String(key);
     if (keyStr.startsWith('course:') && value) {
-      courses.push(value as Course);
+      courses.push(normalizeCourseAcademy(value as Course, keyStr));
     }
   }
   
   return courses.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
+export async function getCoursesByAcademyId(academyId: string): Promise<Course[]> {
+  const all = await getAllCourses();
+  return all.filter((c) => c.academyId === academyId);
+}
+
 // Get active courses only
 export async function getActiveCourses(): Promise<Course[]> {
   const allCourses = await getAllCourses();
   return allCourses.filter(course => course.isActive);
+}
+
+export async function getActiveCoursesByAcademyId(academyId: string): Promise<Course[]> {
+  const allCourses = await getCoursesByAcademyId(academyId);
+  return allCourses.filter((course) => course.isActive);
 }
 
 // Get courses assigned to a specific coach
@@ -77,11 +103,17 @@ export async function getCoursesByCoachId(coachId: string): Promise<Course[]> {
   return allCourses.filter(course => course.coachId === coachId);
 }
 
+export async function getCoursesByCoachIdAndAcademyId(coachId: string, academyId: string): Promise<Course[]> {
+  const allCourses = await getCoursesByAcademyId(academyId);
+  return allCourses.filter((course) => course.coachId === coachId);
+}
+
 // Get course by ID
 export async function findCourseById(id: string): Promise<Course | null> {
   const db = getDatabase();
-  const course = db.get(`course:${id}`);
-  return course ? (course as Course) : null;
+  const key = `course:${id}`;
+  const course = db.get(key);
+  return course ? normalizeCourseAcademy(course as Course, key) : null;
 }
 
 // Create new course
@@ -91,6 +123,7 @@ export async function createCourse(input: CreateCourseInput): Promise<Course> {
   
   const course: Course = {
     id,
+    academyId: input.academyId || DEFAULT_ACADEMY_ID,
     name: input.name,
     nameAr: input.nameAr,
     description: input.description,
@@ -130,6 +163,7 @@ export async function updateCourse(id: string, updates: Partial<CreateCourseInpu
   const updatedCourse: Course = {
     ...existingCourse,
     ...updates,
+    academyId: (updates as any).academyId || existingCourse.academyId,
     updatedAt: new Date().toISOString(),
   };
   
