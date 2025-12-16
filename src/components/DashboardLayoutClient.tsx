@@ -8,7 +8,6 @@ import { Dictionary } from '@/lib/i18n/getDictionary';
 import { PushNotificationInit } from '@/components/PushNotificationInit';
 import { useNotificationFallback } from '@/lib/notifications/fallback';
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
-import "overlayscrollbars/styles/overlayscrollbars.css";
 
 interface DashboardLayoutClientProps {
   children: ReactNode;
@@ -87,12 +86,18 @@ export function DashboardLayoutClient({
 
         <OverlayScrollbarsComponent
           element="main"
-          className="flex-1 min-h-0 overscroll-y-contain pb-20 lg:pb-0"
+          className="flex-1 min-h-0 pb-20 lg:pb-0"
           options={{ 
             scrollbars: { 
-              autoHide: 'leave',
-              theme: 'os-theme-dark'
-            } 
+              autoHide: 'move',
+              autoHideDelay: 800,
+              theme: 'os-theme-dark',
+              visibility: 'auto'
+            },
+            overflow: {
+              x: 'hidden',
+              y: 'scroll'
+            }
           }}
           defer
         >

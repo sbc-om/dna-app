@@ -165,13 +165,7 @@ export function DashboardHeader({ dictionary, user, onMobileMenuToggle }: Dashbo
 
           {/* Logo & Title */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="p-1.5 bg-white dark:bg-[#262626] rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
-              <img 
-                src="/logo.png" 
-                alt="DNA Logo" 
-                className="h-6 w-6 sm:h-7 sm:w-7 object-contain shrink-0"
-              />
-            </div>
+
             <h1 className="hidden sm:block text-base md:text-lg lg:text-xl font-bold text-[#262626] dark:text-white truncate">
               Discover Natural Ability
             </h1>

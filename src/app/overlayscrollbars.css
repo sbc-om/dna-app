@@ -1,0 +1,47 @@
+/* OverlayScrollbars custom theme for DNA app */
+
+/* Dark theme colors matching the app's design */
+.os-theme-dark > .os-scrollbar > .os-scrollbar-track > .os-scrollbar-handle {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.os-theme-dark > .os-scrollbar > .os-scrollbar-track > .os-scrollbar-handle:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.os-theme-dark > .os-scrollbar > .os-scrollbar-track {
+  background: transparent;
+}
+
+/* Scrollbar width */
+.os-theme-dark > .os-scrollbar-vertical {
+  width: 10px;
+  padding: 2px;
+}
+
+.os-theme-dark > .os-scrollbar-horizontal {
+  height: 10px;
+  padding: 2px;
+}
+
+/* Light mode variant */
+.light .os-theme-dark > .os-scrollbar > .os-scrollbar-track > .os-scrollbar-handle {
+  background: rgba(38, 38, 38, 0.3);
+}
+
+.light .os-theme-dark > .os-scrollbar > .os-scrollbar-track > .os-scrollbar-handle:hover {
+  background: rgba(38, 38, 38, 0.5);
+}
+
+/* Hide scrollbar when not hovering (auto-hide behavior) */
+.os-scrollbar-auto-hide.os-scrollbar-unusable {
+  opacity: 0;
+}
+
+/* Smooth transitions */
+.os-scrollbar,
+.os-scrollbar-handle {
+  transition: opacity 0.3s ease, background 0.2s ease;
+}

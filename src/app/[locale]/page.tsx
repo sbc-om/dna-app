@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { getDictionary } from '@/lib/i18n/getDictionary';
+import { getDictionary, type Dictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -9,11 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { 
   Target, 
   Trophy, 
-  Users, 
   Zap, 
   Award, 
   ChevronRight,
@@ -25,14 +25,21 @@ interface PageProps {
   params: Promise<{ locale: string }>;
 }
 
+type SessionUser = {
+  email: string;
+  role?: string;
+  fullName?: string;
+};
+
 export default function HomePage({ params }: PageProps) {
   const [locale, setLocale] = useState<Locale>('en');
-  const [dictionary, setDictionary] = useState<any>(null);
-  const [user, setUser] = useState<any>(null);
+  const [dictionary, setDictionary] = useState<Dictionary | null>(null);
+  const [user, setUser] = useState<SessionUser | null>(null);
   const [email, setEmail] = useState('');
   const { scrollY } = useScroll();
-  const heroOpacity = useTransform(scrollY, [0, 300], [1, 0]);
-  const heroScale = useTransform(scrollY, [0, 300], [1, 0.8]);
+  const heroTextOpacity = useTransform(scrollY, [0, 240], [1, 0]);
+  const heroTextY = useTransform(scrollY, [0, 240], [0, -28]);
+  const heroTextScale = useTransform(scrollY, [0, 240], [1, 0.98]);
 
   useEffect(() => {
     async function loadData() {
@@ -47,11 +54,27 @@ export default function HomePage({ params }: PageProps) {
       try {
         const response = await fetch('/api/auth/me');
         if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
+          const data: unknown = await response.json();
+          if (data && typeof data === 'object' && 'user' in data) {
+            const maybeUser = (data as { user?: unknown }).user;
+            if (maybeUser && typeof maybeUser === 'object') {
+              const u = maybeUser as Record<string, unknown>;
+              const email = typeof u.email === 'string' ? u.email : null;
+              if (email) {
+                const role = typeof u.role === 'string' ? u.role : undefined;
+                const fullName =
+                  typeof u.fullName === 'string'
+                    ? u.fullName
+                    : typeof u.name === 'string'
+                      ? u.name
+                      : undefined;
+                setUser({ email, role, fullName });
+              }
+            }
+          }
         }
-      } catch (error) {
-        console.error('Error fetching user:', error);
+      } catch {
+        // Ignore
       }
     }
     loadData();
@@ -139,80 +162,87 @@ export default function HomePage({ params }: PageProps) {
       
       <main className="overflow-hidden">
         {/* Hero Section */}
-        <motion.section 
-          style={{ opacity: heroOpacity, scale: heroScale }}
-          className="relative min-h-[90vh] flex items-center justify-center px-4 py-20"
-        >
-          {/* Background Image */}
-          <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: "url('/hero.webp')" }}
-          >
-            {/* Dark Overlay for better text contrast */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70"></div>
-            {/* Additional overlay for depth */}
-            <div className="absolute inset-0 bg-[#FF5F02]/10"></div>
+        <section className="relative">
+          {/* Background (static, full width, auto height) */}
+          <div className="relative w-full">
+            <Image
+              src="/hero.png"
+              alt=""
+              width={2400}
+              height={1600}
+              priority
+              sizes="100vw"
+              className="w-full h-auto"
+            />
+            {/* Gentle fade into page background (not darkening the image) */}
+            <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent via-transparent to-background/90" />
+            {/* Subtle grid texture */}
+            <div className="pointer-events-none absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03]" />
           </div>
-
-          {/* Animated grid overlay */}
-          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5"></div>
           
-          <motion.div 
+          <motion.div
+            style={{ opacity: heroTextOpacity, y: heroTextY, scale: heroTextScale }}
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="max-w-7xl mx-auto text-center relative z-10"
+            className="absolute inset-0 flex items-center justify-center px-4 py-6 sm:py-12"
           >
-            <motion.div variants={itemVariants} className="mb-8">
-              <img 
-                src="/logo.png" 
-                alt="Logo"
-                className="w-32 h-32 md:w-48 md:h-48 mx-auto object-contain drop-shadow-2xl"
-              />
-            </motion.div>
+            <div className="w-full max-w-4xl mx-auto text-center relative z-10 flex flex-col items-center">
             
             <motion.h1 
               variants={itemVariants}
-              className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 text-white drop-shadow-2xl leading-tight"
+              className="text-white font-black tracking-tight leading-[1.05] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] text-[clamp(1.9rem,7vw,5rem)]"
             >
               {dictionary.pages.home.hero.title}
             </motion.h1>
             
             <motion.p 
               variants={itemVariants}
-              className="text-xl md:text-3xl text-white font-semibold mb-12 max-w-3xl mx-auto drop-shadow-lg"
+              className="mt-3 text-white/95 font-semibold leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] text-[clamp(0.95rem,2.7vw,1.6rem)] max-w-3xl"
             >
               {dictionary.pages.home.hero.subtitle}
             </motion.p>
             
             <motion.div 
               variants={itemVariants}
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+              className="mt-6 flex flex-col gap-3 w-full max-w-sm mx-auto sm:flex-row sm:max-w-none sm:w-auto sm:justify-center"
             >
               <Link href={`/${locale}/book-appointment`}>
-                <Button size="lg" className="bg-[#FF5F02] hover:bg-white hover:text-[#FF5F02] text-white px-8 py-6 text-lg rounded-full shadow-2xl transform hover:scale-110 transition-all duration-300 border-2 border-transparent hover:border-[#FF5F02]">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto h-12 sm:h-14 rounded-xl bg-[#FF5F02] text-white font-bold px-6 sm:px-8 border-2 border-transparent hover:bg-[#ff6b1a] shadow-lg"
+                >
                   {dictionary.pages.home.hero.cta}
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
               {user ? (
                 <Link href={`/${locale}/dashboard`}>
-                  <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-md border-2 border-white text-white hover:bg-white hover:text-[#FF5F02] px-8 py-6 text-lg rounded-full shadow-lg transform hover:scale-110 transition-all duration-300">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full sm:w-auto h-12 sm:h-14 rounded-xl bg-white/10 backdrop-blur-md border-2 border-white/70 text-white hover:bg-white hover:text-[#262626] px-6 sm:px-8 font-bold shadow-lg"
+                  >
                     {dictionary.nav.dashboard}
                     <ChevronRight className="ml-2 w-5 h-5" />
                   </Button>
                 </Link>
               ) : (
                 <Link href={`/${locale}/auth/login`}>
-                  <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-md border-2 border-white text-white hover:bg-white hover:text-[#FF5F02] px-8 py-6 text-lg rounded-full shadow-lg transform hover:scale-110 transition-all duration-300">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full sm:w-auto h-12 sm:h-14 rounded-xl bg-white/10 backdrop-blur-md border-2 border-white/70 text-white hover:bg-white hover:text-[#262626] px-6 sm:px-8 font-bold shadow-lg"
+                  >
                     {dictionary.pages.home.hero.loginCta}
                     <ChevronRight className="ml-2 w-5 h-5" />
                   </Button>
                 </Link>
               )}
             </motion.div>
+            </div>
           </motion.div>
-        </motion.section>
+        </section>
 
         {/* Partners Section */}
         <section className="py-16 bg-muted/30">
@@ -330,7 +360,7 @@ export default function HomePage({ params }: PageProps) {
                         />
                       </div>
                       <div className="p-8 flex-1 flex flex-col">
-                        <h3 className="text-2xl font-black mb-3 group-hover:text-[#FF5F02] transition-colors min-h-[3.5rem]">
+                        <h3 className="text-2xl font-black mb-3 group-hover:text-[#FF5F02] transition-colors min-h-14">
                           {program.title}
                         </h3>
                         <p className="text-muted-foreground mb-6 flex-1 text-base leading-relaxed">
@@ -426,7 +456,9 @@ export default function HomePage({ params }: PageProps) {
                         alt={testimonial.name}
                         className="w-20 h-20 rounded-full mx-auto mb-4 object-cover"
                       />
-                      <p className="text-muted-foreground mb-4 italic">"{testimonial.content}"</p>
+                      <p className="text-muted-foreground mb-4 italic">
+                        &ldquo;{testimonial.content}&rdquo;
+                      </p>
                       <h4 className="font-bold">{testimonial.name}</h4>
                       <p className="text-sm text-muted-foreground">{testimonial.role}</p>
                     </CardContent>
