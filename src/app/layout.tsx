@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { OverlayScrollbarsProvider } from '@/components/OverlayScrollbarsProvider';
+import { MouseGlowEffect } from '@/components/MouseGlowEffect';
 import "./globals.css";
 import "./overlayscrollbars.css";
 
@@ -71,6 +72,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-300`} suppressHydrationWarning>
         <ThemeProvider>
           <OverlayScrollbarsProvider>
+            <MouseGlowEffect />
             <Toaster />
             {children}
           </OverlayScrollbarsProvider>

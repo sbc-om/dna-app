@@ -763,3 +763,55 @@ input[type="range"].slider::-moz-range-thumb:hover {
    END MOBILE-FIRST STYLES
    ======================================== */
 
+/* ========================================
+   OVERLAYSCROLLBARS CUSTOM THEME
+   ======================================== */
+
+/* Light theme scrollbar */
+.os-theme-light > .os-scrollbar > .os-scrollbar-track > .os-scrollbar-handle {
+  background: rgba(59, 130, 246, 0.4);
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.os-theme-light > .os-scrollbar > .os-scrollbar-track > .os-scrollbar-handle:hover {
+  background: rgba(59, 130, 246, 0.6);
+}
+
+.os-theme-light > .os-scrollbar > .os-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+}
+
+/* Dark theme scrollbar */
+.dark .os-theme-light > .os-scrollbar > .os-scrollbar-track > .os-scrollbar-handle {
+  background: rgba(96, 165, 250, 0.4);
+}
+
+.dark .os-theme-light > .os-scrollbar > .os-scrollbar-track > .os-scrollbar-handle:hover {
+  background: rgba(96, 165, 250, 0.6);
+}
+
+.dark .os-theme-light > .os-scrollbar > .os-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Scrollbar dimensions */
+.os-scrollbar-horizontal {
+  height: 10px;
+}
+
+.os-scrollbar-vertical {
+  width: 10px;
+}
+
+/* Hide horizontal scrollbar completely */
+.os-scrollbar-horizontal {
+  display: none !important;
+}
+
+/* ========================================
+   END OVERLAYSCROLLBARS THEME
+   ======================================== */
+
+

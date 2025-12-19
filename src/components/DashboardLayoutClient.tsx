@@ -4,6 +4,7 @@ import { ReactNode, useState, useEffect } from 'react';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
+import { MouseGlowEffect } from '@/components/MouseGlowEffect';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import { PushNotificationInit } from '@/components/PushNotificationInit';
 import { useNotificationFallback } from '@/lib/notifications/fallback';
@@ -55,7 +56,10 @@ export function DashboardLayoutClient({
   }, [isMobileSidebarOpen]);
 
   return (
-    <div className="flex h-screen bg-[#DDDDDD] dark:bg-[#000000] overflow-hidden" dir={direction}>
+    <div className="flex h-screen bg-[#DDDDDD] dark:bg-[#000000] overflow-hidden relative" dir={direction}>
+      {/* Mouse glow effect */}
+      <MouseGlowEffect />
+      
       {/* Initialize Push Notifications (only on supported devices) */}
       {isPushSupported && <PushNotificationInit />}
       

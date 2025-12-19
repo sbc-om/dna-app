@@ -6,12 +6,12 @@ import { listUsers, getChildrenByParentId, getUsersByIds } from '@/lib/db/reposi
 import { getAllAppointments } from '@/lib/db/repositories/appointmentRepository';
 import { getCoursesByCoachIdAndAcademyId, type Course, getCoursesByAcademyId } from '@/lib/db/repositories/courseRepository';
 import { getPaidEnrollmentsByCourseIdAndAcademyId, getEnrollmentsByAcademyId } from '@/lib/db/repositories/enrollmentRepository';
-import { Users, Calendar, Clock, CheckCircle, UserCheck, User, GraduationCap, TrendingUp, DollarSign, Award } from 'lucide-react';
+import { Users, Calendar, Clock, CheckCircle, UserCheck, User, GraduationCap, TrendingUp, Award } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChildMedalsPreview } from '@/components/ChildMedalsPreview';
-import { UserGrowthChartClient } from '@/components/charts/UserGrowthChartClient';
+import { AnimatedDashboardClient } from '@/components/AnimatedDashboardClient';
+import { DashboardScrollWrapper } from '@/components/DashboardScrollWrapper';
 
 export default async function DashboardPage({
   params,
@@ -80,265 +80,17 @@ export default async function DashboardPage({
   }
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl space-y-6">
-        {/* Header */}
-        <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-[#262626] dark:text-white">
-          {dictionary.common.welcome} {user.fullName || user.username}
-        </h1>
-        <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-          {dictionary.users.role}: {roleLabel}
-        </p>
-      </div>
-
+    <DashboardScrollWrapper>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl space-y-6 overflow-x-hidden">
+      
       {/* Statistics Cards for Admin */}
       {user.role === 'admin' && stats && (
-        <div className="space-y-6">
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Total Users Card */}
-            <div className="bg-white dark:bg-[#262626] p-6 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                    {dictionary.dashboard.totalUsers}
-                  </p>
-                  <p className="text-4xl font-bold text-[#262626] dark:text-white">
-                    {stats.totalUsers}
-                  </p>
-                </div>
-                <div className="bg-black/5 dark:bg-white/5 p-4 rounded-full">
-                  <Users className="w-8 h-8 text-gray-700 dark:text-gray-200" />
-                </div>
-              </div>
-            </div>
-
-            {/* Active Users Card */}
-            <div className="bg-white dark:bg-[#262626] p-6 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                    {dictionary.dashboard.activeUsers}
-                  </p>
-                  <p className="text-4xl font-bold text-[#262626] dark:text-white">
-                    {stats.activeUsers}
-                  </p>
-                </div>
-                <div className="bg-black/5 dark:bg-white/5 p-4 rounded-full">
-                  <UserCheck className="w-8 h-8 text-gray-700 dark:text-gray-200" />
-                </div>
-              </div>
-            </div>
-
-            {/* Total Appointments Card */}
-            <div className="bg-white dark:bg-[#262626] p-6 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                    {dictionary.dashboard.totalAppointments}
-                  </p>
-                  <p className="text-4xl font-bold text-[#262626] dark:text-white">
-                    {stats.totalAppointments}
-                  </p>
-                </div>
-                <div className="bg-black/5 dark:bg-white/5 p-4 rounded-full">
-                  <Calendar className="w-8 h-8 text-gray-700 dark:text-gray-200" />
-                </div>
-              </div>
-            </div>
-
-            {/* Pending Appointments card */}
-            <div className="bg-white dark:bg-[#262626] p-6 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                    {dictionary.dashboard.pendingAppointments}
-                  </p>
-                  <p className="text-4xl font-bold text-[#262626] dark:text-white">
-                    {stats.pendingAppointments}
-                  </p>
-                </div>
-                <div className="bg-black/5 dark:bg-white/5 p-4 rounded-full">
-                  <Clock className="w-8 h-8 text-gray-700 dark:text-gray-200" />
-                </div>
-              </div>
-            </div>
-
-            {/* Today's Appointments Card */}
-            <div className="bg-white dark:bg-[#262626] p-6 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                    {dictionary.dashboard.todayAppointments}
-                  </p>
-                  <p className="text-4xl font-bold text-[#262626] dark:text-white">
-                    {stats.todayAppointments}
-                  </p>
-                </div>
-                <div className="bg-black/5 dark:bg-white/5 p-4 rounded-full">
-                  <CheckCircle className="w-8 h-8 text-gray-700 dark:text-gray-200" />
-                </div>
-              </div>
-            </div>
-
-            {/* Total Courses Card */}
-            <div className="bg-white dark:bg-[#262626] p-6 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                    {dictionary.dashboard.totalCourses || 'Total Courses'}
-                  </p>
-                  <p className="text-4xl font-bold text-[#262626] dark:text-white">
-                    {stats.totalCourses}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {stats.activeCourses} {dictionary.users.active || 'active'}
-                  </p>
-                </div>
-                <div className="bg-black/5 dark:bg-white/5 p-4 rounded-full">
-                  <GraduationCap className="w-8 h-8 text-gray-700 dark:text-gray-200" />
-                </div>
-              </div>
-            </div>
-
-            {/* Total Enrollments Card */}
-            <div className="bg-white dark:bg-[#262626] p-6 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                    {dictionary.dashboard.totalEnrollments || 'Total Enrollments'}
-                  </p>
-                  <p className="text-4xl font-bold text-[#262626] dark:text-white">
-                    {stats.totalEnrollments}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {stats.paidEnrollments} {dictionary.payments?.paid || 'paid'}
-                  </p>
-                </div>
-                <div className="bg-black/5 dark:bg-white/5 p-4 rounded-full">
-                  <TrendingUp className="w-8 h-8 text-gray-700 dark:text-gray-200" />
-                </div>
-              </div>
-            </div>
-
-            {/* Total Coaches Card */}
-            <div className="bg-white dark:bg-[#262626] p-6 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                    {dictionary.dashboard.totalCoaches || 'Total Coaches'}
-                  </p>
-                  <p className="text-4xl font-bold text-[#262626] dark:text-white">
-                    {stats.totalCoaches}
-                  </p>
-                </div>
-                <div className="bg-black/5 dark:bg-white/5 p-4 rounded-full">
-                  <Award className="w-8 h-8 text-gray-700 dark:text-gray-200" />
-                </div>
-              </div>
-            </div>
-
-            {/* Total Kids Card */}
-            <div className="bg-white dark:bg-[#262626] p-6 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                    {dictionary.dashboard.totalKids || 'Total Kids'}
-                  </p>
-                  <p className="text-4xl font-bold text-[#262626] dark:text-white">
-                    {stats.totalKids}
-                  </p>
-                </div>
-                <div className="bg-black/5 dark:bg-white/5 p-4 rounded-full">
-                  <User className="w-8 h-8 text-gray-700 dark:text-gray-200" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Charts Section */}
-          <div className="mt-6">
-            {/* User Growth Chart - Full Width */}
-            <UserGrowthChartClient locale={locale} />
-          </div>
-
-          {/* Summary Statistics Card */}
-          <div className="mt-6">
-            <Card className="border-2">
-              <CardHeader>
-                <CardTitle className="text-xl font-bold text-[#262626] dark:text-white">
-                  {dictionary.dashboard.systemSummary || 'System Summary'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* User Statistics */}
-                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
-                      <Users className="h-5 w-5 text-gray-700 dark:text-gray-200" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{dictionary.dashboard.activeUsersRate || 'Active Users Rate'}</p>
-                      <p className="text-xs text-muted-foreground">{dictionary.dashboard.ofTotalUsers || 'of total users'}</p>
-                    </div>
-                  </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {stats.totalUsers > 0 ? Math.round((stats.activeUsers / stats.totalUsers) * 100) : 0}%
-                  </div>
-                </div>
-
-                {/* Appointment Statistics */}
-                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
-                      <Calendar className="h-5 w-5 text-gray-700 dark:text-gray-200" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{dictionary.dashboard.pendingAppointmentsRate || 'Pending Appointments Rate'}</p>
-                      <p className="text-xs text-muted-foreground">{dictionary.dashboard.ofTotalAppointments || 'of total appointments'}</p>
-                    </div>
-                  </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {stats.totalAppointments > 0 ? Math.round((stats.pendingAppointments / stats.totalAppointments) * 100) : 0}%
-                  </div>
-                </div>
-
-                {/* Course Statistics */}
-                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
-                      <GraduationCap className="h-5 w-5 text-gray-700 dark:text-gray-200" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{dictionary.dashboard.activeCoursesRate || 'Active Courses Rate'}</p>
-                      <p className="text-xs text-muted-foreground">{dictionary.dashboard.ofTotalCourses || 'of total courses'}</p>
-                    </div>
-                  </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {stats.totalCourses > 0 ? Math.round((stats.activeCourses / stats.totalCourses) * 100) : 0}%
-                  </div>
-                </div>
-
-                {/* Enrollment Payment Statistics */}
-                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
-                      <TrendingUp className="h-5 w-5 text-gray-700 dark:text-gray-200" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{dictionary.dashboard.paymentRate || 'Payment Rate'}</p>
-                      <p className="text-xs text-muted-foreground">{dictionary.dashboard.ofTotalEnrollments || 'of total enrollments'}</p>
-                    </div>
-                  </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {stats.totalEnrollments > 0 ? Math.round((stats.paidEnrollments / stats.totalEnrollments) * 100) : 0}%
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        <AnimatedDashboardClient 
+          stats={stats}
+          dictionary={dictionary}
+          username={user.fullName || user.username}
+          roleLabel={roleLabel}
+        />
       )}
 
       {/* Parent View: List of Children */}
@@ -548,38 +300,7 @@ export default async function DashboardPage({
         </div>
       )}
 
-      {/* Quick Actions */}
-      {user.role === 'admin' && (
-        <div className="bg-white dark:bg-[#262626] p-6 rounded-lg border-2 border-[#DDDDDD] dark:border-[#000000]">
-          <h2 className="text-xl font-bold text-[#262626] dark:text-white mb-4">
-            {dictionary.dashboard.quickActions}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href={`/${locale}/dashboard/users`}>
-              <Button className="w-full bg-[#262626] hover:bg-[#000000] text-white">
-                {dictionary.dashboard.manageUsers}
-              </Button>
-            </Link>
-            <Link href={`/${locale}/dashboard/appointments`}>
-              <Button className="w-full bg-[#262626] hover:bg-[#000000] text-white">
-                {dictionary.dashboard.viewAppointments}
-              </Button>
-            </Link>
-            <Link href={`/${locale}/dashboard/schedules`}>
-              <Button className="w-full bg-[#262626] hover:bg-[#000000] text-white">
-                {dictionary.dashboard.manageSchedules}
-              </Button>
-            </Link>
-            <Link href={`/${locale}/dashboard/roles`}>
-              <Button className="w-full bg-[#262626] hover:bg-[#000000] text-white">
-                {dictionary.dashboard.viewRoles}
-              </Button>
-            </Link>
-          </div>
-        </div>
-      )}
-
       </div>
-    </div>
+    </DashboardScrollWrapper>
   );
 }

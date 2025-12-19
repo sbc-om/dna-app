@@ -14,12 +14,14 @@ import {
   Settings,
   BookOpen,
   DollarSign,
-  MessageCircle
+  MessageCircle,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import { useState, useEffect } from 'react';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export interface MenuItem {
   key: string;
@@ -129,38 +131,57 @@ const SidebarContent = ({
   onMobileClose,
   isRTL
 }: SidebarContentProps) => (
-  <div className="flex flex-col h-full">
-    {/* Logo/Brand - Hidden on mobile (mobile has its own header) */}
-    <div className={cn(
-      "hidden lg:block p-6 border-b border-[#000000]",
-      isCollapsed && "lg:px-3"
-    )}>
+  <div className="flex flex-col h-full relative overflow-hidden">
+    {/* Animated Background Gradient */}
+    <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 via-purple-600/5 to-pink-600/5 animate-pulse" style={{ animationDuration: '8s' }} />
+    
+    {/* Logo/Brand - Hidden on mobile */}
+    <motion.div 
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn(
+        "hidden lg:block p-6 border-b border-white/10 relative z-10 backdrop-blur-sm",
+        isCollapsed && "lg:px-3"
+      )}
+    >
       <Link href={`/${locale}/dashboard`} className={cn(
-        "flex items-center gap-3 group",
+        "flex items-center gap-3 group relative",
         isCollapsed && "lg:justify-center"
       )}>
-        <div className="h-10 w-10 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+        <motion.div 
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          whileTap={{ scale: 0.95 }}
+          className="h-10 w-10 flex items-center justify-center shrink-0 relative"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl blur opacity-50 group-hover:opacity-100 transition-opacity" />
           <img 
             src="/logo.png" 
             alt="DNA Logo" 
-            className="h-10 w-10 object-contain"
+            className="h-10 w-10 object-contain relative z-10"
           />
-        </div>
-        {!isCollapsed && (
-          <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-bold text-white truncate">
-              DNA
-            </h2>
-            <p className="text-xs font-medium text-white truncate">Discover Natural Ability</p>
-          </div>
-        )}
+        </motion.div>
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.div 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              className="flex-1 min-w-0"
+            >
+              <h2 className="text-xl font-bold truncate bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                DNA
+              </h2>
+              <p className="text-xs font-medium text-white/60 truncate">Discover Natural Ability</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </Link>
-    </div>
+    </motion.div>
 
     {/* Navigation */}
     <OverlayScrollbarsComponent
       element="nav"
-      className="flex-1 min-h-0 p-4 space-y-2"
+      className="flex-1 min-h-0 p-4 space-y-3 relative z-10"
       options={{
         scrollbars: {
           theme: 'os-theme-dark',
@@ -175,7 +196,7 @@ const SidebarContent = ({
       }}
       defer
     >
-      {filteredMenuItems.map((item) => {
+      {filteredMenuItems.map((item, index) => {
         const Icon = item.icon;
         const href = `/${locale}${item.href}`;
         const isActive = item.key === 'dashboard'
@@ -183,55 +204,113 @@ const SidebarContent = ({
           : pathname === href || pathname.startsWith(`${href}/`);
         
         return (
-          <div key={item.key} className="relative group/item">
+          <motion.div 
+            key={item.key} 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.05 }}
+            className="relative group/item"
+          >
             <Link
               href={href}
               onClick={() => onMobileClose && onMobileClose()}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3.5 rounded-lg transition-colors duration-200 touch-manipulation",
-                "active:scale-[0.98]",
-                isActive 
-                  ? cn(
-                      "bg-white/5 text-white border border-white/10",
-                      isRTL ? "border-r-4 border-r-white/40" : "border-l-4 border-l-white/40"
-                    )
-                  : "text-white/80 hover:text-white hover:bg-white/5 border-2 border-transparent",
-                isCollapsed && "lg:justify-center lg:px-3",
-                "min-h-12" // Touch-friendly minimum height
-              )}
+              className="block relative"
             >
-              <Icon className="h-5 w-5 shrink-0" />
-              
-              {!isCollapsed && (
-                <span className="font-medium truncate flex-1 text-[15px]">
-                  {dictionary.nav[item.labelKey]}
-                </span>
-              )}
-              
+              <motion.div
+                whileHover={{ scale: 1.02, x: isRTL ? -4 : 4 }}
+                whileTap={{ scale: 0.98 }}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-300 backdrop-blur-sm relative overflow-hidden",
+                  "min-h-14",
+                  isActive 
+                    ? "bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-white border-2 border-blue-500/50 shadow-lg shadow-blue-500/20"
+                    : "text-white/70 hover:text-white hover:bg-white/5 border-2 border-white/5 hover:border-white/10",
+                  isCollapsed && "lg:justify-center lg:px-3"
+                )}
+              >
+                {/* Active indicator glow */}
+                {isActive && (
+                  <motion.div
+                    layoutId="activeIndicator"
+                    className={cn(
+                      "absolute top-0 bottom-0 w-1 bg-gradient-to-b from-blue-400 via-purple-500 to-pink-500",
+                      isRTL ? "right-0 rounded-l-full" : "left-0 rounded-r-full"
+                    )}
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                
+                {/* Icon with glow effect */}
+                <motion.div 
+                  className="relative"
+                  animate={isActive ? { 
+                    rotate: [0, -5, 5, -5, 0],
+                  } : {}}
+                  transition={{ duration: 0.5 }}
+                >
+                  <Icon className={cn(
+                    "h-5 w-5 shrink-0 relative z-10",
+                    isActive && "drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]"
+                  )} />
+                  {isActive && (
+                    <motion.div
+                      className="absolute inset-0 bg-blue-500 rounded-full blur-md opacity-50"
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    />
+                  )}
+                </motion.div>
+                
+                <AnimatePresence>
+                  {!isCollapsed && (
+                    <motion.span 
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: 'auto' }}
+                      exit={{ opacity: 0, width: 0 }}
+                      className="font-medium truncate flex-1 text-[15px]"
+                    >
+                      {dictionary.nav[item.labelKey]}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+                
+                {/* Hover sparkle effect */}
+                <motion.div
+                  className="absolute top-1 right-1 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                >
+                  <Sparkles className="h-3 w-3 text-yellow-400" />
+                </motion.div>
+              </motion.div>
             </Link>
-          </div>
+          </motion.div>
         );
       })}
     </OverlayScrollbarsComponent>
 
     {/* Footer */}
-    <div className={cn(
-      "p-4 border-t border-[#000000]",
-      isCollapsed && "lg:px-2"
-    )}>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn(
+        "p-4 border-t border-white/10 relative z-10 backdrop-blur-sm",
+        isCollapsed && "lg:px-2"
+      )}
+    >
       <div className={cn(
-        "text-xs text-center text-white",
+        "text-xs text-center text-white/50",
         isCollapsed && "lg:hidden"
       )}>
-        <p>© 2025 Discover Natural Ability</p>
-        <p className="mt-1">v1.0.0</p>
+        <p>© 2025 DNA</p>
+        <p className="mt-1 font-mono">v1.0.0</p>
       </div>
       {isCollapsed && (
-        <div className="hidden lg:block text-xs text-center text-white">
+        <div className="hidden lg:block text-xs text-center text-white/50 font-mono">
           v1.0
         </div>
       )}
-    </div>
+    </motion.div>
   </div>
 );
 
@@ -262,9 +341,12 @@ export function DashboardSidebar({
     <>
       {/* Desktop Sidebar */}
       <aside className={cn(
-        "hidden lg:flex flex-col bg-[#262626] border-r border-[#000000] transition-all duration-300 relative",
+        "hidden lg:flex flex-col bg-gradient-to-b from-[#1a1a2e] via-[#16213e] to-[#0f3460] border-r border-white/10 transition-all duration-500 relative shadow-2xl",
         isCollapsed ? "w-20" : "w-72"
       )}>
+        {/* Animated mesh gradient overlay */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent_50%)] opacity-50" />
+        
         <SidebarContent 
           isCollapsed={isCollapsed}
           locale={locale}
@@ -276,69 +358,105 @@ export function DashboardSidebar({
         />
         
         {/* Collapse Toggle Button */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           onClick={() => setIsCollapsed(!isCollapsed)}
           className={cn(
-            "absolute top-20 -right-3 h-7 w-7 rounded-full bg-[#1a1a1a] border border-white/10 flex items-center justify-center hover:bg-[#0f0f0f] transition-colors duration-200 z-50 text-white active:scale-95",
+            "absolute top-20 -right-3 h-8 w-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 border-2 border-white/20 flex items-center justify-center hover:from-blue-500 hover:to-purple-500 transition-all duration-300 z-50 text-white shadow-lg shadow-blue-500/50",
             isRTL && "-left-3 right-auto"
           )}
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {isCollapsed ? (
-            isRTL ? <ChevronLeft className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />
-          ) : (
-            isRTL ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />
-          )}
-        </button>
+          <motion.div
+            animate={{ rotate: isCollapsed ? 0 : 180 }}
+            transition={{ duration: 0.3 }}
+          >
+            {isCollapsed ? (
+              isRTL ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+            ) : (
+              isRTL ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />
+            )}
+          </motion.div>
+        </motion.button>
       </aside>
 
       {/* Mobile Sidebar */}
-      <aside 
-        className={cn(
-          "lg:hidden fixed top-0 bottom-0 z-50 bg-[#262626] border-r border-[#000000] transition-all duration-300 ease-out flex flex-col",
-          "w-[85vw] max-w-[320px] sm:w-80",
-          isMobileOpen 
-            ? "translate-x-0" 
-            : isRTL 
-              ? "translate-x-full" 
-              : "-translate-x-full",
-          isRTL ? "right-0" : "left-0"
-        )}
-        role="dialog"
-        aria-label="Navigation menu"
-      >
-        {/* Mobile Header with Close Button */}
-        <div className="flex items-center justify-between p-4 border-b border-[#000000] lg:hidden">
-          <div className="flex items-center gap-3">
-            <img 
-              src="/logo.png" 
-              alt="DNA Logo" 
-              className="h-8 w-8 object-contain"
+      <AnimatePresence>
+        {isMobileOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onMobileClose}
+              className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
             />
-            <div>
-              <h2 className="text-lg font-bold text-white">DNA</h2>
-              <p className="text-xs text-white">Menu</p>
-            </div>
-          </div>
-          <button
-            onClick={onMobileClose}
-            className="h-10 w-10 rounded-lg flex items-center justify-center text-white hover:bg-[#000000] transition-colors active:scale-95"
-            aria-label="Close menu"
-          >
-            ✕
-          </button>
-        </div>
+            
+            {/* Sidebar */}
+            <motion.aside 
+              initial={{ x: isRTL ? '100%' : '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: isRTL ? '100%' : '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className={cn(
+                "lg:hidden fixed top-0 bottom-0 z-50 bg-gradient-to-b from-[#1a1a2e] via-[#16213e] to-[#0f3460] border-r border-white/10 flex flex-col shadow-2xl",
+                "w-[85vw] max-w-[320px] sm:w-80",
+                isRTL ? "right-0" : "left-0"
+              )}
+              role="dialog"
+              aria-label="Navigation menu"
+            >
+              {/* Animated mesh gradient overlay */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent_50%)] opacity-50" />
+              
+              {/* Mobile Header with Close Button */}
+              <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between p-4 border-b border-white/10 lg:hidden relative z-10 backdrop-blur-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <motion.div
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  >
+                    <img 
+                      src="/logo.png" 
+                      alt="DNA Logo" 
+                      className="h-8 w-8 object-contain"
+                    />
+                  </motion.div>
+                  <div>
+                    <h2 className="text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">DNA</h2>
+                    <p className="text-xs text-white/60">Menu</p>
+                  </div>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={onMobileClose}
+                  className="h-10 w-10 rounded-lg flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+                  aria-label="Close menu"
+                >
+                  ✕
+                </motion.button>
+              </motion.div>
 
-        <SidebarContent 
-          isCollapsed={isCollapsed}
-          locale={locale}
-          pathname={pathname}
-          filteredMenuItems={filteredMenuItems}
-          dictionary={dictionary}
-          onMobileClose={onMobileClose}
-          isRTL={isRTL}
-        />
-      </aside>
+              <SidebarContent 
+                isCollapsed={isCollapsed}
+                locale={locale}
+                pathname={pathname}
+                filteredMenuItems={filteredMenuItems}
+                dictionary={dictionary}
+                onMobileClose={onMobileClose}
+                isRTL={isRTL}
+              />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 }

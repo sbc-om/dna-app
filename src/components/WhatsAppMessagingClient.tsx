@@ -514,8 +514,8 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Users/Groups List */}
         <Card className="lg:col-span-2 bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] shadow-lg">
-          <CardHeader>
-            <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as 'users' | 'groups')} className="w-full">
+          <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as 'users' | 'groups')} className="w-full">
+            <CardHeader>
               <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-[#1a1a1a]">
                 <TabsTrigger value="users" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
@@ -532,9 +532,8 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                   )}
                 </TabsTrigger>
               </TabsList>
-            </Tabs>
-          </CardHeader>
-          <CardContent>
+            </CardHeader>
+            <CardContent>
             {/* Users Tab */}
             <TabsContent value="users" className="mt-0 space-y-4">
             {/* Profiles */}
@@ -1040,6 +1039,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
             </TabsContent>
 
           </CardContent>
+          </Tabs>
         </Card>
 
         {/* Message Form */}

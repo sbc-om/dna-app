@@ -1,11 +1,12 @@
 'use client';
 
-import { LogOut, User, Menu, X, Download, Bell, Globe, Building2, ChevronDown, ArrowLeft } from 'lucide-react';
+import { LogOut, User, Menu, X, Download, Bell, Globe, Building2, ChevronDown, ArrowLeft, Sparkles } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { ThemeToggle } from './ThemeToggle';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -153,43 +154,86 @@ export function DashboardHeader({ dictionary, user, onMobileMenuToggle }: Dashbo
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#1a1a1a]">
-      <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 lg:px-6 gap-2 sm:gap-3">
+    <motion.header 
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+      className="sticky top-0 z-40 border-b-2 border-white/10 dark:border-white/5 bg-gradient-to-r from-white/95 via-blue-50/50 to-purple-50/50 dark:from-gray-900/95 dark:via-blue-950/50 dark:to-purple-950/50 backdrop-blur-xl shadow-lg"
+    >
+      {/* Animated gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-purple-600/5 to-pink-600/5 opacity-50" />
+      
+      <div className="relative flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 lg:px-6 gap-2 sm:gap-3">
         {/* Left Section: Menu + Title */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
           {/* Back + Mobile Menu */}
           <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleBack}
-              className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all border-2 border-transparent hover:border-black/10 dark:hover:border-white/10"
-              aria-label="Go back"
-            >
-              <ArrowLeft className="h-5 w-5 text-gray-800 dark:text-gray-100 rtl:rotate-180" />
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleBack}
+                className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-xl hover:bg-gradient-to-br hover:from-blue-500/10 hover:to-purple-500/10 dark:hover:from-blue-500/20 dark:hover:to-purple-500/20 active:scale-95 transition-all border-2 border-transparent hover:border-blue-500/20 dark:hover:border-blue-500/30"
+                aria-label="Go back"
+              >
+                <ArrowLeft className="h-5 w-5 text-gray-800 dark:text-gray-100 rtl:rotate-180" />
+              </Button>
+            </motion.div>
 
             {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleMobileMenuToggle}
-            className="lg:hidden h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all border-2 border-transparent hover:border-black/10 dark:hover:border-white/10"
-            aria-label="Toggle menu"
-          >
-            {isMobileMenuOpen ? (
-              <X className="h-5 w-5 text-gray-800 dark:text-gray-100" />
-            ) : (
-              <Menu className="h-5 w-5 text-gray-800 dark:text-gray-100" />
-            )}
-          </Button>
-
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleMobileMenuToggle}
+                className="lg:hidden h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-xl hover:bg-gradient-to-br hover:from-blue-500/10 hover:to-purple-500/10 dark:hover:from-blue-500/20 dark:hover:to-purple-500/20 active:scale-95 transition-all border-2 border-transparent hover:border-blue-500/20 dark:hover:border-blue-500/30"
+                aria-label="Toggle menu"
+              >
+                <AnimatePresence mode="wait">
+                  {isMobileMenuOpen ? (
+                    <motion.div
+                      key="close"
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: 90, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <X className="h-5 w-5 text-gray-800 dark:text-gray-100" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="menu"
+                      initial={{ rotate: 90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: -90, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Menu className="h-5 w-5 text-gray-800 dark:text-gray-100" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </Button>
+            </motion.div>
           </div>
 
-          {/* Title - Responsive visibility */}
-          <h1 className="hidden sm:block text-base md:text-lg font-bold text-[#262626] dark:text-white truncate">
+          {/* Title - Responsive visibility with animated gradient */}
+          <motion.h1 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="hidden sm:block text-base md:text-lg font-bold truncate bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent"
+            style={{
+              backgroundSize: '200% auto',
+              animation: 'gradient 3s linear infinite'
+            }}
+          >
             DNA
-          </h1>
+          </motion.h1>
+          <style jsx>{`
+            @keyframes gradient {
+              0%, 100% { background-position: 0% 50%; }
+              50% { background-position: 100% 50%; }
+            }
+          `}</style>
         </div>
 
         {/* Right Section: Actions - Grouped by priority */}
@@ -235,43 +279,57 @@ export function DashboardHeader({ dictionary, user, onMobileMenuToggle }: Dashbo
 
             {/* Notifications - Always visible with badge */}
             <Link href={`/${locale}/dashboard/notifications`}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all border-2 border-transparent hover:border-black/10 dark:hover:border-white/10 relative"
-                aria-label={dictionary.nav.notifications}
-              >
-                <Bell className="h-4 w-4 text-gray-700 dark:text-gray-200" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-600 text-white text-[9px] font-bold flex items-center justify-center border-2 border-white dark:border-[#1a1a1a]">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </Button>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl hover:bg-gradient-to-br hover:from-blue-500/10 hover:to-purple-500/10 dark:hover:from-blue-500/20 dark:hover:to-purple-500/20 active:scale-95 transition-all border-2 border-transparent hover:border-blue-500/20 dark:hover:border-blue-500/30 relative"
+                  aria-label={dictionary.nav.notifications}
+                >
+                  <Bell className="h-4 w-4 text-gray-700 dark:text-gray-200" />
+                  {unreadCount > 0 && (
+                    <motion.span 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-gradient-to-br from-red-500 to-pink-600 text-white text-[9px] font-bold flex items-center justify-center border-2 border-white dark:border-gray-900 shadow-lg"
+                    >
+                      <motion.span
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </motion.span>
+                    </motion.span>
+                  )}
+                </Button>
+              </motion.div>
             </Link>
 
             {/* User Menu - Avatar */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-full active:scale-95 transition-all border-2 border-transparent hover:border-black/10 dark:hover:border-white/10"
-                  aria-label="User menu"
-                >
-                  {user.profilePicture ? (
-                    <img
-                      key={user.profilePicture}
-                      src={user.profilePicture}
-                      alt={user.fullName || 'User'}
-                      className="h-full w-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-full w-full rounded-full bg-[#262626] dark:bg-[#444] flex items-center justify-center text-white text-xs font-bold">
-                      {user.fullName?.[0]?.toUpperCase() || 'U'}
-                    </div>
-                  )}
-                </Button>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-9 w-9 sm:h-10 sm:w-10 rounded-full active:scale-95 transition-all border-2 border-transparent hover:border-blue-500/30 dark:hover:border-blue-500/50 relative overflow-hidden"
+                    aria-label="User menu"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 opacity-0 hover:opacity-100 transition-opacity" />
+                    {user.profilePicture ? (
+                      <img
+                        key={user.profilePicture}
+                        src={user.profilePicture}
+                        alt={user.fullName || 'User'}
+                        className="h-full w-full rounded-full object-cover relative z-10"
+                      />
+                    ) : (
+                      <div className="h-full w-full rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-xs font-bold relative z-10">
+                        {user.fullName?.[0]?.toUpperCase() || 'U'}
+                      </div>
+                    )}
+                  </Button>
+                </motion.div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
                 <DropdownMenuLabel className="bg-gray-50 dark:bg-[#1a1a1a]">
@@ -334,6 +392,6 @@ export function DashboardHeader({ dictionary, user, onMobileMenuToggle }: Dashbo
           </div>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 }

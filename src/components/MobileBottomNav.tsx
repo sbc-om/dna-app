@@ -13,6 +13,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 interface MobileBottomNavProps {
   locale: string;
@@ -100,13 +101,19 @@ export function MobileBottomNav({ locale, accessibleResources }: MobileBottomNav
     .slice(0, 5); // Limit to 5 items for mobile bottom nav
 
   return (
-    <nav 
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#1a1a1a] border-t-2 border-[#DDDDDD] dark:border-[#000000] safe-bottom"
+    <motion.nav 
+      initial={{ y: 100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-linear-to-t from-white/95 via-white/98 to-white dark:from-gray-900/95 dark:via-gray-900/98 dark:to-gray-900 backdrop-blur-xl border-t-2 border-white/20 dark:border-white/10 safe-bottom shadow-2xl"
       role="navigation"
       aria-label="Mobile bottom navigation"
     >
-      <div className="flex items-center justify-around px-2 py-2 max-w-screen-sm mx-auto">
-        {filteredItems.map((item) => {
+      {/* Animated gradient overlay */}
+      <div className="absolute inset-0 bg-linear-to-r from-blue-600/5 via-purple-600/5 to-pink-600/5 opacity-50" />
+      
+      <div className="relative flex items-center justify-around px-2 py-2 max-w-screen-sm mx-auto">
+        {filteredItems.map((item, index) => {
           const Icon = item.icon;
           const href = `/${locale}${item.href}`;
           const isActive = 
@@ -115,39 +122,65 @@ export function MobileBottomNav({ locale, accessibleResources }: MobileBottomNav
               : pathname.startsWith(href);
 
           return (
-            <Link
+            <motion.div
               key={item.key}
-              href={href}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors duration-200 touch-manipulation min-w-16 group",
-                "active:scale-95 active:bg-gray-100 dark:active:bg-gray-800",
-                isActive 
-                  ? "text-[#262626] dark:text-white" 
-                  : "text-gray-600 dark:text-gray-400 hover:text-[#262626] dark:hover:text-white"
-              )}
-              aria-current={isActive ? 'page' : undefined}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
             >
-              <div className={cn(
-                "relative transition-transform duration-200",
-                isActive && "scale-110"
-              )}>
-                <Icon className={cn(
-                  "h-5 w-5 transition-colors duration-200"
-                )} />
-                {isActive && (
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#262626] dark:bg-white" />
-                )}
-              </div>
-              <span className={cn(
-                "text-[10px] font-medium transition-colors duration-200 line-clamp-1",
-                isActive && "font-semibold"
-              )}>
-                {item.label}
-              </span>
-            </Link>
+              <Link
+                href={href}
+                className="block"
+              >
+                <motion.div
+                  whileTap={{ scale: 0.9 }}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 touch-manipulation min-w-16 group relative overflow-hidden",
+                    isActive 
+                      ? "text-[#262626] dark:text-white" 
+                      : "text-gray-600 dark:text-gray-400"
+                  )}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  {/* Active background */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute inset-0 bg-linear-to-br from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 rounded-xl border-2 border-blue-500/30"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  
+                  <motion.div 
+                    className="relative z-10"
+                    animate={isActive ? { 
+                      rotate: [0, -5, 5, -5, 0],
+                      scale: [1, 1.1, 1]
+                    } : {}}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {isActive && (
+                      <motion.div
+                        className="absolute inset-0 bg-blue-500 rounded-full blur-md opacity-30"
+                        animate={{ scale: [1, 1.3, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      />
+                    )}
+                  </motion.div>
+                  
+                  <span className={cn(
+                    "text-[10px] font-medium transition-colors duration-200 line-clamp-1 relative z-10",
+                    isActive && "font-bold"
+                  )}>
+                    {item.label}
+                  </span>
+                </motion.div>
+              </Link>
+            </motion.div>
           );
         })}
       </div>
-    </nav>
+    </motion.nav>
   );
 }

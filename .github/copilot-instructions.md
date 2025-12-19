@@ -1,5 +1,251 @@
 # Copilot Instructions – DNA Web App
 
+---
+
+## 🎮 GAME-LIKE UI/UX DESIGN GUIDELINES
+
+**The DNA application must feel like an engaging, interactive game experience, not a traditional admin panel.**
+
+### 🌟 MASTER RULE: All Pages Must Be Game-Like and Animated
+
+**Every page, component, and interaction in the DNA application MUST follow these game-like design principles:**
+
+#### 1. **Framer Motion is MANDATORY**
+   - Install: `npm install framer-motion`
+   - Import in EVERY client component: `import { motion, AnimatePresence } from 'framer-motion'`
+   - Wrap interactive elements in `<motion.div>` or `motion.button`
+   - Use `<AnimatePresence>` for conditional rendering
+
+#### 2. **Page Entry Animations (REQUIRED)**
+   ```tsx
+   <motion.div
+     initial={{ opacity: 0, y: 20 }}
+     animate={{ opacity: 1, y: 0 }}
+     transition={{ duration: 0.6, type: 'spring' }}
+   >
+     {/* Page content */}
+   </motion.div>
+   ```
+
+#### 3. **Interactive Elements (ALL BUTTONS & LINKS)**
+   ```tsx
+   <motion.button
+     whileHover={{ scale: 1.05 }}
+     whileTap={{ scale: 0.95 }}
+     className="..."
+   >
+     Button Text
+   </motion.button>
+   ```
+
+#### 4. **Card Components with 3D Effects**
+   ```tsx
+   <motion.div
+     whileHover={{ 
+       scale: 1.05,
+       rotateY: 5,
+       rotateX: 5,
+     }}
+     style={{ transformStyle: 'preserve-3d' }}
+     className="relative group"
+   >
+     {/* Card with gradient glow */}
+     <motion.div
+       className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl blur-xl opacity-0 group-hover:opacity-50"
+       animate={{ scale: [1, 1.1, 1] }}
+       transition={{ duration: 2, repeat: Infinity }}
+     />
+     <div className="relative bg-white/10 backdrop-blur-xl p-6 rounded-2xl border-2 border-white/20">
+       {/* Content */}
+     </div>
+   </motion.div>
+   ```
+
+#### 5. **Header/Navigation Animation Pattern**
+   ```tsx
+   <motion.header
+     initial={{ y: -100, opacity: 0 }}
+     animate={{ y: 0, opacity: 1 }}
+     transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+     className="sticky top-0 z-40 bg-gradient-to-r from-white/95 via-blue-50/50 to-purple-50/50 backdrop-blur-xl"
+   >
+     {/* Animated background overlay */}
+     <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-purple-600/5 to-pink-600/5" />
+     {/* Header content */}
+   </motion.header>
+   ```
+
+#### 6. **List/Grid Items with Stagger Animation**
+   ```tsx
+   {items.map((item, index) => (
+     <motion.div
+       key={item.id}
+       initial={{ opacity: 0, y: 20 }}
+       animate={{ opacity: 1, y: 0 }}
+       transition={{ delay: index * 0.1 }}
+     >
+       {/* Item content */}
+     </motion.div>
+   ))}
+   ```
+
+#### 7. **Icon Animations (ALWAYS)**
+   ```tsx
+   <motion.div
+     animate={{ rotate: [0, -5, 5, -5, 0] }}
+     transition={{ duration: 0.5 }}
+   >
+     <Icon className="w-6 h-6" />
+   </motion.div>
+   ```
+
+#### 8. **Badge/Notification Pulse**
+   ```tsx
+   <motion.span
+     initial={{ scale: 0 }}
+     animate={{ scale: 1 }}
+     className="badge"
+   >
+     <motion.span
+       animate={{ scale: [1, 1.2, 1] }}
+       transition={{ duration: 2, repeat: Infinity }}
+     >
+       {count}
+     </motion.span>
+   </motion.span>
+   ```
+
+#### 9. **Modal/Dialog Entry**
+   ```tsx
+   <AnimatePresence>
+     {isOpen && (
+       <>
+         <motion.div
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+           exit={{ opacity: 0 }}
+           className="backdrop"
+         />
+         <motion.div
+           initial={{ scale: 0.9, opacity: 0 }}
+           animate={{ scale: 1, opacity: 1 }}
+           exit={{ scale: 0.9, opacity: 0 }}
+           className="modal"
+         >
+           {/* Modal content */}
+         </motion.div>
+       </>
+     )}
+   </AnimatePresence>
+   ```
+
+#### 10. **Loading States**
+   ```tsx
+   <motion.div
+     animate={{ rotate: 360 }}
+     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+   >
+     <Loader className="w-6 h-6" />
+   </motion.div>
+   ```
+
+---
+
+### Core Principles:
+1. **Smooth Animations Everywhere**
+   - Use **Framer Motion** for all interactive elements
+   - Apply entrance animations (fade, slide, scale) with stagger delays
+   - Add hover effects: scale, rotate, glow, shadow changes
+   - Include exit animations for dialogs and overlays
+
+2. **Visual Feedback & Interactivity**
+   - Every clickable element must have:
+     * Hover state with scale transformation (1.02-1.1)
+     * Active/pressed state with scale-down (0.95-0.98)
+     * Color transitions and shadow effects
+   - Use particle effects on special interactions
+   - Add loading spinners with playful animations
+
+3. **Color & Gradients**
+   - Use vibrant gradient backgrounds: `bg-gradient-to-br from-blue-500 to-purple-600`
+   - Apply animated gradients that shift colors over time
+   - Add glow effects with `shadow-lg shadow-blue-500/50`
+   - Use glassmorphism: `backdrop-blur-xl bg-white/10`
+
+4. **3D Transforms & Depth**
+   - Apply perspective transforms on hover: `rotateY(5deg) rotateX(5deg)`
+   - Use `transform-style: preserve-3d` for card effects
+   - Layer elements with z-index and shadows for depth
+   - Add floating animations with Y-axis movement
+
+5. **Iconography & Visual Elements**
+   - Rotate icons on hover (360° spins)
+   - Scale and bounce icons during interactions
+   - Add sparkles, stars, and decorative elements
+   - Use animated borders and progress indicators
+
+6. **Sidebar & Navigation**
+   - Dark gradient backgrounds: `from-[#1a1a2e] via-[#16213e] to-[#0f3460]`
+   - Active menu items with glowing borders
+   - Smooth expand/collapse animations
+   - Backdrop blur and transparency effects
+   - Menu items spacing: `space-y-3` with `py-4` padding
+
+7. **Dashboard Cards & Stats**
+   - Equal height cards with `h-full` and flexbox
+   - Gradient backgrounds per card category
+   - Hover animations: lift, tilt, glow
+   - Particle effects appearing on hover
+   - Animated counters and progress bars
+
+8. **Headers & Typography**
+   - Large, bold headings with animated gradients
+   - Color-shifting text using `background-clip: text`
+   - Badge elements with pulsing shadows
+   - Decorative floating icons (Sparkles, Zap, Star)
+
+9. **Spacing & Layout**
+   - Generous spacing: `space-y-6` to `space-y-8`
+   - Menu items: `space-y-3`, padding `py-4`
+   - Cards: `p-6` to `p-8` with `rounded-2xl` to `rounded-3xl`
+   - Consistent gap in grids: `gap-6`
+
+10. **Background Layers**
+    - Multi-layered backgrounds with gradients
+    - Animated mesh patterns: `bg-[radial-gradient(...)]`
+    - Floating particles with random positions
+    - Blur overlays for depth: `blur-3xl`
+
+### Implementation Checklist:
+- ✅ Install `framer-motion` package
+- ✅ Wrap interactive elements in `<motion.div>`
+- ✅ Add `initial`, `animate`, `whileHover`, `whileTap` props
+- ✅ Use `transition` with spring physics or duration
+- ✅ Apply gradient backgrounds to cards and buttons
+- ✅ Add icon animations with rotation and scale
+- ✅ Create particle systems for special effects
+- ✅ Implement glassmorphism with backdrop-blur
+- ✅ Add shadow effects with glow colors
+- ✅ Ensure all cards have equal heights with flexbox
+
+### Code Example Pattern:
+```tsx
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  whileHover={{ scale: 1.05, rotate: 2 }}
+  whileTap={{ scale: 0.95 }}
+  transition={{ type: 'spring', stiffness: 300 }}
+  className="bg-gradient-to-br from-blue-500 to-purple-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/50"
+>
+  {/* Interactive content */}
+</motion.div>
+```
+
+**Goal:** Every page should feel alive, responsive, and fun to use – like playing a game, not working in software.
+
+---
+
 You are helping build a **modular, bilingual web application** using **Next.js 16**, **LMDB** as the database, and **shadcn/ui** for the UI.
 
 The project has:
