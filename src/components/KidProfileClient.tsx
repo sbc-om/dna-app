@@ -1102,6 +1102,8 @@ export function KidProfileClient({
                     value={assessmentForm[f.key] || f.min.toString()}
                     onChange={(e) => setAssessmentForm((p) => ({ ...p, [f.key]: e.target.value }))}
                     className="slider w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    aria-label={categoryLabel(f.key)}
+                    title={categoryLabel(f.key)}
                     style={{
                       background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(assessmentForm[f.key] || f.min.toString()) - f.min) / (f.max - f.min)) * 100}%, rgb(229, 231, 235) ${((parseFloat(assessmentForm[f.key] || f.min.toString()) - f.min) / (f.max - f.min)) * 100}%, rgb(229, 231, 235) 100%)`
                     }}

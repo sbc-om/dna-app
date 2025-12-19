@@ -142,6 +142,8 @@ export function PhysicalTestDialog({
                   value={formData.verticalJump || '0'}
                   onChange={(e) => setFormData({ ...formData, verticalJump: e.target.value })}
                   className="slider w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  aria-label="Vertical Jump in centimeters"
+                  title="Vertical Jump in centimeters"
                   style={{
                     background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(formData.verticalJump || '0')) / 100) * 100}%, rgb(229, 231, 235) ${((parseFloat(formData.verticalJump || '0')) / 100) * 100}%, rgb(229, 231, 235) 100%)`
                   }}
@@ -168,6 +170,8 @@ export function PhysicalTestDialog({
                   value={formData.broadJump || '0'}
                   onChange={(e) => setFormData({ ...formData, broadJump: e.target.value })}
                   className="slider w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  aria-label="Broad Jump in centimeters"
+                  title="Broad Jump in centimeters"
                   style={{
                     background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(formData.broadJump || '0')) / 300) * 100}%, rgb(229, 231, 235) ${((parseFloat(formData.broadJump || '0')) / 300) * 100}%, rgb(229, 231, 235) 100%)`
                   }}
@@ -198,6 +202,8 @@ export function PhysicalTestDialog({
                   value={formData.sprint10m || '0'}
                   onChange={(e) => setFormData({ ...formData, sprint10m: e.target.value })}
                   className="slider w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  aria-label="Sprint 10m in seconds"
+                  title="Sprint 10m in seconds"
                   style={{
                     background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(formData.sprint10m || '0')) / 10) * 100}%, rgb(229, 231, 235) ${((parseFloat(formData.sprint10m || '0')) / 10) * 100}%, rgb(229, 231, 235) 100%)`
                   }}
@@ -219,6 +225,8 @@ export function PhysicalTestDialog({
                   value={formData.sprint20m || '0'}
                   onChange={(e) => setFormData({ ...formData, sprint20m: e.target.value })}
                   className="slider w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  aria-label="Sprint 20m in seconds"
+                  title="Sprint 20m in seconds"
                   style={{
                     background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(formData.sprint20m || '0')) / 10) * 100}%, rgb(229, 231, 235) ${((parseFloat(formData.sprint20m || '0')) / 10) * 100}%, rgb(229, 231, 235) 100%)`
                   }}
@@ -240,6 +248,8 @@ export function PhysicalTestDialog({
                   value={formData.sprint30m || '0'}
                   onChange={(e) => setFormData({ ...formData, sprint30m: e.target.value })}
                   className="slider w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  aria-label="Sprint 30m in seconds"
+                  title="Sprint 30m in seconds"
                   style={{
                     background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(formData.sprint30m || '0')) / 10) * 100}%, rgb(229, 231, 235) ${((parseFloat(formData.sprint30m || '0')) / 10) * 100}%, rgb(229, 231, 235) 100%)`
                   }}
@@ -265,6 +275,8 @@ export function PhysicalTestDialog({
                   value={formData.illinoisAgilityTest || '0'}
                   onChange={(e) => setFormData({ ...formData, illinoisAgilityTest: e.target.value })}
                   className="slider w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  aria-label="Illinois Agility Test in seconds"
+                  title="Illinois Agility Test in seconds"
                   style={{
                     background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(formData.illinoisAgilityTest || '0')) / 30) * 100}%, rgb(229, 231, 235) ${((parseFloat(formData.illinoisAgilityTest || '0')) / 30) * 100}%, rgb(229, 231, 235) 100%)`
                   }}
@@ -286,6 +298,8 @@ export function PhysicalTestDialog({
                   value={formData.tTest || '0'}
                   onChange={(e) => setFormData({ ...formData, tTest: e.target.value })}
                   className="slider w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  aria-label="T-Test in seconds"
+                  title="T-Test in seconds"
                   style={{
                     background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(formData.tTest || '0')) / 30) * 100}%, rgb(229, 231, 235) ${((parseFloat(formData.tTest || '0')) / 30) * 100}%, rgb(229, 231, 235) 100%)`
                   }}
@@ -307,6 +321,8 @@ export function PhysicalTestDialog({
                   value={formData.agility505Test || '0'}
                   onChange={(e) => setFormData({ ...formData, agility505Test: e.target.value })}
                   className="slider w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  aria-label="5-0-5 Agility Test in seconds"
+                  title="5-0-5 Agility Test in seconds"
                   style={{
                     background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(formData.agility505Test || '0')) / 10) * 100}%, rgb(229, 231, 235) ${((parseFloat(formData.agility505Test || '0')) / 10) * 100}%, rgb(229, 231, 235) 100%)`
                   }}
@@ -332,6 +348,8 @@ export function PhysicalTestDialog({
                   value={formData.singleLegBalance || '0'}
                   onChange={(e) => setFormData({ ...formData, singleLegBalance: e.target.value })}
                   className="slider w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  aria-label="Single-Leg Balance in seconds"
+                  title="Single-Leg Balance in seconds"
                   style={{
                     background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(formData.singleLegBalance || '0')) / 120) * 100}%, rgb(229, 231, 235) ${((parseFloat(formData.singleLegBalance || '0')) / 120) * 100}%, rgb(229, 231, 235) 100%)`
                   }}
@@ -353,6 +371,8 @@ export function PhysicalTestDialog({
                   value={formData.plankHold || '0'}
                   onChange={(e) => setFormData({ ...formData, plankHold: e.target.value })}
                   className="slider w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  aria-label="Plank Hold in seconds"
+                  title="Plank Hold in seconds"
                   style={{
                     background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(formData.plankHold || '0')) / 300) * 100}%, rgb(229, 231, 235) ${((parseFloat(formData.plankHold || '0')) / 300) * 100}%, rgb(229, 231, 235) 100%)`
                   }}
@@ -378,6 +398,8 @@ export function PhysicalTestDialog({
                   value={formData.enduranceTest || '0'}
                   onChange={(e) => setFormData({ ...formData, enduranceTest: e.target.value })}
                   className="slider w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  aria-label="Endurance Test in meters"
+                  title="Endurance Test in meters"
                   style={{
                     background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(formData.enduranceTest || '0')) / 5000) * 100}%, rgb(229, 231, 235) ${((parseFloat(formData.enduranceTest || '0')) / 5000) * 100}%, rgb(229, 231, 235) 100%)`
                   }}
@@ -399,6 +421,8 @@ export function PhysicalTestDialog({
                   value={formData.pullUpTest || '0'}
                   onChange={(e) => setFormData({ ...formData, pullUpTest: e.target.value })}
                   className="slider w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  aria-label="Pull-Up Test count"
+                  title="Pull-Up Test count"
                   style={{
                     background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(formData.pullUpTest || '0')) / 50) * 100}%, rgb(229, 231, 235) ${((parseFloat(formData.pullUpTest || '0')) / 50) * 100}%, rgb(229, 231, 235) 100%)`
                   }}

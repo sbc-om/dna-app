@@ -250,8 +250,10 @@ export function EditKidProfileDialog({
                   value={formData.height || '50'}
                   onChange={(e) => setFormData({ ...formData, height: e.target.value })}
                   className="slider w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  aria-label="Height in centimeters"
+                  title="Height in centimeters"
                   style={{
-                    background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(formData.height || '50') - 50) / 200) * 100}%, rgb(229, 231, 235) ${((parseFloat(formData.height || '50') - 50) / 200) * 100}%, rgb(229, 231, 235) 100%)`
+                    background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(String(formData.height || '50')) - 50) / 200) * 100}%, rgb(229, 231, 235) ${((parseFloat(String(formData.height || '50')) - 50) / 200) * 100}%, rgb(229, 231, 235) 100%)`
                   }}
                 />
                 <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -277,8 +279,10 @@ export function EditKidProfileDialog({
                   value={formData.weight || '10'}
                   onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
                   className="slider w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  aria-label="Weight in kilograms"
+                  title="Weight in kilograms"
                   style={{
-                    background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(formData.weight || '10') - 10) / 140) * 100}%, rgb(229, 231, 235) ${((parseFloat(formData.weight || '10') - 10) / 140) * 100}%, rgb(229, 231, 235) 100%)`
+                    background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${((parseFloat(String(formData.weight || '10')) - 10) / 140) * 100}%, rgb(229, 231, 235) ${((parseFloat(String(formData.weight || '10')) - 10) / 140) * 100}%, rgb(229, 231, 235) 100%)`
                   }}
                 />
                 <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
