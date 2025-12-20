@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, AlertCircle, ArrowRight, ArrowLeft, Shield, CheckCircle } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Eye, EyeOff, Sparkles, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dictionary } from '@/lib/i18n/getDictionary';
@@ -16,47 +17,61 @@ interface LoginFormProps {
   locale: Locale;
 }
 
-type WizardStep = 'email' | 'password' | 'twoFactor';
-
 export function LoginForm({ dictionary, locale }: LoginFormProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [currentStep, setCurrentStep] = useState<WizardStep>('email');
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    twoFactorCode: '',
-  });
+  const [formData, setFormData] = useState({ email: '', password: '', twoFactorCode: '' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [needsTwoFactor, setNeedsTwoFactor] = useState(false);
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    
-    if (!formData.email) {
-      setError(dictionary.auth?.emailRequired || dictionary.errors.validationError);
-      return;
-    }
+  const redirectUrl = useMemo(() => {
+    return searchParams.get('redirect') || `/${locale}/dashboard`;
+  }, [searchParams, locale]);
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError(dictionary.auth?.invalidEmail || dictionary.errors.validationError);
-      return;
-    }
-
-    // Move to password step
-    setCurrentStep('password');
-  };
-
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
 
     try {
+      if (!formData.email) {
+        setError(dictionary.auth?.emailRequired || dictionary.errors.validationError);
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setError(dictionary.auth?.invalidEmail || dictionary.errors.validationError);
+        return;
+      }
+
+      if (!needsTwoFactor && !formData.password) {
+        setError(dictionary.errors.validationError);
+        return;
+      }
+
+      if (needsTwoFactor) {
+        const verifyResponse = await fetch('/api/auth/verify-2fa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: formData.email,
+            code: formData.twoFactorCode,
+          }),
+        });
+
+        if (!verifyResponse.ok) {
+          const verifyData = await verifyResponse.json().catch(() => ({}));
+          setError(verifyData.error || dictionary.errors.serverError);
+          return;
+        }
+
+        window.location.href = redirectUrl;
+        return;
+      }
+
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -71,10 +86,8 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        // Check if 2FA is required
         if (data.requiresTwoFactor) {
           setNeedsTwoFactor(true);
-          setCurrentStep('twoFactor');
           return;
         }
         
@@ -82,345 +95,185 @@ export function LoginForm({ dictionary, locale }: LoginFormProps) {
         return;
       }
 
-      // Get redirect URL from query params or default to dashboard
-      const redirectUrl = searchParams.get('redirect') || `/${locale}/dashboard`;
-      
-      // Force a full page reload to ensure cookie is available
+      // Note: rememberMe is UI-only for now; session persistence is controlled server-side.
+      void rememberMe;
+
+      // Force a full page reload to ensure cookie is available.
       window.location.href = redirectUrl;
     } catch (err) {
+      console.error('Login error:', err);
       setError(dictionary.errors.serverError);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleTwoFactorSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError('');
-
-    try {
-      const response = await fetch('/api/auth/verify-2fa', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: formData.email, 
-          code: formData.twoFactorCode 
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Invalid verification code');
-      }
-
-      // Get redirect URL from query params or default to dashboard
-      const redirectUrl = searchParams.get('redirect') || `/${locale}/dashboard`;
-      window.location.href = redirectUrl;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : dictionary.errors.serverError);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const goBack = () => {
-    setError('');
-    if (currentStep === 'password') {
-      setCurrentStep('email');
-    } else if (currentStep === 'twoFactor') {
-      setCurrentStep('password');
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Progress Steps */}
-      <div className="flex items-center justify-center gap-2 mb-8">
-        <div className={`flex items-center gap-2 transition-all duration-300 ${
-          currentStep === 'email' 
-            ? 'scale-110' 
-            : 'opacity-50'
-        }`}>
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-            currentStep !== 'email' 
-              ? 'bg-[#262626] text-white dark:bg-white dark:text-[#262626]' 
-              : 'bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white'
-          }`}>
-            {currentStep !== 'email' ? <CheckCircle className="w-5 h-5" /> : '1'}
-          </div>
-          <span className="text-sm font-semibold text-[#262626] dark:text-white">{dictionary.common.email}</span>
-        </div>
-        
-        <div className={`w-12 h-1 transition-all ${
-          currentStep !== 'email' ? 'bg-[#262626] dark:bg-white' : 'bg-[#DDDDDD] dark:bg-[#262626]'
-        }`} />
-        
-        <div className={`flex items-center gap-2 transition-all duration-300 ${
-          currentStep === 'password' 
-            ? 'scale-110' 
-            : 'opacity-50'
-        }`}>
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-            currentStep === 'twoFactor'
-              ? 'bg-[#262626] text-white dark:bg-white dark:text-[#262626]' 
-              : currentStep === 'password'
-              ? 'bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white'
-              : 'bg-[#DDDDDD] dark:bg-[#1a1a1a] text-[#262626] dark:text-white'
-          }`}>
-            {currentStep === 'twoFactor' ? <CheckCircle className="w-5 h-5" /> : '2'}
-          </div>
-          <span className="text-sm font-semibold text-[#262626] dark:text-white">{dictionary.common.password}</span>
+    <motion.form onSubmit={handleSubmit} className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80">
+          <ShieldCheck className="h-4 w-4" />
+          <span>{dictionary.auth?.loginSubtitle || dictionary.auth.login}</span>
         </div>
 
-        {needsTwoFactor && (
-          <>
-            <div className={`w-12 h-1 transition-all ${
-              currentStep === 'twoFactor' ? 'bg-[#262626] dark:bg-white' : 'bg-[#DDDDDD] dark:bg-[#262626]'
-            }`} />
-            
-            <div className={`flex items-center gap-2 transition-all duration-300 ${
-              currentStep === 'twoFactor' 
-                ? 'scale-110' 
-                : 'opacity-50'
-            }`}>
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-                currentStep === 'twoFactor'
-                  ? 'bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white'
-                  : 'bg-[#DDDDDD] dark:bg-[#1a1a1a] text-[#262626] dark:text-white'
-              }`}>
-                3
-              </div>
-              <span className="text-sm font-semibold text-[#262626] dark:text-white">2FA</span>
-            </div>
-          </>
-        )}
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="hidden sm:flex items-center gap-2 text-xs text-white/60"
+        >
+          <Sparkles className="h-4 w-4" />
+          <span>{dictionary.common?.loading ? dictionary.common.loading.replace(/\.$/, '') : 'Ready'}</span>
+        </motion.div>
       </div>
 
-      <AnimatePresence mode="wait" initial={false}>
-        {/* Step 1: Email */}
-        {currentStep === 'email' && (
-          <motion.form
-            key="login-step-email"
-            onSubmit={handleEmailSubmit}
-            className="space-y-6"
-            initial={{ opacity: 0, y: 12 }}
+      <div className="space-y-2">
+        <Label htmlFor="email" className="text-sm font-semibold text-white/90">
+          {dictionary.common.email}
+        </Label>
+        <div className="relative">
+          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-white/45" />
+          <Input
+            id="email"
+            type="email"
+            placeholder={dictionary.auth.emailPlaceholder}
+            value={formData.email}
+            onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
+            autoComplete="email"
+            required
+            className="h-12 pl-10 bg-black/30 border-white/10 text-white placeholder:text-white/35 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:border-white/20"
+          />
+        </div>
+      </div>
+
+      <AnimatePresence initial={false}>
+        {!needsTwoFactor ? (
+          <motion.div
+            key="password"
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-2"
           >
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium text-[#262626] dark:text-white">
-              {dictionary.common.email}
-            </Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-300" />
-              <Input
-                id="email"
-                type="email"
-                placeholder={dictionary.auth.emailPlaceholder}
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-                autoFocus
-                className="pl-10 h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-black/30 dark:focus:border-white/20"
-              />
-            </div>
-          </div>
-
-          {error && (
-            <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-            </div>
-          )}
-
-          <Button
-            asChild
-            type="submit"
-            className="w-full h-12 bg-[#262626] dark:bg-white text-white dark:text-[#262626] hover:bg-black dark:hover:bg-gray-100 font-semibold transition-colors"
-          >
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <span className="flex items-center justify-center gap-2">
-                {dictionary.common?.continue || 'Continue'}
-                <ArrowRight className="w-5 h-5" />
-              </span>
-            </motion.button>
-          </Button>
-          </motion.form>
-        )}
-
-        {/* Step 2: Password */}
-        {currentStep === 'password' && (
-          <motion.form
-            key="login-step-password"
-            onSubmit={handlePasswordSubmit}
-            className="space-y-6"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.25 }}
-          >
-          <div className="p-3 bg-gray-50 dark:bg-[#1a1a1a] rounded-lg border-2 border-[#DDDDDD] dark:border-[#000000]">
-            <p className="text-sm text-[#262626] dark:text-white font-medium truncate">
-              <Mail className="w-4 h-4 inline mr-2 text-gray-500 dark:text-gray-300" />
-              {formData.email}
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium text-[#262626] dark:text-white">
+            <Label htmlFor="password" className="text-sm font-semibold text-white/90">
               {dictionary.common.password}
             </Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-300" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-white/45" />
               <Input
                 id="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder={dictionary.auth.passwordPlaceholder}
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))}
+                autoComplete="current-password"
                 required
-                autoFocus
-                className="pl-10 h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-black/30 dark:focus:border-white/20"
+                className="h-12 pl-10 pr-11 bg-black/30 border-white/10 text-white placeholder:text-white/35 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:border-white/20"
               />
-            </div>
-          </div>
-
-          {error && (
-            <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-            </div>
-          )}
-
-          <div className="flex items-center justify-between">
-            <Link 
-              href={`/${locale}/auth/forgot-password`}
-              className="text-sm text-[#262626] dark:text-white hover:underline"
-            >
-              {dictionary.auth.forgotPassword}
-            </Link>
-          </div>
-
-          <div className="flex gap-3">
-            <Button
-              asChild
-              type="button"
-              onClick={goBack}
-              variant="outline"
-              className="h-12 border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#262626]"
-            >
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <ArrowLeft className="w-5 h-5" />
+              <motion.button
+                type="button"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                onClick={() => setShowPassword((v) => !v)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 grid h-9 w-9 place-content-center rounded-xl border border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </motion.button>
-            </Button>
-            <Button
-              asChild
-              type="submit"
-              className="flex-1 h-12 bg-[#262626] dark:bg-white text-white dark:text-[#262626] hover:bg-black dark:hover:bg-gray-100 font-semibold transition-colors"
-              disabled={isSubmitting}
-            >
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                {isSubmitting ? (
-                  <span className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    {dictionary.common.loading}
-                  </span>
-                ) : (
-                  dictionary.auth.loginButton
-                )}
-              </motion.button>
-            </Button>
-          </div>
-          </motion.form>
-        )}
-
-        {/* Step 3: Two-Factor Authentication (optional) */}
-        {currentStep === 'twoFactor' && (
-          <motion.form
-            key="login-step-2fa"
-            onSubmit={handleTwoFactorSubmit}
-            className="space-y-6"
-            initial={{ opacity: 0, y: 12 }}
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="twoFactor"
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-2"
           >
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-gray-50 dark:bg-[#1a1a1a] rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-[#DDDDDD] dark:border-[#000000]">
-              <Shield className="w-8 h-8 text-[#262626] dark:text-white" />
-            </div>
-            <h3 className="text-lg font-bold text-[#262626] dark:text-white mb-2">
-              {dictionary.auth?.twoFactorTitle || 'Two-Factor Authentication'}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {dictionary.auth?.twoFactorDescription || 'Enter the verification code from your authenticator app'}
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="twoFactorCode" className="text-sm font-medium text-[#262626] dark:text-white">
+            <Label htmlFor="twoFactorCode" className="text-sm font-semibold text-white/90">
               {dictionary.auth?.verificationCode || 'Verification Code'}
             </Label>
-            <div className="relative">
-              <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-300" />
-              <Input
-                id="twoFactorCode"
-                type="text"
-                placeholder="000000"
-                value={formData.twoFactorCode}
-                onChange={(e) => setFormData({ ...formData, twoFactorCode: e.target.value })}
-                required
-                autoFocus
-                maxLength={6}
-                pattern="[0-9]{6}"
-                className="pl-10 h-12 text-center text-2xl font-mono tracking-widest bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-black/30 dark:focus:border-white/20"
-              />
+            <Input
+              id="twoFactorCode"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              placeholder="000000"
+              value={formData.twoFactorCode}
+              onChange={(e) => setFormData((p) => ({ ...p, twoFactorCode: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
+              required
+              className="h-12 text-center text-xl font-mono tracking-[0.35em] bg-black/30 border-white/10 text-white placeholder:text-white/35 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:border-white/20"
+            />
+            <div className="text-xs text-white/55">
+              {dictionary.auth?.twoFactorDescription || 'Enter the verification code from your authenticator app'}
             </div>
-          </div>
-
-          {error && (
-            <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-            </div>
-          )}
-
-          <div className="flex gap-3">
-            <Button
-              asChild
-              type="button"
-              onClick={goBack}
-              variant="outline"
-              className="h-12 border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#262626]"
-            >
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <ArrowLeft className="w-5 h-5" />
-              </motion.button>
-            </Button>
-            <Button
-              asChild
-              type="submit"
-              className="flex-1 h-12 bg-[#262626] dark:bg-white text-white dark:text-[#262626] hover:bg-black dark:hover:bg-gray-100 font-semibold transition-colors"
-              disabled={isSubmitting}
-            >
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                {isSubmitting ? (
-                  <span className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    {dictionary.common.loading}
-                  </span>
-                ) : (
-                  dictionary.auth?.verifyAndLogin || 'Verify & Login'
-                )}
-              </motion.button>
-            </Button>
-          </div>
-          </motion.form>
+          </motion.div>
         )}
       </AnimatePresence>
 
-    </div>
+      <div className="flex items-center justify-between gap-3">
+        <label className="flex items-center gap-2 text-sm text-white/80">
+          <Checkbox checked={rememberMe} onCheckedChange={(v) => setRememberMe(Boolean(v))} />
+          <span>{dictionary.common?.rememberMe || 'Remember me'}</span>
+        </label>
+
+        <Link
+          href={`/${locale}/auth/forgot-password`}
+          className="text-sm font-semibold text-white/85 hover:text-white hover:underline"
+        >
+          {dictionary.auth.forgotPassword}
+        </Link>
+      </div>
+
+      <AnimatePresence initial={false}>
+        {error ? (
+          <motion.div
+            key="login-error"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-start gap-3 rounded-2xl border border-red-500/25 bg-red-500/10 p-4"
+          >
+            <AlertCircle className="mt-0.5 h-5 w-5 text-red-300" />
+            <p className="text-sm text-red-100/90">{error}</p>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      <div className="space-y-3">
+        <Button
+          asChild
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full h-12 rounded-2xl bg-white text-black hover:bg-white/90 font-black tracking-wide"
+        >
+          <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            {isSubmitting ? (
+              <span className="inline-flex items-center justify-center gap-2">
+                <motion.span
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
+                  className="inline-block h-4 w-4 rounded-full border-2 border-black/70 border-t-transparent"
+                />
+                {dictionary.common.loading}
+              </span>
+            ) : needsTwoFactor ? (
+              dictionary.auth?.verifyAndLogin || 'Verify & Login'
+            ) : (
+              dictionary.auth.loginButton
+            )}
+          </motion.button>
+        </Button>
+
+        <div className="text-center text-sm text-white/70">
+          <span>{dictionary.auth.noAccount}</span>{' '}
+          <Link href={`/${locale}/auth/register`} className="font-bold text-white hover:underline">
+            {dictionary.auth.createAccount}
+          </Link>
+        </div>
+      </div>
+    </motion.form>
   );
 }
