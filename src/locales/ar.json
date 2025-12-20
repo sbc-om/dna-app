@@ -1059,6 +1059,60 @@
     "download": "تنزيل",
     "share": "مشاركة"
   },
+  "notificationsPage": {
+    "title": "الإشعارات",
+    "subtitleUnread": "لديك {count} إشعارات غير مقروءة",
+    "subtitleAllRead": "تمت قراءة جميع الإشعارات",
+    "filters": {
+      "all": "الكل",
+      "unread": "غير مقروء",
+      "read": "مقروء",
+      "statusLabel": "تصفية حسب الحالة",
+      "allNotifications": "كل الإشعارات",
+      "unreadOnly": "غير المقروء فقط",
+      "readOnly": "المقروء فقط"
+    },
+    "actions": {
+      "markAllRead": "تحديد الكل كمقروء",
+      "clearRead": "مسح المقروء",
+      "viewDetails": "عرض التفاصيل",
+      "markAsRead": "تحديد كمقروء",
+      "delete": "حذف"
+    },
+    "stats": {
+      "total": "الإجمالي",
+      "unread": "غير مقروء",
+      "read": "مقروء",
+      "today": "اليوم"
+    },
+    "tabs": {
+      "all": "الكل",
+      "appointments": "المواعيد",
+      "users": "المستخدمون",
+      "messages": "الرسائل",
+      "system": "النظام"
+    },
+    "empty": {
+      "titleUnread": "أحسنت!",
+      "titleNone": "لا توجد إشعارات",
+      "descUnread": "لقد قرأت جميع إشعاراتك. عمل رائع.",
+      "descNone": "لا توجد إشعارات حالياً. تحقق لاحقاً.",
+      "descCategory": "لا توجد إشعارات {category} في الوقت الحالي."
+    },
+    "category": {
+      "all": "الكل",
+      "system": "النظام",
+      "appointments": "المواعيد",
+      "users": "المستخدمون",
+      "messages": "الرسائل"
+    },
+    "type": {
+      "info": "معلومات",
+      "success": "نجاح",
+      "warning": "تحذير",
+      "error": "خطأ"
+    }
+  },
   "footer": {
     "description": "كن بطلاً!",
     "quickLinks": "روابط سريعة",
