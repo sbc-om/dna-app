@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
 import { getDictionary, type Dictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
 import { Header } from '@/components/Header';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { 
@@ -43,6 +43,21 @@ export default function HomePage({ params }: PageProps) {
   const [dictionary, setDictionary] = useState<Dictionary | null>(null);
   const [user, setUser] = useState<SessionUser | null>(null);
   const [email, setEmail] = useState('');
+
+  // Motion scroll-linked animations (per motion.dev scroll animations docs)
+  const { scrollYProgress } = useScroll();
+  const progressScaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001,
+  });
+
+  const heroTitleY = useTransform(scrollYProgress, [0, 0.35], [0, -28]);
+  const heroGlowY = useTransform(scrollYProgress, [0, 1], [0, 220]);
+  const heroGlowRotate = useTransform(scrollYProgress, [0, 1], [0, 35]);
+  const heroGlowOpacity = useTransform(scrollYProgress, [0, 0.25, 1], [0.45, 0.25, 0.05]);
+
+  const progressOriginX = useMemo(() => (locale === 'ar' ? 1 : 0), [locale]);
 
   useEffect(() => {
     async function loadData() {
@@ -162,10 +177,31 @@ export default function HomePage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-[#0a0a0a]" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       <Header dictionary={dictionary} locale={locale} user={user} />
+
+      {/* Scroll progress indicator (scroll-linked) */}
+      <div className="fixed top-0 left-0 right-0 z-60 pointer-events-none">
+        <div className="h-1.5 bg-white/5 backdrop-blur-xl">
+          <motion.div
+            className="h-full bg-linear-to-r from-blue-500 via-purple-500 to-pink-500"
+            style={{ scaleX: progressScaleX, transformOrigin: progressOriginX === 1 ? 'right' : 'left' }}
+          />
+        </div>
+      </div>
       
       <main className="overflow-hidden">
         {/* Intro section (no hero image, no background glow) */}
-        <section className="relative py-16 px-4">
+        <section className="relative py-16 px-4 overflow-hidden">
+          {/* Parallax glow accents (scroll-linked) */}
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(59,130,246,0.35),transparent_60%)] blur-3xl"
+            style={{ y: heroGlowY, rotate: heroGlowRotate, opacity: heroGlowOpacity }}
+          />
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-48 -right-48 w-[620px] h-[620px] rounded-full bg-[radial-gradient(circle_at_70%_70%,rgba(168,85,247,0.28),transparent_60%)] blur-3xl"
+            style={{ y: heroGlowY, rotate: heroGlowRotate, opacity: heroGlowOpacity }}
+          />
           <div className="max-w-7xl mx-auto">
             <motion.div
               initial="hidden"
@@ -183,9 +219,12 @@ export default function HomePage({ params }: PageProps) {
                       <span className="text-sm font-semibold text-white/90">Discover Your Natural Ability</span>
                     </div>
 
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.05] text-white">
+                    <motion.h1
+                      style={{ y: heroTitleY }}
+                      className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.05] text-white"
+                    >
                       {dictionary.pages.home.hero.title}
-                    </h1>
+                    </motion.h1>
                     <p className="mt-5 text-gray-300 font-medium leading-relaxed text-base sm:text-lg max-w-2xl">
                       {dictionary.pages.home.hero.subtitle}
                     </p>
