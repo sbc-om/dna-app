@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth/auth';
 import { getDictionary } from '@/lib/i18n/getDictionary';
 import { hasRolePermission } from '@/lib/db/repositories/rolePermissionRepository';
 import CoursesClient from '@/components/CoursesClient';
+import type { Locale } from '@/config/i18n';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -27,7 +28,7 @@ export default async function CoursesPage({ params }: PageProps) {
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-7xl">
-      <CoursesClient locale={locale} dict={dict} />
+      <CoursesClient locale={locale as Locale} dict={dict} />
     </div>
   );
 }

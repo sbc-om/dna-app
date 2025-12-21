@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Calendar as CalendarIcon, Plus, X } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Save, Calendar as CalendarIcon, Sparkles, ChevronLeft } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
@@ -16,10 +17,12 @@ import { getCoachesAction } from '@/lib/actions/userActions';
 import { bulkCreateSessionPlansAction } from '@/lib/actions/sessionPlanActions';
 import { getAllCategoriesAction } from '@/lib/actions/categoryActions';
 import type { Category } from '@/lib/db/repositories/categoryRepository';
+import type { Dictionary } from '@/lib/i18n/getDictionary';
+import type { Locale } from '@/config/i18n';
 
 interface CreateCourseClientProps {
-  locale: string;
-  dict: any;
+  locale: Locale;
+  dict: Dictionary;
 }
 
 interface SessionTemplate {
@@ -115,7 +118,7 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
       return day ? day.value : -1;
     }).filter(v => v !== -1);
 
-    let currentDate = new Date(start);
+    const currentDate = new Date(start);
     let sessionNumber = 1;
 
     while (currentDate <= end) {
@@ -174,7 +177,7 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
         sessionDays: formData.sessionDays.length > 0 ? formData.sessionDays : undefined,
         sessionStartTime: formData.sessionStartTime || undefined,
         sessionEndTime: formData.sessionEndTime || undefined,
-      });
+      }, locale);
 
       if (!courseResult.success || !courseResult.course) {
         alert(courseResult.error || 'Failed to create course');
@@ -189,7 +192,7 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
           sessionNumber: template.sessionNumber,
           sessionDate: template.sessionDate,
           title: `${dict.courses?.sessionNumber || 'Session #'}${template.sessionNumber}`,
-          titleAr: `${dict.courses?.sessionNumber || 'الجلسة رقم'}${template.sessionNumber}`,
+          titleAr: `${dict.courses?.sessionNumber || 'Session #'}${template.sessionNumber}`,
           description: '',
           descriptionAr: '',
           objectives: [],
@@ -220,29 +223,66 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, type: 'spring' }}
+      className="space-y-6 max-w-5xl mx-auto"
+    >
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">
-            {dict.courses?.createCourse || 'Create New Course'}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {locale === 'ar' 
-              ? 'أدخل تفاصيل الدورة وقم بتخطيط الجلسات' 
-              : 'Enter course details and plan your sessions'}
-          </p>
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/35">
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-[#FF5F02]/15 via-purple-500/10 to-cyan-500/10" />
+        <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-linear-to-br from-[#FF5F02]/25 to-purple-500/20 blur-3xl" />
+
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <motion.div
+                animate={{ rotate: [0, -6, 6, -6, 0] }}
+                transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 2.5 }}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15"
+              >
+                <Sparkles className="h-5 w-5 text-[#FF5F02]" />
+              </motion.div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                  {dict.courses?.createCourse || 'Create Course'}
+                </h1>
+                <p className="mt-1 text-sm text-white/70">
+                  {dict.courses?.createCourseSubtitle || ''}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="self-start">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancel}
+              className="h-11 rounded-2xl border-white/15 bg-white/5 text-white hover:bg-white/10"
+            >
+              <ChevronLeft className={`h-4 w-4 ${locale === 'ar' ? 'rotate-180 ml-2' : 'mr-2'}`} />
+              {dict.common?.back || dict.common?.cancel || 'Back'}
+            </Button>
+          </motion.div>
         </div>
       </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit}>
         <Tabs value={currentTab} onValueChange={setCurrentTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="basic">
-              {locale === 'ar' ? 'المعلومات الأساسية' : 'Basic Information'}
+          <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-white/5 border border-white/10 p-1">
+            <TabsTrigger
+              value="basic"
+              className="rounded-xl data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            >
+              {dict.courses?.basicInformation || 'Basic Information'}
             </TabsTrigger>
-            <TabsTrigger value="schedule">
+            <TabsTrigger
+              value="schedule"
+              className="rounded-xl data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            >
               <CalendarIcon className="h-4 w-4 mr-2" />
               {dict.courses?.schedule || 'Schedule'}
             </TabsTrigger>
@@ -250,14 +290,15 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
 
           {/* Basic Information Tab */}
           <TabsContent value="basic" className="space-y-6">
-            <Card>
+            <Card className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-xl shadow-black/25">
+              <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-white/5 via-transparent to-white/5" />
               <CardHeader>
-                <CardTitle>{locale === 'ar' ? 'معلومات الدورة' : 'Course Information'}</CardTitle>
-                <CardDescription>
-                  {locale === 'ar' ? 'املأ جميع الحقول المطلوبة' : 'Fill in all required fields'}
+                <CardTitle className="text-white">{dict.courses?.courseInformation || 'Course Information'}</CardTitle>
+                <CardDescription className="text-white/60">
+                  {dict.courses?.fillRequiredFields || ''}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="relative space-y-6">
                 {/* Name Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -269,7 +310,8 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Football Training"
+                      placeholder={dict.courses?.placeholders?.courseNameEn || 'e.g. Football Training'}
+                      className="h-11 rounded-2xl bg-black/20 border border-white/10 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:border-[#FF5F02]/60"
                     />
                   </div>
                   <div className="space-y-2">
@@ -281,8 +323,9 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                       required
                       value={formData.nameAr}
                       onChange={(e) => setFormData({ ...formData, nameAr: e.target.value })}
-                      placeholder="تدريب كرة القدم"
+                      placeholder={dict.courses?.placeholders?.courseNameAr || 'e.g. Football Training'}
                       dir="rtl"
+                      className="h-11 rounded-2xl bg-black/20 border border-white/10 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:border-[#FF5F02]/60"
                     />
                   </div>
                 </div>
@@ -290,7 +333,7 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                 {/* Course Image Upload */}
                 <div className="space-y-2">
                   <Label>
-                    {locale === 'ar' ? 'صورة الدورة' : 'Course Image'}
+                    {dict.courses?.courseImage || 'Course Image'}
                   </Label>
                   <div className="flex justify-center">
                     <ImageUpload
@@ -315,8 +358,9 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                       id="description"
                       value={formData.description}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Professional football training program..."
+                      placeholder={dict.courses?.placeholders?.courseDescriptionEn || ''}
                       rows={4}
+                      className="rounded-2xl bg-black/20 border border-white/10 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:border-[#FF5F02]/60"
                     />
                   </div>
                   <div className="space-y-2">
@@ -327,26 +371,27 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                       id="descriptionAr"
                       value={formData.descriptionAr}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, descriptionAr: e.target.value })}
-                      placeholder="برنامج تدريب احترافي..."
+                      placeholder={dict.courses?.placeholders?.courseDescriptionAr || ''}
                       dir="rtl"
                       rows={4}
+                      className="rounded-2xl bg-black/20 border border-white/10 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:border-[#FF5F02]/60"
                     />
                   </div>
                 </div>
 
                 {/* Category Selection */}
                 <div className="space-y-2">
-                  <Label>{locale === 'ar' ? 'فئة الدورة' : 'Course Category'} <span className="text-red-500">*</span></Label>
+                  <Label>{dict.courses?.courseCategory || 'Course Category'} <span className="text-red-500">*</span></Label>
                   <div className="flex gap-4">
                     <div className="flex-1">
                       <Select
                         value={selectedCategory}
                         onValueChange={setSelectedCategory}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder={locale === 'ar' ? 'اختر فئة' : 'Select category'} />
+                        <SelectTrigger className="h-11 rounded-2xl bg-black/20 border border-white/10 text-white hover:bg-white/5">
+                          <SelectValue placeholder={dict.courses?.selectCategory || ''} />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-[#0b0b10] border border-white/10 text-white">
                           {categories.map((category) => (
                             <SelectItem key={category.id} value={category.name}>
                               {locale === 'ar' ? (category.nameAr || category.name) : category.name}
@@ -372,7 +417,8 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                       step="0.01"
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                      placeholder="50.00"
+                      placeholder={dict.courses?.placeholders?.price || '50.00'}
+                      className="h-11 rounded-2xl bg-black/20 border border-white/10 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:border-[#FF5F02]/60"
                     />
                   </div>
                   <div className="space-y-2">
@@ -384,7 +430,8 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                       required
                       value={formData.currency}
                       onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                      placeholder="OMR"
+                      placeholder={dict.courses?.placeholders?.currency || 'OMR'}
+                      className="h-11 rounded-2xl bg-black/20 border border-white/10 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:border-[#FF5F02]/60"
                     />
                   </div>
                   <div className="space-y-2">
@@ -398,7 +445,8 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                       min="1"
                       value={formData.duration}
                       onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 1 })}
-                      placeholder="1"
+                      placeholder={dict.courses?.placeholders?.duration || '1'}
+                      className="h-11 rounded-2xl bg-black/20 border border-white/10 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:border-[#FF5F02]/60"
                     />
                   </div>
                 </div>
@@ -406,18 +454,18 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                 {/* Coach Selection */}
                 <div className="space-y-2">
                   <Label htmlFor="coach">
-                    {locale === 'ar' ? 'المدرب' : 'Coach'}
+                    {dict.courses?.coach || 'Coach'}
                   </Label>
                   <Select
                     value={formData.coachId || 'none'}
                     onValueChange={(value) => setFormData({ ...formData, coachId: value })}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder={locale === 'ar' ? 'اختر مدرباً' : 'Select a coach'} />
+                    <SelectTrigger className="h-11 rounded-2xl bg-black/20 border border-white/10 text-white hover:bg-white/5">
+                      <SelectValue placeholder={dict.courses?.selectCoach || ''} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-[#0b0b10] border border-white/10 text-white">
                       <SelectItem value="none">
-                        {locale === 'ar' ? 'بدون مدرب' : 'No coach'}
+                        {dict.courses?.noCoach || 'No coach'}
                       </SelectItem>
                       {coaches.map((coach) => (
                         <SelectItem key={coach.id} value={coach.id}>
@@ -439,13 +487,10 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                     min="0"
                     value={formData.maxStudents}
                     onChange={(e) => setFormData({ ...formData, maxStudents: parseInt(e.target.value) || 0 })}
-                    placeholder={locale === 'ar' ? '0 = غير محدود' : '0 = unlimited'}
+                    placeholder={dict.courses?.unlimitedHint || '0 = unlimited'}
+                    className="h-11 rounded-2xl bg-black/20 border border-white/10 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:border-[#FF5F02]/60"
                   />
-                  <p className="text-sm text-muted-foreground">
-                    {locale === 'ar' 
-                      ? 'اترك القيمة 0 إذا كنت لا تريد حد أقصى للطلاب'
-                      : 'Leave as 0 if you don\'t want a limit on students'}
-                  </p>
+                  <p className="text-sm text-white/60">{dict.courses?.maxStudentsHint || ''}</p>
                 </div>
               </CardContent>
             </Card>
@@ -453,16 +498,15 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
 
           {/* Schedule Tab */}
           <TabsContent value="schedule" className="space-y-6">
-            <Card>
+            <Card className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-xl shadow-black/25">
+              <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-white/5 via-transparent to-white/5" />
               <CardHeader>
                 <CardTitle>{dict.courses?.sessionPlanning || 'Session Planning'}</CardTitle>
-                <CardDescription>
-                  {locale === 'ar' 
-                    ? 'حدد تواريخ الدورة وأيام التدريب لإنشاء الجلسات تلقائياً'
-                    : 'Set course dates and training days to automatically generate sessions'}
+                <CardDescription className="text-white/60">
+                  {dict.courses?.sessionPlanningSubtitle || ''}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="relative space-y-6">
                 {/* Start Date and End Date */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -475,6 +519,7 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                       required
                       value={formData.startDate}
                       onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                      className="h-11 rounded-2xl bg-black/20 border border-white/10 text-white focus-visible:ring-0 focus-visible:border-[#FF5F02]/60"
                     />
                   </div>
                   <div className="space-y-2">
@@ -488,6 +533,7 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                       value={formData.endDate}
                       onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                       min={formData.startDate}
+                      className="h-11 rounded-2xl bg-black/20 border border-white/10 text-white focus-visible:ring-0 focus-visible:border-[#FF5F02]/60"
                     />
                   </div>
                 </div>
@@ -495,27 +541,25 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                 {/* Session Days */}
                 <div className="space-y-2">
                   <Label>{dict.courses?.trainingDays || 'Training Days'} <span className="text-red-500">*</span></Label>
-                  <p className="text-sm text-muted-foreground">
-                    {locale === 'ar'
-                      ? 'اختر الأيام التي سيتم فيها التدريب'
-                      : 'Select the days when training will occur'}
-                  </p>
+                  <p className="text-sm text-white/60">{dict.courses?.trainingDaysHint || ''}</p>
                   <div className="flex flex-wrap gap-2">
                     {weekDays.map((day) => {
                       const selected = formData.sessionDays.includes(day.key);
                       return (
-                        <button
+                        <motion.button
                           key={day.key}
                           type="button"
                           onClick={() => toggleSessionDay(day.key)}
+                          whileHover={{ scale: 1.04 }}
+                          whileTap={{ scale: 0.96 }}
                           className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                             selected 
-                              ? 'bg-[#FF5F02] text-white border-[#FF5F02] shadow-sm' 
-                              : 'border-gray-300 text-gray-700 hover:border-[#FF5F02] hover:text-[#FF5F02] dark:border-gray-600 dark:text-gray-300'
+                              ? 'bg-linear-to-r from-[#FF5F02] to-orange-600 text-white border-[#FF5F02]/50 shadow-lg shadow-orange-500/15'
+                              : 'border-white/10 bg-white/5 text-white/80 hover:border-[#FF5F02]/50 hover:text-white'
                           }`}
                         >
                           {day.label}
-                        </button>
+                        </motion.button>
                       );
                     })}
                   </div>
@@ -525,24 +569,26 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="sessionStartTime">
-                      {locale === 'ar' ? 'وقت البدء' : 'Start Time'}
+                      {dict.courses?.startTime || 'Start Time'}
                     </Label>
                     <Input
                       id="sessionStartTime"
                       type="time"
                       value={formData.sessionStartTime}
                       onChange={(e) => setFormData({ ...formData, sessionStartTime: e.target.value })}
+                      className="h-11 rounded-2xl bg-black/20 border border-white/10 text-white focus-visible:ring-0 focus-visible:border-[#FF5F02]/60"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="sessionEndTime">
-                      {locale === 'ar' ? 'وقت الانتهاء' : 'End Time'}
+                      {dict.courses?.endTime || 'End Time'}
                     </Label>
                     <Input
                       id="sessionEndTime"
                       type="time"
                       value={formData.sessionEndTime}
                       onChange={(e) => setFormData({ ...formData, sessionEndTime: e.target.value })}
+                      className="h-11 rounded-2xl bg-black/20 border border-white/10 text-white focus-visible:ring-0 focus-visible:border-[#FF5F02]/60"
                     />
                   </div>
                 </div>
@@ -550,24 +596,20 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                 {/* Generated Sessions Preview */}
                 {sessionTemplates.length > 0 && (
                   <div className="space-y-2">
-                    <Label>{dict.courses?.sessions || 'Generated Sessions'}</Label>
-                    <Card className="bg-muted/50">
+                    <Label>{dict.courses?.generatedSessions || dict.courses?.sessions || 'Generated Sessions'}</Label>
+                    <Card className="rounded-3xl border border-white/10 bg-black/20">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between mb-3">
                           <p className="text-sm font-medium">
                             {dict.courses?.totalSessions || 'Total Sessions'}: {sessionTemplates.length}
                           </p>
-                          <p className="text-sm text-muted-foreground">
-                            {locale === 'ar' 
-                              ? 'سيتم إنشاء جلسات فارغة يمكنك تعديلها لاحقاً'
-                              : 'Empty sessions will be created that you can edit later'}
-                          </p>
+                          <p className="text-sm text-white/60">{dict.courses?.emptySessionsCreated || ''}</p>
                         </div>
                         <div className="max-h-64 overflow-y-auto space-y-1">
                           {sessionTemplates.map((template) => (
                             <div 
                               key={template.sessionNumber}
-                              className="flex items-center justify-between p-2 bg-background rounded text-sm"
+                              className="flex items-center justify-between p-2 bg-white/5 border border-white/10 rounded-2xl text-sm"
                             >
                               <span className="font-medium">
                                 {dict.courses?.sessionNumber || 'Session #'}{template.sessionNumber}
@@ -584,20 +626,14 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
                         </div>
                       </CardContent>
                     </Card>
-                    <p className="text-sm text-muted-foreground">
-                      {locale === 'ar'
-                        ? 'بعد إنشاء الدورة، يمكنك تعديل كل جلسة وإضافة الأهداف والأنشطة والمواد'
-                        : 'After creating the course, you can edit each session and add objectives, activities, and materials'}
-                    </p>
+                    <p className="text-sm text-white/60">{dict.courses?.afterCreateHint || ''}</p>
                   </div>
                 )}
 
                 {formData.startDate && formData.endDate && formData.sessionDays.length === 0 && (
-                  <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                      {locale === 'ar'
-                        ? 'يرجى اختيار أيام التدريب لإنشاء الجلسات تلقائياً'
-                        : 'Please select training days to automatically generate sessions'}
+                  <div className="p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20">
+                    <p className="text-sm text-yellow-200/90">
+                      {dict.courses?.selectTrainingDaysToGenerate || ''}
                     </p>
                   </div>
                 )}
@@ -607,27 +643,34 @@ export default function CreateCourseClient({ locale, dict }: CreateCourseClientP
         </Tabs>
 
         {/* Action Buttons */}
-        <Card className="mt-6">
+        <Card className="mt-6 rounded-3xl border border-white/10 bg-white/5">
           <CardContent className="p-4">
             <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCancel}
-                disabled={loading}
-              >
-                {dict.common?.cancel || 'Cancel'}
-              </Button>
-              <Button type="submit" disabled={loading} className="bg-[#FF5F02] hover:bg-[#FF5F02]/90">
-                <Save className="h-4 w-4 mr-2" />
-                {loading 
-                  ? (dict.common?.loading || 'Saving...')
-                  : (dict.courses?.createCourse || 'Create Course')}
-              </Button>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={loading}
+                  className="rounded-2xl border-white/15 bg-white/5 text-white hover:bg-white/10"
+                >
+                  {dict.common?.cancel || 'Cancel'}
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="rounded-2xl bg-linear-to-r from-[#FF5F02] to-orange-600 text-white shadow-lg shadow-orange-500/20 hover:from-[#FF5F02]/90 hover:to-orange-600/90"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {loading ? (dict.common?.loading || 'Saving...') : (dict.courses?.createCourse || 'Create Course')}
+                </Button>
+              </motion.div>
             </div>
           </CardContent>
         </Card>
       </form>
-    </div>
+    </motion.div>
   );
 }

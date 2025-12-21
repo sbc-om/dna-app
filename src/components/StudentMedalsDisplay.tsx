@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Award } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Award, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getStudentMedalsAction, getStudentCourseMedalsAction } from '@/lib/actions/medalActions';
 import type { StudentMedal, Medal } from '@/lib/db/repositories/medalRepository';
@@ -13,8 +14,9 @@ interface MedalDisplay extends StudentMedal {
 interface StudentMedalsDisplayProps {
   studentId: string;
   courseId?: string; // Optional: filter by specific course
-  title: string;
+  title?: string;
   description?: string;
+  hideHeader?: boolean;
   locale: 'en' | 'ar';
   onTotalPointsChange?: (totalPoints: number) => void;
 }
@@ -24,6 +26,7 @@ export function StudentMedalsDisplay({
   courseId,
   title,
   description,
+  hideHeader,
   locale,
   onTotalPointsChange,
 }: StudentMedalsDisplayProps) {
@@ -56,45 +59,115 @@ export function StudentMedalsDisplay({
     }
   };
 
+  const totalPoints = medals.reduce((sum, sm) => sum + (sm.medal?.points || 0), 0);
+
+  const formatDate = (iso: string) => {
+    try {
+      return new Date(iso).toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    } catch {
+      return iso;
+    }
+  };
+
+  const shellClassName =
+    'bg-white/6 border border-white/10 backdrop-blur-xl rounded-3xl overflow-hidden shadow-[0_30px_90px_-50px_rgba(0,0,0,0.7)]';
+
+  const headerClassName =
+    'relative bg-white/5 border-b border-white/10 flex flex-col items-center justify-center text-center gap-1';
+
+  const showHeader = !hideHeader && Boolean(title);
+
+  const Title = showHeader ? (
+    <div className="flex items-center justify-center gap-2 text-white">
+      <motion.div
+        animate={{ rotate: [0, -6, 6, -6, 0] }}
+        transition={{ duration: 0.6 }}
+        className="relative"
+        aria-hidden
+      >
+        <Award className="w-5 h-5 text-white/85" />
+        <motion.div
+          className="absolute inset-0 bg-amber-400/20 rounded-full blur-md"
+          animate={{ scale: [1, 1.25, 1] }}
+          transition={{ duration: 2.2, repeat: Infinity }}
+        />
+      </motion.div>
+      <span className="font-semibold tracking-tight">{title}</span>
+    </div>
+  ) : null;
+
+  const Header =
+    showHeader ? (
+      <CardHeader className={headerClassName}>
+        <div className="absolute inset-0 bg-linear-to-r from-yellow-500/10 via-orange-500/10 to-fuchsia-500/10" />
+        <CardTitle className="relative py-4">{Title}</CardTitle>
+        {description ? (
+          <p className="relative pb-4 text-sm text-white/65">{description}</p>
+        ) : null}
+      </CardHeader>
+    ) : null;
+
   if (loading) {
     return (
-      <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] rounded-2xl overflow-hidden">
-        <CardHeader className="bg-gray-50 dark:bg-[#1a1a1a] border-b-2 border-[#DDDDDD] dark:border-[#000000] flex items-center justify-center min-h-14">
-          <CardTitle className="text-[#262626] dark:text-white flex items-center gap-2 text-center">
-            <Award className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-            {title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="bg-white dark:bg-[#262626]">
-          <div className="text-center py-8 text-gray-600 dark:text-gray-400">
-            {locale === 'ar' ? 'جاري التحميل...' : 'Loading...'}
-          </div>
-        </CardContent>
-      </Card>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, type: 'spring', stiffness: 260, damping: 22 }}
+      >
+        <Card className={shellClassName}>
+          {Header}
+          <CardContent className={showHeader ? 'pt-6' : 'pt-8'}>
+            <div className="flex flex-col items-center justify-center py-10 text-white/70">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1.1, repeat: Infinity, ease: 'linear' }}
+              >
+                <Sparkles className="w-8 h-8 text-white/70" />
+              </motion.div>
+              <div className="mt-3 text-sm">Loading…</div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     );
   }
 
   if (medals.length === 0) {
     return (
-      <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] rounded-2xl overflow-hidden">
-        <CardHeader className="bg-gray-50 dark:bg-[#1a1a1a] border-b-2 border-[#DDDDDD] dark:border-[#000000] flex flex-col items-center justify-center text-center gap-1">
-          <CardTitle className="text-[#262626] dark:text-white flex items-center gap-2 justify-center">
-            <Award className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-            {title}
-          </CardTitle>
-          {description && (
-            <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>
-          )}
-        </CardHeader>
-        <CardContent className="bg-white dark:bg-[#262626]">
-          <div className="text-center py-12 bg-gray-50 dark:bg-[#1a1a1a] rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
-            <Award className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-            <p className="text-gray-600 dark:text-gray-400 font-medium">
-              {locale === 'ar' ? 'لم يتم منح أي ميداليات بعد' : 'No medals awarded yet'}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, type: 'spring', stiffness: 260, damping: 22 }}
+      >
+        <Card className={shellClassName}>
+          {Header}
+          <CardContent className={showHeader ? 'pt-6' : 'pt-8'}>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="text-center py-12 rounded-2xl border border-dashed border-white/15 bg-black/20"
+            >
+              <motion.div
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                className="mx-auto w-fit"
+                aria-hidden
+              >
+                <Award className="w-14 h-14 text-white/45" />
+              </motion.div>
+              <p className="mt-4 text-white/70 font-medium">No medals awarded yet</p>
+              <p className="mt-2 text-sm text-white/55">
+                Keep progressing—new medals will appear here.
+              </p>
+            </motion.div>
+          </CardContent>
+        </Card>
+      </motion.div>
     );
   }
 
@@ -116,68 +189,107 @@ export function StudentMedalsDisplay({
   const uniqueMedals = Object.values(medalCounts);
 
   return (
-    <Card className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] overflow-hidden rounded-2xl">
-      <CardHeader className="bg-gray-50 dark:bg-[#1a1a1a] border-b-2 border-[#DDDDDD] dark:border-[#000000] flex flex-col items-center justify-center text-center gap-1">
-        <CardTitle className="text-[#262626] dark:text-white flex items-center gap-2 justify-center">
-          <Award className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-          {title}
-        </CardTitle>
-        {description && (
-          <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>
-        )}
-      </CardHeader>
-      <CardContent className="bg-white dark:bg-[#262626] pt-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {uniqueMedals.map(({ medal, count, lastAwarded }) => (
-            <div
-              key={medal.id}
-              className="p-4 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-gray-800 transition-colors"
-            >
-              <div className="flex items-start gap-3">
-                <div className="text-4xl shrink-0">{medal.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-[#262626] dark:text-white truncate">
-                    {locale === 'ar' ? medal.nameAr : medal.name}
-                  </h4>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                    {locale === 'ar' ? medal.descriptionAr : medal.description}
-                  </p>
-                  <div className="flex items-center gap-2 mt-3">
-                    <span className="text-xs font-semibold text-white px-2 py-1 rounded bg-[#262626] dark:bg-white dark:text-black">
-                      +{medal.points} pts
-                    </span>
-                    {count > 1 && (
-                      <span className="text-xs font-semibold text-[#262626] dark:text-white px-2 py-1 rounded bg-[#DDDDDD] dark:bg-[#000000]">
-                        x{count}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                    {locale === 'ar' ? 'آخر منح:' : 'Last awarded:'}{' '}
-                    {new Date(lastAwarded).toLocaleDateString(
-                      locale === 'ar' ? 'ar-SA' : 'en-US',
-                      { month: 'short', day: 'numeric', year: 'numeric' }
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, type: 'spring', stiffness: 260, damping: 22 }}
+    >
+      <Card className={shellClassName}>
+        {Header}
 
-        {/* Total Points */}
-        <div className="mt-6 p-5 rounded-xl bg-gray-50 dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000]">
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-[#262626] dark:text-white text-lg">
-              {locale === 'ar' ? 'إجمالي النقاط من الميداليات:' : 'Total Medal Points:'}
-            </span>
-            <span className="text-3xl font-bold text-[#262626] dark:text-white flex items-center gap-2">
-              <Award className="w-7 h-7 text-gray-700 dark:text-gray-200" />
-              {medals.reduce((sum, sm) => sum + (sm.medal?.points || 0), 0)}
-            </span>
+        <CardContent className={showHeader ? 'pt-6' : 'pt-8'}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {uniqueMedals.map(({ medal, count, lastAwarded }, index) => (
+              <motion.div
+                key={medal.id}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.35 }}
+                whileHover={{ scale: 1.02, rotateY: 4, rotateX: 3 }}
+                whileTap={{ scale: 0.98 }}
+                style={{ transformStyle: 'preserve-3d' }}
+                className="relative group rounded-2xl border border-white/10 bg-white/5 overflow-hidden"
+              >
+                <motion.div
+                  className="absolute inset-0 bg-linear-to-br from-yellow-500/15 via-orange-500/10 to-fuchsia-500/15 opacity-0 group-hover:opacity-100 blur-xl"
+                  animate={{ scale: [1, 1.06, 1] }}
+                  transition={{ duration: 2.4, repeat: Infinity }}
+                  aria-hidden
+                />
+
+                <div className="relative p-4">
+                  <div className="flex items-start gap-3">
+                    <motion.div
+                      className="shrink-0 rounded-2xl border border-white/10 bg-black/30 px-3 py-2"
+                      animate={{ y: [0, -2, 0] }}
+                      transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                      aria-hidden
+                    >
+                      <div className="text-3xl leading-none">{medal.icon}</div>
+                    </motion.div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <h4 className="font-bold text-white truncate">
+                          {locale === 'ar' ? medal.nameAr : medal.name}
+                        </h4>
+                        {count > 1 ? (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="shrink-0"
+                          >
+                            <span className="inline-flex items-center justify-center px-2 py-1 rounded-full text-[11px] font-bold bg-white/10 text-white border border-white/10">
+                              x{count}
+                            </span>
+                          </motion.div>
+                        ) : null}
+                      </div>
+
+                      <p className="mt-1 text-xs text-white/65 line-clamp-2">
+                        {locale === 'ar' ? medal.descriptionAr : medal.description}
+                      </p>
+
+                      <div className="mt-3 flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-linear-to-r from-yellow-500/80 to-orange-600/80 px-2.5 py-1 text-[11px] font-bold text-white border border-white/10">
+                          +{medal.points} pts
+                        </span>
+                        <span className="text-[11px] text-white/55 truncate">
+                          Last awarded: {formatDate(lastAwarded)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
-        </div>
-      </CardContent>
-    </Card>
+
+          {/* Total points (game-like stat tile) */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.35 }}
+            className="mt-6 relative overflow-hidden rounded-2xl border border-white/10 bg-white/5"
+          >
+            <div className="absolute inset-0 bg-linear-to-r from-yellow-500/10 via-orange-500/10 to-fuchsia-500/10" aria-hidden />
+            <div className="relative p-5 flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <div className="text-white/60 text-sm">Total Medal Points</div>
+                <div className="mt-1 text-white text-xl font-bold truncate">{totalPoints}</div>
+              </div>
+              <motion.div
+                className="h-12 w-12 rounded-2xl border border-white/10 bg-black/25 flex items-center justify-center shrink-0"
+                animate={{ rotate: [0, -6, 6, -6, 0] }}
+                transition={{ duration: 0.7 }}
+                aria-hidden
+              >
+                <Award className="h-6 w-6 text-white/85" />
+              </motion.div>
+            </div>
+          </motion.div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

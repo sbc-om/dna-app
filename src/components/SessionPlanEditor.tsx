@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Plus, Save, Trash2, GripVertical } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,15 +10,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createSessionPlanAction, updateSessionPlanAction } from '@/lib/actions/sessionPlanActions';
-import type { SessionActivity } from '@/lib/db/repositories/sessionPlanRepository';
+import type { SessionActivity, SessionPlan } from '@/lib/db/repositories/sessionPlanRepository';
+import type { Dictionary } from '@/lib/i18n/getDictionary';
+import type { Locale } from '@/config/i18n';
 
 interface SessionPlanEditorProps {
   courseId: string;
   sessionNumber: number;
   sessionDate: string;
-  existingPlan?: any;
-  locale: 'en' | 'ar';
-  dictionary: any;
+  existingPlan?: SessionPlan;
+  locale: Locale;
+  dictionary: Dictionary;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -32,6 +35,8 @@ export function SessionPlanEditor({
   onSuccess,
   onCancel,
 }: SessionPlanEditorProps) {
+  type EditableActivity = Omit<SessionActivity, 'id'>;
+
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: existingPlan?.title || '',
@@ -134,10 +139,16 @@ export function SessionPlanEditor({
     setActivities(activities.filter((_, i) => i !== index));
   };
 
-  const updateActivity = (index: number, field: string, value: any) => {
-    const newActivities = [...activities];
-    newActivities[index] = { ...newActivities[index], [field]: value };
-    setActivities(newActivities);
+  const updateActivity = <K extends keyof EditableActivity>(
+    index: number,
+    field: K,
+    value: EditableActivity[K]
+  ) => {
+    setActivities((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
   };
 
   const handleSubmit = async () => {
@@ -181,31 +192,42 @@ export function SessionPlanEditor({
       }
     } catch (error) {
       console.error('Save session plan error:', error);
-      alert('Failed to save session plan');
+      alert(dictionary.common?.errors?.saveFailed || 'Failed to save. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const activityTypes = [
-    { value: 'warmup', label: locale === 'ar' ? 'الإحماء' : 'Warm-up' },
-    { value: 'drill', label: locale === 'ar' ? 'تدريب' : 'Drill' },
-    { value: 'game', label: locale === 'ar' ? 'لعبة' : 'Game' },
-    { value: 'theory', label: locale === 'ar' ? 'نظري' : 'Theory' },
-    { value: 'cooldown', label: locale === 'ar' ? 'استرخاء' : 'Cool-down' },
+    { value: 'warmup', label: dictionary.courses?.warmup || 'Warm-up' },
+    { value: 'drill', label: dictionary.courses?.drill || 'Drill' },
+    { value: 'game', label: dictionary.courses?.game || 'Game' },
+    { value: 'theory', label: dictionary.courses?.theory || 'Theory' },
+    { value: 'cooldown', label: dictionary.courses?.cooldown || 'Cool-down' },
   ];
 
+  const placeholders = dictionary.courses?.placeholders || {};
+  const fieldClass =
+    'rounded-2xl border border-white/10 bg-black/30 text-white placeholder-white/30 focus-visible:ring-2 focus-visible:ring-[#FF5F02]/35';
+  const selectTriggerClass =
+    'rounded-2xl border border-white/10 bg-black/30 text-white focus:ring-2 focus:ring-[#FF5F02]/35';
+
   return (
-    <Card className="bg-white dark:bg-[#262626] border-[#DDDDDD] dark:border-[#262626]">
-      <CardHeader>
-        <CardTitle className="text-[#262626] dark:text-white">
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, type: 'spring' }}
+    >
+      <Card className="rounded-3xl border border-white/10 bg-white/5 shadow-xl shadow-black/25">
+        <CardHeader>
+          <CardTitle className="text-white">
           {dictionary.courses?.sessionPlan || 'Session Plan'} #{sessionNumber}
-        </CardTitle>
-        <p className="text-sm text-[#262626] dark:text-[#DDDDDD]">
-          {new Date(sessionDate).toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', { dateStyle: 'long' })}
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-6">
+          </CardTitle>
+          <p className="text-sm text-white/60">
+            {new Date(sessionDate).toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', { dateStyle: 'long' })}
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-6">
         {/* Title and Status */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
@@ -214,7 +236,8 @@ export function SessionPlanEditor({
               id="title"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Session title in English"
+              placeholder={placeholders.sessionTitleEn || 'Session title (EN)'}
+              className={fieldClass}
             />
           </div>
           <div>
@@ -223,7 +246,8 @@ export function SessionPlanEditor({
               id="titleAr"
               value={formData.titleAr}
               onChange={(e) => setFormData({ ...formData, titleAr: e.target.value })}
-              placeholder="عنوان الجلسة"
+              placeholder={placeholders.sessionTitleAr || 'Session title (AR)'}
+              className={fieldClass}
               dir="rtl"
             />
           </div>
@@ -235,7 +259,7 @@ export function SessionPlanEditor({
                 setFormData({ ...formData, status: value })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className={selectTriggerClass}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -256,7 +280,8 @@ export function SessionPlanEditor({
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Session description"
+              placeholder={placeholders.sessionDescriptionEn || 'Session description (EN)'}
+              className={fieldClass}
               rows={3}
             />
           </div>
@@ -266,7 +291,8 @@ export function SessionPlanEditor({
               id="descriptionAr"
               value={formData.descriptionAr}
               onChange={(e) => setFormData({ ...formData, descriptionAr: e.target.value })}
-              placeholder="وصف الجلسة"
+              placeholder={placeholders.sessionDescriptionAr || 'Session description (AR)'}
+              className={fieldClass}
               rows={3}
               dir="rtl"
             />
@@ -288,13 +314,15 @@ export function SessionPlanEditor({
                 <Input
                   value={formData.objectives[index]}
                   onChange={(e) => updateObjective(index, e.target.value, false)}
-                  placeholder="Objective in English"
+                  placeholder={placeholders.objectiveEn || 'Objective (EN)'}
+                  className={fieldClass}
                 />
                 <div className="flex gap-2">
                   <Input
                     value={formData.objectivesAr[index]}
                     onChange={(e) => updateObjective(index, e.target.value, true)}
-                    placeholder="الهدف بالعربي"
+                    placeholder={placeholders.objectiveAr || 'Objective (AR)'}
+                    className={fieldClass}
                     dir="rtl"
                   />
                   <Button
@@ -322,12 +350,12 @@ export function SessionPlanEditor({
           </div>
           <div className="space-y-4">
             {activities.map((activity, index) => (
-              <Card key={index} className="border-2 border-[#DDDDDD] dark:border-[#262626]">
+              <Card key={index} className="rounded-3xl border border-white/10 bg-black/20">
                 <CardContent className="pt-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <GripVertical className="w-4 h-4 text-[#262626] dark:text-[#DDDDDD]" />
-                      <span className="text-sm font-semibold text-[#262626] dark:text-white">
+                      <GripVertical className="w-4 h-4 text-white/70" />
+                      <span className="text-sm font-semibold text-white">
                         {dictionary.courses?.activity || 'Activity'} {index + 1}
                       </span>
                     </div>
@@ -345,12 +373,14 @@ export function SessionPlanEditor({
                     <Input
                       value={activity.name}
                       onChange={(e) => updateActivity(index, 'name', e.target.value)}
-                      placeholder="Activity name (EN)"
+                      placeholder={placeholders.activityNameEn || 'Activity name (EN)'}
+                      className={fieldClass}
                     />
                     <Input
                       value={activity.nameAr}
                       onChange={(e) => updateActivity(index, 'nameAr', e.target.value)}
-                      placeholder="اسم النشاط"
+                      placeholder={placeholders.activityNameAr || 'Activity name (AR)'}
+                      className={fieldClass}
                       dir="rtl"
                     />
                   </div>
@@ -363,15 +393,16 @@ export function SessionPlanEditor({
                         value={activity.duration}
                         onChange={(e) => updateActivity(index, 'duration', parseInt(e.target.value))}
                         min={1}
+                        className={fieldClass}
                       />
                     </div>
                     <div>
-                      <Label className="text-xs">{dictionary.courses?.type || 'Type'}</Label>
+                      <Label className="text-xs">{dictionary.courses?.activityType || 'Activity Type'}</Label>
                       <Select
                         value={activity.type}
-                        onValueChange={(value) => updateActivity(index, 'type', value)}
+                        onValueChange={(value) => updateActivity(index, 'type', value as EditableActivity['type'])}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className={selectTriggerClass}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -389,13 +420,15 @@ export function SessionPlanEditor({
                     <Textarea
                       value={activity.description}
                       onChange={(e) => updateActivity(index, 'description', e.target.value)}
-                      placeholder="Description (EN)"
+                      placeholder={placeholders.activityDescriptionEn || 'Activity description (EN)'}
+                      className={fieldClass}
                       rows={2}
                     />
                     <Textarea
                       value={activity.descriptionAr}
                       onChange={(e) => updateActivity(index, 'descriptionAr', e.target.value)}
-                      placeholder="الوصف"
+                      placeholder={placeholders.activityDescriptionAr || 'Activity description (AR)'}
+                      className={fieldClass}
                       rows={2}
                       dir="rtl"
                     />
@@ -421,13 +454,15 @@ export function SessionPlanEditor({
                 <Input
                   value={formData.materials[index]}
                   onChange={(e) => updateMaterial(index, e.target.value, false)}
-                  placeholder="Material in English"
+                  placeholder={placeholders.materialEn || 'Material (EN)'}
+                  className={fieldClass}
                 />
                 <div className="flex gap-2">
                   <Input
                     value={formData.materialsAr[index]}
                     onChange={(e) => updateMaterial(index, e.target.value, true)}
-                    placeholder="المادة بالعربي"
+                    placeholder={placeholders.materialAr || 'Material (AR)'}
+                    className={fieldClass}
                     dir="rtl"
                   />
                   <Button
@@ -447,22 +482,24 @@ export function SessionPlanEditor({
         {/* Notes */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="notes">{dictionary.common?.notes || 'Notes'} (EN)</Label>
+            <Label htmlFor="notes">{dictionary.courses?.notesEn || 'Notes (English)'}</Label>
             <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Additional notes"
+              placeholder={placeholders.additionalNotesEn || 'Additional notes (EN)'}
+              className={fieldClass}
               rows={3}
             />
           </div>
           <div>
-            <Label htmlFor="notesAr">{dictionary.common?.notes || 'Notes'} (AR)</Label>
+            <Label htmlFor="notesAr">{dictionary.courses?.notesAr || 'Notes (Arabic)'}</Label>
             <Textarea
               id="notesAr"
               value={formData.notesAr}
               onChange={(e) => setFormData({ ...formData, notesAr: e.target.value })}
-              placeholder="ملاحظات إضافية"
+              placeholder={placeholders.additionalNotesAr || 'Additional notes (AR)'}
+              className={fieldClass}
               rows={3}
               dir="rtl"
             />
@@ -470,7 +507,7 @@ export function SessionPlanEditor({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-4 border-t border-[#DDDDDD] dark:border-[#262626]">
+        <div className="flex justify-end gap-2 pt-4 border-t border-white/10">
           <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
             {dictionary.common?.cancel || 'Cancel'}
           </Button>
@@ -481,10 +518,13 @@ export function SessionPlanEditor({
             className="bg-[#FF5F02] hover:bg-[#262626] text-white"
           >
             <Save className="w-4 h-4 mr-2" />
-            {loading ? (dictionary.common?.saving || 'Saving...') : (dictionary.common?.save || 'Save')}
+            {loading
+              ? (dictionary.courses?.savingSessionPlan || dictionary.common?.saving || 'Saving...')
+              : (dictionary.courses?.saveSessionPlan || dictionary.common?.save || 'Save')}
           </Button>
         </div>
       </CardContent>
     </Card>
+    </motion.div>
   );
 }

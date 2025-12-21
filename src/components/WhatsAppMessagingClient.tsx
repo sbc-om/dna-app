@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
@@ -54,6 +55,8 @@ type WhatsAppSendResults = {
 };
 
 export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsAppMessagingClientProps) {
+  const t = dictionary.whatsapp;
+
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
@@ -135,11 +138,11 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
         setUsers(usersWithPhone);
         setFilteredUsers(usersWithPhone);
       } else {
-        setErrorMessage('Failed to fetch users');
+        setErrorMessage(t?.errors?.fetchUsersFailed || 'Failed to fetch users');
       }
     } catch (error) {
       console.error('Error fetching users:', error);
-      setErrorMessage('Failed to fetch users');
+      setErrorMessage(t?.errors?.fetchUsersFailed || 'Failed to fetch users');
     } finally {
       setIsFetchingUsers(false);
     }
@@ -236,11 +239,11 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
   const handleSaveProfile = async () => {
     const name = profileName.trim();
     if (!name) {
-      setErrorMessage('Profile name is required');
+      setErrorMessage(t?.errors?.profileNameRequired || 'Profile name is required');
       return;
     }
     if (selectedUsers.size === 0) {
-      setErrorMessage('Please select at least one user');
+      setErrorMessage(t?.errors?.selectAtLeastOneUser || 'Please select at least one user');
       return;
     }
 
@@ -266,13 +269,17 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
         const newId = data.profile?.id || selectedProfile?.id;
         if (newId) setSelectedProfileId(newId);
         setProfileDialogOpen(false);
-        setSuccessMessage(isEdit ? 'Profile updated' : 'Profile created');
+        setSuccessMessage(
+          isEdit
+            ? (t?.status?.profileUpdated || 'Profile updated')
+            : (t?.status?.profileCreated || 'Profile created')
+        );
       } else {
-        setErrorMessage(data?.message || 'Failed to save profile');
+        setErrorMessage(data?.message || (t?.errors?.saveProfileFailed || 'Failed to save profile'));
       }
     } catch (error) {
       console.error('Error saving profile:', error);
-      setErrorMessage('Failed to save profile');
+      setErrorMessage(t?.errors?.saveProfileFailed || 'Failed to save profile');
     } finally {
       setIsSavingProfile(false);
     }
@@ -289,13 +296,13 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
       if (response.ok && data?.success) {
         setSelectedProfileId('');
         await fetchProfiles();
-        setSuccessMessage('Profile deleted');
+        setSuccessMessage(t?.status?.profileDeleted || 'Profile deleted');
       } else {
-        setErrorMessage(data?.message || 'Failed to delete profile');
+        setErrorMessage(data?.message || (t?.errors?.deleteProfileFailed || 'Failed to delete profile'));
       }
     } catch (error) {
       console.error('Error deleting profile:', error);
-      setErrorMessage('Failed to delete profile');
+      setErrorMessage(t?.errors?.deleteProfileFailed || 'Failed to delete profile');
     } finally {
       setIsDeletingProfile(false);
     }
@@ -304,11 +311,11 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
   const handleSaveGroup = async () => {
     const name = groupName.trim();
     if (!name) {
-      setErrorMessage(locale === 'ar' ? 'اسم المجموعة مطلوب' : 'Group name is required');
+      setErrorMessage(t?.errors?.groupNameRequired || 'Group name is required');
       return;
     }
     if (selectedUsers.size === 0) {
-      setErrorMessage(locale === 'ar' ? 'يرجى اختيار مستخدم واحد على الأقل' : 'Please select at least one user');
+      setErrorMessage(t?.errors?.selectAtLeastOneUser || 'Please select at least one user');
       return;
     }
 
@@ -340,16 +347,17 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
         const newId = data.group?.id || selectedGroup?.id;
         if (newId) setSelectedGroupId(newId);
         setGroupDialogOpen(false);
-        setSuccessMessage(isEdit 
-          ? (locale === 'ar' ? 'تم تحديث المجموعة' : 'Group updated')
-          : (locale === 'ar' ? 'تم إنشاء المجموعة' : 'Group created')
+        setSuccessMessage(
+          isEdit
+            ? (t?.status?.groupUpdated || 'Group updated')
+            : (t?.status?.groupCreated || 'Group created')
         );
       } else {
-        setErrorMessage(data?.message || (locale === 'ar' ? 'فشل حفظ المجموعة' : 'Failed to save group'));
+        setErrorMessage(data?.message || (t?.errors?.saveGroupFailed || 'Failed to save group'));
       }
     } catch (error) {
       console.error('Error saving group:', error);
-      setErrorMessage(locale === 'ar' ? 'فشل حفظ المجموعة' : 'Failed to save group');
+      setErrorMessage(t?.errors?.saveGroupFailed || 'Failed to save group');
     } finally {
       setIsSavingGroup(false);
     }
@@ -366,13 +374,13 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
       if (response.ok && data?.success) {
         setSelectedGroupId('');
         await fetchGroups();
-        setSuccessMessage(locale === 'ar' ? 'تم حذف المجموعة' : 'Group deleted');
+        setSuccessMessage(t?.status?.groupDeleted || 'Group deleted');
       } else {
-        setErrorMessage(data?.message || (locale === 'ar' ? 'فشل حذف المجموعة' : 'Failed to delete group'));
+        setErrorMessage(data?.message || (t?.errors?.deleteGroupFailed || 'Failed to delete group'));
       }
     } catch (error) {
       console.error('Error deleting group:', error);
-      setErrorMessage(locale === 'ar' ? 'فشل حذف المجموعة' : 'Failed to delete group');
+      setErrorMessage(t?.errors?.deleteGroupFailed || 'Failed to delete group');
     } finally {
       setIsDeletingGroup(false);
     }
@@ -401,15 +409,16 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
     const hasSelection = currentTab === 'groups' ? selectedGroupId : selectedUsers.size > 0;
     
     if (!hasSelection) {
-      setErrorMessage(locale === 'ar' 
-        ? (currentTab === 'groups' ? 'يرجى اختيار مجموعة' : 'يرجى اختيار مستخدم واحد على الأقل')
-        : (currentTab === 'groups' ? 'Please select a group' : 'Please select at least one user')
+      setErrorMessage(
+        currentTab === 'groups'
+          ? (t?.selectGroup || 'Please select a group')
+          : (t?.errors?.selectAtLeastOneUser || 'Please select at least one user')
       );
       return;
     }
 
     if (!message.trim()) {
-      setErrorMessage(locale === 'ar' ? 'يرجى إدخال رسالة' : 'Please enter a message');
+      setErrorMessage(t?.errors?.enterMessage || 'Please enter a message');
       return;
     }
 
@@ -469,11 +478,11 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
           setSelectedUsers(new Set());
         }
       } else {
-        setErrorMessage(data.message || (locale === 'ar' ? 'فشل إرسال الرسائل' : 'Failed to send messages'));
+        setErrorMessage(data.message || (t?.errors?.sendFailed || 'Failed to send messages'));
       }
     } catch (error) {
       console.error('Error sending messages:', error);
-      setErrorMessage(locale === 'ar' ? 'فشل إرسال الرسائل' : 'Failed to send messages');
+      setErrorMessage(t?.errors?.sendFailed || 'Failed to send messages');
     } finally {
       setIsLoading(false);
     }
@@ -482,17 +491,31 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
   const uniqueRoles = Array.from(new Set(users.map(user => user.role)));
 
   return (
-    <div className="container mx-auto py-6 px-4 max-w-7xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-          <MessageSquare className="h-8 w-8 text-green-600" />
-          {locale === 'ar' ? 'رسائل واتساب' : 'WhatsApp Messaging'}
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
-          {locale === 'ar' 
-            ? 'إرسال رسائل واتساب إلى المستخدمين المحددين'
-            : 'Send WhatsApp messages to selected users'}
-        </p>
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, type: 'spring' }}
+      className="container mx-auto py-6 px-4 max-w-7xl"
+    >
+      <div className="relative mb-6 overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/35">
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-emerald-500/10 via-cyan-500/10 to-purple-500/10" />
+        <div className="relative flex items-center gap-3">
+          <motion.div
+            animate={{ rotate: [0, -6, 6, -6, 0] }}
+            transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 2.5 }}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15"
+          >
+            <MessageSquare className="h-5 w-5 text-emerald-300" />
+          </motion.div>
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white truncate">
+              {t?.title || 'WhatsApp Messaging'}
+            </h1>
+            <p className="mt-1 text-sm text-white/70">
+              {t?.subtitle || 'Send WhatsApp messages to selected users'}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Error Alert */}
@@ -519,14 +542,14 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
               <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-[#1a1a1a]">
                 <TabsTrigger value="users" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
-                  {locale === 'ar' ? 'المستخدمون' : 'Users'}
+                  {t?.usersTab || 'Users'}
                   {currentTab === 'users' && filteredUsers.length > 0 && (
                     <span className="text-xs">({selectedUsers.size}/{filteredUsers.length})</span>
                   )}
                 </TabsTrigger>
                 <TabsTrigger value="groups" className="flex items-center gap-2">
                   <Folder className="h-4 w-4" />
-                  {locale === 'ar' ? 'المجموعات' : 'Groups'}
+                  {t?.groupsTab || 'Groups'}
                   {currentTab === 'groups' && groups.length > 0 && (
                     <span className="text-xs">({groups.length})</span>
                   )}
@@ -541,7 +564,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
               <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
                 <div className="flex-1">
                   <Label className="text-[#262626] dark:text-white font-semibold">
-                    {locale === 'ar' ? 'ملفات المستلمين' : 'Recipient Profiles'}
+                    {t?.recipientProfiles || 'Recipient Profiles'}
                   </Label>
                   <div className="mt-2">
                     <Select
@@ -555,11 +578,17 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                       }}
                     >
                       <SelectTrigger className="w-full h-12 bg-white dark:bg-[#0a0a0a] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white">
-                        <SelectValue placeholder={isFetchingProfiles ? 'Loading profiles...' : 'Select a profile'} />
+                        <SelectValue
+                          placeholder={
+                            isFetchingProfiles
+                              ? (t?.loadingProfiles || t?.loading || 'Loading...')
+                              : (t?.selectProfile || 'Select a profile')
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
                         <SelectItem value="none" className="text-[#262626] dark:text-white cursor-pointer">
-                          {locale === 'ar' ? 'بدون' : 'None'}
+                          {t?.none || 'None'}
                         </SelectItem>
                         {profiles.map((p) => (
                           <SelectItem key={p.id} value={p.id} className="text-[#262626] dark:text-white cursor-pointer">
@@ -571,7 +600,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                   </div>
                   {selectedProfile && (
                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      {selectedProfile.userIds.length} {locale === 'ar' ? 'مستلمين' : 'recipients'}
+                      {selectedProfile.userIds.length} {t?.recipients || 'recipients'}
                     </p>
                   )}
                 </div>
@@ -585,7 +614,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                     disabled={isSavingProfile}
                   >
                     <Save className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
-                    {locale === 'ar' ? 'حفظ كملف' : 'Save Profile'}
+                    {t?.saveProfile || 'Save Profile'}
                   </Button>
                   <Button
                     type="button"
@@ -595,7 +624,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                     disabled={!selectedProfile || isSavingProfile}
                   >
                     <Pencil className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
-                    {locale === 'ar' ? 'تعديل' : 'Edit'}
+                    {t?.edit || 'Edit'}
                   </Button>
                   <Button
                     type="button"
@@ -620,7 +649,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                     }}
                     className="h-12"
                   >
-                    {locale === 'ar' ? 'مسح التحديد' : 'Clear'}
+                    {t?.clear || 'Clear'}
                   </Button>
                 </div>
               </div>
@@ -630,47 +659,47 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                   <DialogHeader>
                     <DialogTitle>
                       {profileDialogMode === 'edit'
-                        ? (locale === 'ar' ? 'تعديل الملف' : 'Edit Profile')
-                        : (locale === 'ar' ? 'إنشاء ملف' : 'Create Profile')}
+                          ? (t?.editProfile || 'Edit Profile')
+                          : (t?.createProfile || 'Create Profile')}
                     </DialogTitle>
                     <DialogDescription>
-                      {locale === 'ar'
-                        ? 'احفظ مجموعة من المستلمين لإرسال الرسائل لهم بسرعة'
-                        : 'Save a set of recipients to send messages in one click.'}
+                      {t?.profileDialogHint || 'Save a set of recipients to send messages in one click.'}
                     </DialogDescription>
                   </DialogHeader>
 
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label className="text-[#262626] dark:text-white font-semibold">
-                        {locale === 'ar' ? 'اسم الملف' : 'Profile Name'}
+                        {t?.profileName || 'Profile Name'}
                       </Label>
                       <Input
                         value={profileName}
                         onChange={(e) => setProfileName(e.target.value)}
-                        placeholder={locale === 'ar' ? 'مثال: أولياء الأمور' : 'e.g. Parents'}
+                        placeholder={t?.profileNamePlaceholder || 'e.g. Parents'}
                         className="h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white"
                       />
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      {selectedUsers.size} {locale === 'ar' ? 'مستخدمين محددين' : 'selected users'}
+                      {selectedUsers.size} {t?.selectedUsers || 'selected users'}
                     </div>
                   </div>
 
                   <DialogFooter className="gap-2">
                     <Button variant="outline" onClick={() => setProfileDialogOpen(false)} className="border-2">
-                      {locale === 'ar' ? 'إلغاء' : 'Cancel'}
+                      {t?.cancel || 'Cancel'}
                     </Button>
                     <Button onClick={handleSaveProfile} disabled={isSavingProfile} className="bg-[#262626] hover:bg-[#1f1f1f] text-white">
                       {isSavingProfile ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin mr-2 rtl:mr-0 rtl:ml-2" />
-                          {locale === 'ar' ? 'جارٍ الحفظ...' : 'Saving...'}
+                          {t?.saving || 'Saving...'}
                         </>
                       ) : (
                         <>
                           <Save className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
-                          {profileDialogMode === 'edit' ? (locale === 'ar' ? 'حفظ التغييرات' : 'Save Changes') : (locale === 'ar' ? 'إنشاء' : 'Create')}
+                          {profileDialogMode === 'edit'
+                            ? (t?.saveChanges || 'Save Changes')
+                            : (t?.create || 'Create')}
                         </>
                       )}
                     </Button>
@@ -684,7 +713,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
   {/* Search Input */}
   <div className="flex-1">
     <Input
-      placeholder={locale === 'ar' ? 'البحث...' : 'Search...'}
+      placeholder={t?.search || 'Search...'}
       value={searchQuery}
       onChange={(e) => setSearchQuery(e.target.value)}
       className="
@@ -711,7 +740,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
       "
     >
       <SelectValue
-        placeholder={locale === 'ar' ? 'فلترة حسب الدور' : 'Filter by role'}
+        placeholder={t?.filterByRole || 'Filter by role'}
       />
     </SelectTrigger>
 
@@ -729,7 +758,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
           cursor-pointer
         "
       >
-        {locale === 'ar' ? 'الكل' : 'All'}
+        {t?.all || 'All'}
       </SelectItem>
 
       {uniqueRoles.map((role) => (
@@ -759,7 +788,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                   onCheckedChange={handleSelectAll}
                 />
                 <Label htmlFor="select-all" className="cursor-pointer font-medium text-[#262626] dark:text-white">
-                  {locale === 'ar' ? 'تحديد الكل' : 'Select All'}
+                  {t?.selectAll || 'Select All'}
                 </Label>
               </div>
             )}
@@ -771,7 +800,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
               </div>
             ) : filteredUsers.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                {locale === 'ar' ? 'لم يتم العثور على مستخدمين' : 'No users found'}
+                {t?.noUsersFound || 'No users found'}
               </div>
             ) : (
               <div className="space-y-2 max-h-[500px] overflow-y-auto scrollbar-custom-dark pr-2">
@@ -810,7 +839,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                 <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
                   <div className="flex-1">
                     <Label className="text-[#262626] dark:text-white font-semibold">
-                      {locale === 'ar' ? 'مجموعات واتساب' : 'WhatsApp Groups'}
+                      {t?.whatsappGroups || 'WhatsApp Groups'}
                     </Label>
                     <div className="mt-2">
                       <Select
@@ -825,15 +854,21 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                         }}
                       >
                         <SelectTrigger className="w-full h-12 bg-white dark:bg-[#0a0a0a] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white">
-                          <SelectValue placeholder={isFetchingGroups ? (locale === 'ar' ? 'جاري التحميل...' : 'Loading groups...') : (locale === 'ar' ? 'اختر مجموعة' : 'Select a group')} />
+                          <SelectValue
+                            placeholder={
+                              isFetchingGroups
+                                ? (t?.loadingGroups || t?.loading || 'Loading...')
+                                : (t?.selectGroup || 'Select a group')
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
                           <SelectItem value="none" className="text-[#262626] dark:text-white cursor-pointer">
-                            {locale === 'ar' ? 'بدون' : 'None'}
+                            {t?.none || 'None'}
                           </SelectItem>
                           {groups.map((g) => (
                             <SelectItem key={g.id} value={g.id} className="text-[#262626] dark:text-white cursor-pointer">
-                              {locale === 'ar' && g.nameAr ? g.nameAr : g.name} ({g.memberIds.length} {locale === 'ar' ? 'أعضاء' : 'members'})
+                              {locale === 'ar' && g.nameAr ? g.nameAr : g.name} ({g.memberIds.length} {t?.members || 'members'})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -842,7 +877,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                     {selectedGroup && (
                       <div className="mt-2 space-y-1">
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {selectedGroup.memberIds.length} {locale === 'ar' ? 'أعضاء' : 'members'}
+                          {selectedGroup.memberIds.length} {t?.members || 'members'}
                         </p>
                         {selectedGroup.description && (
                           <p className="text-xs text-gray-600 dark:text-gray-300">
@@ -862,7 +897,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                       disabled={isSavingGroup}
                     >
                       <Save className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
-                      {locale === 'ar' ? 'مجموعة جديدة' : 'New Group'}
+                      {t?.newGroup || 'New Group'}
                     </Button>
                     <Button
                       type="button"
@@ -872,7 +907,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                       disabled={!selectedGroup || isSavingGroup}
                     >
                       <Pencil className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
-                      {locale === 'ar' ? 'تعديل' : 'Edit'}
+                      {t?.edit || 'Edit'}
                     </Button>
                     <Button
                       type="button"
@@ -897,49 +932,47 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                     <DialogHeader>
                       <DialogTitle>
                         {groupDialogMode === 'edit'
-                          ? (locale === 'ar' ? 'تعديل المجموعة' : 'Edit Group')
-                          : (locale === 'ar' ? 'إنشاء مجموعة جديدة' : 'Create New Group')}
+                          ? (t?.editGroup || 'Edit Group')
+                          : (t?.createNewGroup || 'Create New Group')}
                       </DialogTitle>
                       <DialogDescription>
-                        {locale === 'ar'
-                          ? 'احفظ مجموعة من المستخدمين لإرسال رسائل واتساب إليهم بسرعة'
-                          : 'Save a group of users to send WhatsApp messages quickly'}
+                        {t?.groupDialogHint || 'Save a group of users to send WhatsApp messages quickly'}
                       </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label className="text-[#262626] dark:text-white font-semibold">
-                          {locale === 'ar' ? 'اسم المجموعة (EN)' : 'Group Name (EN)'}
+                          {t?.groupNameEn || 'Group Name (EN)'}
                         </Label>
                         <Input
                           value={groupName}
                           onChange={(e) => setGroupName(e.target.value)}
-                          placeholder={locale === 'ar' ? 'مثال: Parents Group' : 'e.g. Parents Group'}
+                          placeholder={t?.groupNameEnPlaceholder || 'e.g. Parents Group'}
                           className="h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white"
                         />
                       </div>
 
                       <div className="space-y-2">
                         <Label className="text-[#262626] dark:text-white font-semibold">
-                          {locale === 'ar' ? 'اسم المجموعة (AR)' : 'Group Name (AR)'}
+                          {t?.groupNameAr || 'Group Name (AR)'}
                         </Label>
                         <Input
                           value={groupNameAr}
                           onChange={(e) => setGroupNameAr(e.target.value)}
-                          placeholder={locale === 'ar' ? 'مثال: مجموعة أولياء الأمور' : 'e.g. مجموعة أولياء الأمور'}
+                          placeholder={t?.groupNameArPlaceholder || 'e.g. Parents Group (AR)'}
                           className="h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white"
                         />
                       </div>
 
                       <div className="space-y-2">
                         <Label className="text-[#262626] dark:text-white font-semibold">
-                          {locale === 'ar' ? 'الوصف (EN)' : 'Description (EN)'}
+                          {t?.descriptionEn || 'Description (EN)'}
                         </Label>
                         <Textarea
                           value={groupDescription}
                           onChange={(e) => setGroupDescription(e.target.value)}
-                          placeholder={locale === 'ar' ? 'وصف اختياري' : 'Optional description'}
+                          placeholder={t?.optionalDescription || 'Optional description'}
                           rows={2}
                           className="bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white"
                         />
@@ -947,36 +980,38 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
 
                       <div className="space-y-2">
                         <Label className="text-[#262626] dark:text-white font-semibold">
-                          {locale === 'ar' ? 'الوصف (AR)' : 'Description (AR)'}
+                          {t?.descriptionAr || 'Description (AR)'}
                         </Label>
                         <Textarea
                           value={groupDescriptionAr}
                           onChange={(e) => setGroupDescriptionAr(e.target.value)}
-                          placeholder={locale === 'ar' ? 'وصف اختياري' : 'Optional description'}
+                          placeholder={t?.optionalDescription || 'Optional description'}
                           rows={2}
                           className="bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white"
                         />
                       </div>
 
                       <div className="text-sm text-gray-600 dark:text-gray-400">
-                        {selectedUsers.size} {locale === 'ar' ? 'مستخدمين محددين' : 'selected users'}
+                        {selectedUsers.size} {t?.selectedUsers || 'selected users'}
                       </div>
                     </div>
 
                     <DialogFooter className="gap-2">
                       <Button variant="outline" onClick={() => setGroupDialogOpen(false)} className="border-2">
-                        {locale === 'ar' ? 'إلغاء' : 'Cancel'}
+                        {t?.cancel || 'Cancel'}
                       </Button>
                       <Button onClick={handleSaveGroup} disabled={isSavingGroup} className="bg-green-600 hover:bg-green-700 text-white">
                         {isSavingGroup ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin mr-2 rtl:mr-0 rtl:ml-2" />
-                            {locale === 'ar' ? 'جارٍ الحفظ...' : 'Saving...'}
+                            {t?.saving || 'Saving...'}
                           </>
                         ) : (
                           <>
                             <Save className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
-                            {groupDialogMode === 'edit' ? (locale === 'ar' ? 'حفظ التغييرات' : 'Save Changes') : (locale === 'ar' ? 'إنشاء' : 'Create')}
+                            {groupDialogMode === 'edit'
+                              ? (t?.saveChanges || 'Save Changes')
+                              : (t?.create || 'Create')}
                           </>
                         )}
                       </Button>
@@ -992,9 +1027,9 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                 </div>
               ) : groups.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  {locale === 'ar' ? 'لم يتم العثور على مجموعات' : 'No groups found'}
+                  {t?.noGroupsFound || 'No groups found'}
                   <p className="text-sm mt-2">
-                    {locale === 'ar' ? 'قم بإنشاء مجموعة جديدة للبدء' : 'Create a new group to get started'}
+                    {t?.createGroupHint || 'Create a new group to get started'}
                   </p>
                 </div>
               ) : (
@@ -1023,7 +1058,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                             </p>
                           )}
                           <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                            <span>{group.memberIds.length} {locale === 'ar' ? 'أعضاء' : 'members'}</span>
+                            <span>{group.memberIds.length} {t?.members || 'members'}</span>
                             <span>•</span>
                             <span>{new Date(group.createdAt).toLocaleDateString(locale === 'ar' ? 'ar' : 'en')}</span>
                           </div>
@@ -1045,11 +1080,9 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
         {/* Message Form */}
         <Card className="lg:col-span-1 bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] shadow-lg">
           <CardHeader>
-            <CardTitle>{locale === 'ar' ? 'الرسالة' : 'Message'}</CardTitle>
+            <CardTitle>{t?.message || 'Message'}</CardTitle>
             <CardDescription>
-              {locale === 'ar' 
-                ? 'اكتب رسالتك هنا'
-                : 'Write your message here'}
+              {t?.messageHint || 'Write your message here'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1061,13 +1094,13 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                     <>
                       <Users className="h-4 w-4" />
                       <span className="font-semibold">{selectedUsers.size}</span>
-                      <span>{locale === 'ar' ? 'مستخدمين محددين' : 'users selected'}</span>
+                      <span>{t?.usersSelected || 'users selected'}</span>
                     </>
                   ) : (
                     <>
                       <UsersIcon className="h-4 w-4" />
-                      <span className="font-semibold">{selectedGroup?.name}</span>
-                      <span>({selectedGroup?.memberIds.length} {locale === 'ar' ? 'أعضاء' : 'members'})</span>
+                      <span className="font-semibold">{locale === 'ar' && selectedGroup?.nameAr ? selectedGroup.nameAr : selectedGroup?.name}</span>
+                      <span>({selectedGroup?.memberIds.length} {t?.members || 'members'})</span>
                     </>
                   )}
                 </div>
@@ -1075,7 +1108,7 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
             ) : null}
             
             <div className="space-y-2">
-              <Label htmlFor="wahaUrl" className="text-[#262626] dark:text-white font-semibold">{locale === 'ar' ? 'رابط WAHA API' : 'WAHA API URL'}</Label>
+              <Label htmlFor="wahaUrl" className="text-[#262626] dark:text-white font-semibold">{t?.wahaApiUrl || 'WAHA API URL'}</Label>
               <Input
                 id="wahaUrl"
                 value={wahaUrl}
@@ -1084,31 +1117,27 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                 className="h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white"
               />
               <p className="text-xs text-gray-500">
-                {locale === 'ar' 
-                  ? 'عنوان URL لخادم WAHA'
-                  : 'WAHA server URL'}
+                {t?.wahaApiUrlHint || 'WAHA server URL'}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="wahaApiKey" className="text-[#262626] dark:text-white font-semibold">{locale === 'ar' ? 'مفتاح API' : 'API Key'}</Label>
+              <Label htmlFor="wahaApiKey" className="text-[#262626] dark:text-white font-semibold">{t?.apiKey || 'API Key'}</Label>
               <Input
                 id="wahaApiKey"
                 type="password"
                 value={wahaApiKey}
                 onChange={(e) => setWahaApiKey(e.target.value)}
-                placeholder={locale === 'ar' ? 'أدخل مفتاح API' : 'Enter API key'}
+                placeholder={t?.apiKeyPlaceholder || 'Enter API key'}
                 className="h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white"
               />
               <p className="text-xs text-gray-500">
-                {locale === 'ar' 
-                  ? 'مفتاح المصادقة لـ WAHA API'
-                  : 'WAHA API authentication key'}
+                {t?.apiKeyHint || 'WAHA API authentication key'}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="session" className="text-[#262626] dark:text-white font-semibold">{locale === 'ar' ? 'الجلسة' : 'Session'}</Label>
+              <Label htmlFor="session" className="text-[#262626] dark:text-white font-semibold">{t?.session || 'Session'}</Label>
               <Input
                 id="session"
                 value={session}
@@ -1117,19 +1146,17 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
                 className="h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white"
               />
               <p className="text-xs text-gray-500">
-                {locale === 'ar' 
-                  ? 'اسم جلسة WAHA'
-                  : 'WAHA session name'}
+                {t?.sessionHint || 'WAHA session name'}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="message" className="text-[#262626] dark:text-white font-semibold">{locale === 'ar' ? 'نص الرسالة' : 'Message Text'}</Label>
+              <Label htmlFor="message" className="text-[#262626] dark:text-white font-semibold">{t?.messageText || 'Message Text'}</Label>
               <Textarea
                 id="message"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder={locale === 'ar' ? 'اكتب رسالتك هنا...' : 'Write your message here...'}
+                placeholder={t?.messagePlaceholder || 'Write your message here...'}
                 rows={8}
                 className="resize-none bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-[#FF5F02] dark:focus:border-[#FF5F02] text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
@@ -1143,12 +1170,12 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2 rtl:mr-0 rtl:ml-2" />
-                  {locale === 'ar' ? 'جاري الإرسال...' : 'Sending...'}
+                  {t?.sending || 'Sending...'}
                 </>
               ) : (
                 <>
                   <Send className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
-                  {locale === 'ar' ? 'إرسال' : 'Send'}
+                  {t?.send || 'Send'}
                   {currentTab === 'users' && selectedUsers.size > 0 && ` (${selectedUsers.size})`}
                   {currentTab === 'groups' && selectedGroup && ` (${selectedGroup.memberIds.length})`}
                 </>
@@ -1160,21 +1187,21 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
               <Card className="mt-4 bg-gray-50 dark:bg-gray-800">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm">
-                    {locale === 'ar' ? 'نتائج الإرسال' : 'Send Results'}
+                    {t?.sendResults || 'Send Results'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="flex items-center gap-2 text-green-600">
                       <CheckCircle className="h-4 w-4" />
-                      {locale === 'ar' ? 'ناجح' : 'Success'}
+                      {t?.success || 'Success'}
                     </span>
                     <span className="font-medium">{sendResults.success}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="flex items-center gap-2 text-red-600">
                       <XCircle className="h-4 w-4" />
-                      {locale === 'ar' ? 'فشل' : 'Failed'}
+                      {t?.failed || 'Failed'}
                     </span>
                     <span className="font-medium">{sendResults.failed}</span>
                   </div>
@@ -1184,6 +1211,6 @@ export default function WhatsAppMessagingClient({ dictionary, locale }: WhatsApp
           </CardContent>
         </Card>
       </div>
-    </div>
+    </motion.div>
   );
 }

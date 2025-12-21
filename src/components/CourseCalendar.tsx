@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getCourseCalendarAction, getSessionPlanByDateAction } from '@/lib/actions/sessionPlanActions';
 import type { SessionPlan } from '@/lib/db/repositories/sessionPlanRepository';
+import type { Dictionary } from '@/lib/i18n/getDictionary';
+import type { Locale } from '@/config/i18n';
 import {
   Dialog,
   DialogContent,
@@ -17,8 +19,8 @@ import {
 
 interface CourseCalendarProps {
   courseId: string;
-  locale: 'en' | 'ar';
-  dictionary: any;
+  locale: Locale;
+  dictionary: Dictionary;
   onSessionClick?: (session: SessionPlan) => void;
 }
 
@@ -38,18 +40,19 @@ export function CourseCalendar({ courseId, locale, dictionary, onSessionClick }:
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadCalendar();
-  }, [courseId]);
-
-  const loadCalendar = async () => {
+  const loadCalendar = useCallback(async () => {
     setLoading(true);
     const result = await getCourseCalendarAction(courseId);
     if (result.success && result.calendar) {
       setCalendarData(result.calendar);
     }
     setLoading(false);
-  };
+  }, [courseId]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadCalendar();
+  }, [loadCalendar]);
 
   const handleDateClick = async (date: string) => {
     const session = calendarData.find(s => s.date === date);
@@ -145,9 +148,15 @@ export function CourseCalendar({ courseId, locale, dictionary, onSessionClick }:
   };
 
   const days = getDaysInMonth(currentDate);
-  const weekDays = locale === 'ar' 
-    ? ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
-    : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekDays = [
+    dictionary.courses?.weekdaysShort?.sunday || dictionary.courses?.sunday || 'Sun',
+    dictionary.courses?.weekdaysShort?.monday || dictionary.courses?.monday || 'Mon',
+    dictionary.courses?.weekdaysShort?.tuesday || dictionary.courses?.tuesday || 'Tue',
+    dictionary.courses?.weekdaysShort?.wednesday || dictionary.courses?.wednesday || 'Wed',
+    dictionary.courses?.weekdaysShort?.thursday || dictionary.courses?.thursday || 'Thu',
+    dictionary.courses?.weekdaysShort?.friday || dictionary.courses?.friday || 'Fri',
+    dictionary.courses?.weekdaysShort?.saturday || dictionary.courses?.saturday || 'Sat',
+  ];
 
   const monthName = currentDate.toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', {
     month: 'long',

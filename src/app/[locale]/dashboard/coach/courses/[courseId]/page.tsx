@@ -4,6 +4,8 @@ import { Locale } from '@/config/i18n';
 import { findCourseById } from '@/lib/db/repositories/courseRepository';
 import { getPaidEnrollmentsByCourseId } from '@/lib/db/repositories/enrollmentRepository';
 import { getUsersByIds } from '@/lib/db/repositories/userRepository';
+import type { Enrollment } from '@/lib/db/repositories/enrollmentRepository';
+import type { User } from '@/lib/db/repositories/userRepository';
 import { notFound, redirect } from 'next/navigation';
 import { CoachCourseDetailClient } from '@/components/CoachCourseDetailClient';
 
@@ -42,16 +44,15 @@ export default async function CoachCoursePage(props: PageProps) {
   const studentIds = enrollments.map((e) => e.studentId);
   const students = studentIds.length > 0 ? await getUsersByIds(studentIds) : [];
 
-  const roster = enrollments.map((enrollment) => {
-    const student = students.find((s) => s.id === enrollment.studentId);
-    if (!student) {
-      return null;
-    }
-    return {
-      enrollment,
-      student,
-    };
-  }).filter(Boolean) as Array<{ enrollment: any; student: any }>;
+  const roster: Array<{ enrollment: Enrollment; student: User }> = enrollments
+    .map((enrollment) => {
+      const student = students.find((s) => s.id === enrollment.studentId);
+      if (!student) {
+        return null;
+      }
+      return { enrollment, student };
+    })
+    .filter((item): item is { enrollment: Enrollment; student: User } => item !== null);
 
   return (
     <CoachCourseDetailClient

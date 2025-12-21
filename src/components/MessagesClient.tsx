@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageSquare, Users as UsersIcon, Send, Plus, Search, X, Smile, Paperclip, MoreVertical, ArrowLeft, Phone, Video, CheckCheck, Clock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -165,7 +166,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
         setShowEmojiPicker(false);
         loadMessages(selectedConversation);
         loadData(); // Refresh conversation list
-        showNotification(locale === 'ar' ? 'تم إرسال الرسالة' : 'Message sent', 'success');
+        showNotification(dictionary.messages?.messageSent || 'Message sent successfully', 'success');
       } else {
         showNotification(result.error || 'Failed to send message', 'error');
       }
@@ -252,7 +253,12 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
   );
 
   return (
-    <>
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, type: 'spring' }}
+      className="h-full"
+    >
       {/* Toast Notification */}
       {notification && (
         <div className={`fixed top-4 right-4 left-4 sm:left-auto sm:w-96 z-50 animate-in slide-in-from-top-5 ${
@@ -272,7 +278,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
         </div>
       )}
 
-  <div className="h-full min-h-0 flex flex-col bg-gray-50 dark:bg-[#1a1a1a] overflow-hidden">
+      <div className="h-full min-h-0 flex flex-col bg-gray-50 dark:bg-[#1a1a1a] overflow-hidden">
         {/* Header - Hidden on mobile when chat is open */}
         <div className={`${!showMobileSidebar && selectedConversation ? 'hidden lg:block' : 'block'} p-4 sm:p-6 border-b bg-white dark:bg-[#262626] shadow-sm`}>
           <div className="flex items-center justify-between gap-3">
@@ -281,7 +287,9 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                 {dictionary.messages?.title || 'Messages'}
               </h1>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1 hidden sm:block">
-                {isAdmin ? 'Send messages to users and manage groups' : 'Your conversations'}
+                {isAdmin
+                  ? (dictionary.messages?.subtitleAdmin || 'Send messages to users and manage groups')
+                  : (dictionary.messages?.subtitleUser || 'Your conversations')}
               </p>
             </div>
             <div className="flex gap-2 shrink-0">
@@ -393,7 +401,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                                   </span>
                                 )}
                               </div>
-                              <p className="text-sm opacity-75 truncate">{conv.lastMessage?.content || (locale === 'ar' ? 'ابدأ محادثة' : 'Start conversation')}</p>
+                              <p className="text-sm opacity-75 truncate">{conv.lastMessage?.content || (dictionary.messages?.startConversation || 'Start a conversation')}</p>
                             </div>
                           </div>
                         </button>
@@ -422,7 +430,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                     {groups.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <UsersIcon className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                        <p>{locale === 'ar' ? 'لا توجد مجموعات' : 'No groups yet'}</p>
+                        <p>{dictionary.messages?.noGroups || 'No groups yet'}</p>
                         {permissions.canCreateGroup && (
                           <Button
                             onClick={() => setShowNewGroupDialog(true)}
@@ -455,7 +463,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold truncate">{group.name}</p>
-                              <p className="text-sm opacity-75">{group.members.length} {locale === 'ar' ? 'أعضاء' : 'members'}</p>
+                              <p className="text-sm opacity-75">{group.members.length} {dictionary.messages?.members || 'members'}</p>
                             </div>
                           </div>
                         </button>
@@ -514,9 +522,9 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                     <h3 className="font-bold text-base sm:text-lg truncate">{selectedConversation.name}</h3>
                     <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1">
                       {selectedConversation.type === 'group' ? (
-                        <><UsersIcon className="h-3 w-3" /> {locale === 'ar' ? 'مجموعة' : 'Group Chat'}</>
+                        <><UsersIcon className="h-3 w-3" /> {dictionary.messages?.groupChat || 'Group chat'}</>
                       ) : (
-                        <><span className="h-2 w-2 bg-green-500 rounded-full"></span> {locale === 'ar' ? 'متصل' : 'Online'}</>
+                        <><span className="h-2 w-2 bg-green-500 rounded-full"></span> {dictionary.messages?.online || 'Online'}</>
                       )}
                     </p>
                   </div>
@@ -554,8 +562,8 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                       <div className="flex items-center justify-center h-full text-muted-foreground">
                         <div className="text-center">
                           <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                          <p className="text-sm">{locale === 'ar' ? 'لا توجد رسائل بعد' : 'No messages yet'}</p>
-                          <p className="text-xs mt-2">{locale === 'ar' ? 'ابدأ المحادثة الآن' : 'Start the conversation now'}</p>
+                          <p className="text-sm">{dictionary.messages?.noMessages || 'No messages yet'}</p>
+                          <p className="text-xs mt-2">{dictionary.messages?.startConversationNow || 'Start the conversation now'}</p>
                         </div>
                       </div>
                     ) : (
@@ -651,7 +659,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                       <EmojiPicker 
                         onEmojiClick={handleEmojiClick}
                         theme={Theme.LIGHT}
-                        searchPlaceholder={locale === 'ar' ? 'بحث عن إيموجي...' : 'Search emoji...'}
+                        searchPlaceholder={dictionary.messages?.searchEmoji || 'Search emojis...'}
                         height={350}
                         width="100%"
                       />
@@ -720,7 +728,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                     <MessageSquare className="h-10 w-10 sm:h-12 sm:w-12 opacity-50" />
                   </div>
                   <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900 dark:text-white">
-                    {locale === 'ar' ? 'ابدأ محادثة' : 'Start a Conversation'}
+                    {dictionary.messages?.startConversation || 'Start a conversation'}
                   </h3>
                   <p className="text-sm sm:text-base mb-6">
                     {dictionary.messages?.selectUser || 'Select a conversation to start chatting'}
@@ -747,7 +755,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
           <DialogHeader className="p-4 sm:p-6 border-b">
             <DialogTitle className="text-xl sm:text-2xl">{dictionary.messages?.createGroup || 'Create Group'}</DialogTitle>
             <DialogDescription className="text-sm">
-              {locale === 'ar' ? 'إنشاء مجموعة لإرسال الرسائل إلى عدة مستخدمين' : 'Create a group to send messages to multiple users at once'}
+              {dictionary.messages?.groupDialogHint || 'Create a group to send messages to multiple users at once'}
             </DialogDescription>
           </DialogHeader>
 
@@ -757,7 +765,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
               <Input
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
-                placeholder={locale === 'ar' ? 'أدخل اسم المجموعة' : 'Enter group name'}
+                placeholder={dictionary.messages?.enterGroupName || 'Enter group name'}
                 className="mt-2 h-11 border-2 focus:border-[#FF5F02]"
               />
             </div>
@@ -784,7 +792,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
               </div>
               {selectedMembers.length > 0 && (
                 <p className="text-sm text-muted-foreground mt-2">
-                  {selectedMembers.length} {locale === 'ar' ? 'عضو محدد' : 'members selected'}
+                  {(dictionary.messages?.membersSelected || '{count} members selected').replace('{count}', String(selectedMembers.length))}
                 </p>
               )}
             </div>
@@ -819,7 +827,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
           <DialogHeader className="p-4 sm:p-6 border-b">
             <DialogTitle className="text-xl sm:text-2xl">{dictionary.messages?.selectRecipient || 'Select Recipient'}</DialogTitle>
             <DialogDescription className="text-sm">
-              {locale === 'ar' ? 'اختر مستخدم لبدء المحادثة' : 'Choose a user to start a conversation'}
+              {dictionary.messages?.selectUser || 'Select a user to start chatting'}
             </DialogDescription>
           </DialogHeader>
 
@@ -840,7 +848,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
               {filteredUsers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Search className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>{locale === 'ar' ? 'لم يتم العثور على مستخدمين' : 'No users found'}</p>
+                  <p>{dictionary.messages?.noUsersFound || 'No users found'}</p>
                 </div>
               ) : (
                 filteredUsers.map((user) => (
@@ -866,6 +874,6 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
       </Dialog>
 
       <ConfirmDialog />
-    </>
+    </motion.div>
   );
 }

@@ -45,7 +45,6 @@ export default async function CourseDetailPage({
         locale={locale}
         kid={kid}
         course={course}
-        currentUser={user}
       />
     </div>
   );

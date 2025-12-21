@@ -550,13 +550,14 @@ export function KidProfileClient({
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, type: 'spring', stiffness: 260, damping: 22 }}
-      className="space-y-6"
+      // Add bottom padding so the page content never sits under the global mobile bottom nav.
+      className="space-y-6 pb-28 lg:pb-0"
     >
       {/* Header */}
       <Card className="border border-white/10 bg-transparent rounded-2xl shadow-none">
         <CardContent className="p-4 sm:p-6">
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
-            <div className="flex items-start gap-4 min-w-0">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            <div className="flex items-start gap-5 min-w-0">
               <div className="shrink-0">
                 {canAdmin ? (
                   <ImageUpload
@@ -565,7 +566,7 @@ export function KidProfileClient({
                     aspectRatio={1}
                     maxSizeMB={2}
                     shape="square"
-                    size="sm"
+                    size="md"
                     hideHint
                     variant="minimal"
                   />
@@ -573,11 +574,11 @@ export function KidProfileClient({
                   <img
                     src={currentKid.profilePicture}
                     alt={currentKid.fullName || currentKid.username}
-                    className="w-20 h-20 rounded-2xl object-cover border border-white/15"
+                    className="w-32 h-32 rounded-2xl object-cover border border-white/15"
                   />
                 ) : (
-                  <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/15 flex items-center justify-center">
-                    <UserCircle className="w-10 h-10 text-white/70" />
+                  <div className="w-32 h-32 rounded-2xl bg-white/5 border border-white/15 flex items-center justify-center">
+                    <UserCircle className="w-16 h-16 text-white/70" />
                   </div>
                 )}
               </div>
@@ -598,10 +599,7 @@ export function KidProfileClient({
                   )}
                 </div>
 
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
-                  {currentKid.nationalId ? (
-                    <InfoChip icon={IdCard} label={dictionary.users.nationalId} value={currentKid.nationalId} />
-                  ) : null}
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {currentKid.birthDate ? (
                     <InfoChip
                       icon={Cake}
@@ -620,49 +618,100 @@ export function KidProfileClient({
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 lg:justify-end">
+            {/* Desktop: Stacked buttons on the right */}
+            <div className="hidden lg:flex flex-col gap-3 w-48">
               {canAdmin && (
                 <Button
                   type="button"
                   onClick={() => router.push(`/${locale}/dashboard/kids/${currentKid.id}/edit`)}
-                  variant="outline"
-                  className="border-white/15 bg-white/5 text-white hover:bg-white/10"
+                  className="w-full bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg"
                 >
                   <Edit className="h-4 w-4 me-2" />
-                  {dictionary.users.editUser}
+                  Edit Profile
                 </Button>
               )}
               {canManage && (
                 <Button
                   type="button"
                   onClick={() => setAssessmentDialogOpen(true)}
-                  className="bg-blue-600 hover:bg-blue-500 text-white"
+                  className="w-full bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white shadow-lg"
                 >
                   <Plus className="h-4 w-4 me-2" />
-                  {dictionary.playerProfile?.actions?.newAssessment ?? 'New Assessment'}
+                  New Assessment
                 </Button>
               )}
               {canManage && (
                 <Button
                   type="button"
                   onClick={openGrantBadgeDialog}
-                  variant="outline"
-                  className="border-white/15 bg-white/5 text-white hover:bg-white/10"
+                  className="w-full bg-linear-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-lg"
                 >
                   <Award className="h-4 w-4 me-2" />
-                  {dictionary.playerProfile?.actions?.grantBadge ?? 'Grant Badge'}
+                  Grant Badge
                 </Button>
               )}
               {canManage && stageEvaluation?.evaluation?.readyForStageUpgrade && (
                 <Button
                   type="button"
                   onClick={handleApproveStageUpgrade}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                  className="w-full bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg"
                 >
                   <Flag className="h-4 w-4 me-2" />
-                  {dictionary.playerProfile?.actions?.approveStageUpgrade ?? 'Approve Stage Upgrade'}
+                  Approve Stage
                 </Button>
               )}
+            </div>
+          </div>
+
+          {/* Mobile: Action buttons below profile info */}
+          <div className="lg:hidden mt-6">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <div className="grid grid-cols-3 gap-2">
+                {canAdmin && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => router.push(`/${locale}/dashboard/kids/${currentKid.id}/edit`)}
+                    className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg flex-col h-auto py-3"
+                  >
+                    <Edit className="h-4 w-4 mb-1" />
+                    <span className="text-[10px] font-semibold">Edit</span>
+                  </Button>
+                )}
+                {canManage && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setAssessmentDialogOpen(true)}
+                    className="bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white shadow-lg flex-col h-auto py-3"
+                  >
+                    <Plus className="h-4 w-4 mb-1" />
+                    <span className="text-[10px] font-semibold">Assessment</span>
+                  </Button>
+                )}
+                {canManage && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={openGrantBadgeDialog}
+                    className="bg-linear-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-lg flex-col h-auto py-3"
+                  >
+                    <Award className="h-4 w-4 mb-1" />
+                    <span className="text-[10px] font-semibold">Badge</span>
+                  </Button>
+                )}
+                {canManage && stageEvaluation?.evaluation?.readyForStageUpgrade && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleApproveStageUpgrade}
+                    className="bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg flex-col h-auto py-3 col-span-3"
+                  >
+                    <Flag className="h-4 w-4 mb-1" />
+                    <span className="text-[10px] font-semibold">Approve Stage</span>
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -715,6 +764,9 @@ export function KidProfileClient({
         </CardContent>
       </Card>
 
+      {/* Intentionally no fixed bottom action bar on mobile.
+          A global mobile bottom navigation exists; keeping actions inside the header avoids overlap. */}
+
       <Tabs defaultValue="overview" className="w-full">
         <div className="-mx-4 sm:mx-0">
           <div className="px-4 sm:px-0">
@@ -738,38 +790,38 @@ export function KidProfileClient({
                 <TabsList className="inline-flex w-max min-w-full items-center justify-start gap-1 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl p-1.5">
                   <TabsTrigger
                     value="overview"
-                    className="min-w-max gap-2 text-white/70 hover:text-white hover:bg-white/5 data-[state=active]:bg-linear-to-r data-[state=active]:from-blue-500/60 data-[state=active]:to-purple-600/60 data-[state=active]:text-white"
+                    className="gap-2 text-white/70 hover:text-white hover:bg-white/5 data-[state=active]:bg-linear-to-r data-[state=active]:from-blue-500/60 data-[state=active]:to-purple-600/60 data-[state=active]:text-white"
                   >
                     <Activity className="w-4 h-4" />
-                    {dictionary.playerProfile?.tabs?.overview ?? 'Overview'}
+                    <span className="hidden md:inline">{dictionary.playerProfile?.tabs?.overview ?? 'Overview'}</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="assessments"
-                    className="min-w-max gap-2 text-white/70 hover:text-white hover:bg-white/5 data-[state=active]:bg-linear-to-r data-[state=active]:from-orange-500/70 data-[state=active]:to-fuchsia-600/70 data-[state=active]:text-white"
+                    className="gap-2 text-white/70 hover:text-white hover:bg-white/5 data-[state=active]:bg-linear-to-r data-[state=active]:from-orange-500/70 data-[state=active]:to-fuchsia-600/70 data-[state=active]:text-white"
                   >
                     <Calendar className="w-4 h-4" />
-                    {dictionary.playerProfile?.tabs?.assessments ?? 'Assessments'}
+                    <span className="hidden md:inline">{dictionary.playerProfile?.tabs?.assessments ?? 'Assessments'}</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="badges"
-                    className="min-w-max gap-2 text-white/70 hover:text-white hover:bg-white/5 data-[state=active]:bg-linear-to-r data-[state=active]:from-emerald-500/70 data-[state=active]:to-teal-600/70 data-[state=active]:text-white"
+                    className="gap-2 text-white/70 hover:text-white hover:bg-white/5 data-[state=active]:bg-linear-to-r data-[state=active]:from-emerald-500/70 data-[state=active]:to-teal-600/70 data-[state=active]:text-white"
                   >
                     <Star className="w-4 h-4" />
-                    {dictionary.playerProfile?.tabs?.badges ?? 'Badges'}
+                    <span className="hidden md:inline">{dictionary.playerProfile?.tabs?.badges ?? 'Badges'}</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="courses"
-                    className="min-w-max gap-2 text-white/70 hover:text-white hover:bg-white/5 data-[state=active]:bg-linear-to-r data-[state=active]:from-cyan-500/60 data-[state=active]:to-blue-600/60 data-[state=active]:text-white"
+                    className="gap-2 text-white/70 hover:text-white hover:bg-white/5 data-[state=active]:bg-linear-to-r data-[state=active]:from-cyan-500/60 data-[state=active]:to-blue-600/60 data-[state=active]:text-white"
                   >
                     <BookOpen className="w-4 h-4" />
-                    {dictionary.playerProfile?.tabs?.courses ?? 'Courses'}
+                    <span className="hidden md:inline">{dictionary.playerProfile?.tabs?.courses ?? 'Courses'}</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="achievements"
-                    className="min-w-max gap-2 text-white/70 hover:text-white hover:bg-white/5 data-[state=active]:bg-linear-to-r data-[state=active]:from-violet-500/70 data-[state=active]:to-purple-600/70 data-[state=active]:text-white"
+                    className="gap-2 text-white/70 hover:text-white hover:bg-white/5 data-[state=active]:bg-linear-to-r data-[state=active]:from-yellow-500/70 data-[state=active]:to-orange-600/70 data-[state=active]:text-white"
                   >
                     <Award className="w-4 h-4" />
-                    {dictionary.playerProfile?.tabs?.achievements ?? 'Achievements'}
+                    <span className="hidden md:inline">{dictionary.playerProfile?.tabs?.achievements ?? 'Achievements'}</span>
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -778,7 +830,7 @@ export function KidProfileClient({
         </div>
 
         <TabsContent value="overview" className="mt-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="space-y-6">
             <PanelCard title={dictionary.playerProfile?.sections?.insights ?? 'Insights'} icon={Activity}>
               <div className="space-y-6">
                 {!latestAssessment ? (
@@ -908,7 +960,7 @@ export function KidProfileClient({
                         {canAdmin && (
                           <Button
                             variant="outline"
-                            className="border-white/15 bg-white/5 text-white hover:bg-white/10"
+                            className="border-white/20 bg-white/10 text-white hover:bg-white/15"
                             onClick={() => handleDeleteAssessment(a.id)}
                           >
                             <Trash2 className="h-4 w-4 me-2" />
@@ -1079,7 +1131,7 @@ export function KidProfileClient({
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-white/15 bg-white/5 text-white hover:bg-white/10"
+                                className="border-white/20 bg-white/10 text-white hover:bg-white/15"
                                 onClick={() => handleEditEnrollment(enrollment)}
                                 disabled={isDeleting}
                               >
@@ -1088,7 +1140,7 @@ export function KidProfileClient({
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-white/15 bg-white/5 text-white hover:bg-white/10"
+                                className="border-white/20 bg-white/10 text-white hover:bg-white/15"
                                 onClick={() => handleDeleteEnrollment(enrollment.id)}
                                 disabled={isDeleting}
                               >
@@ -1108,12 +1160,33 @@ export function KidProfileClient({
         </TabsContent>
 
         <TabsContent value="achievements" className="mt-4">
-          <StudentMedalsDisplay
-            studentId={currentKid.id}
-            title={dictionary.playerProfile?.sections?.medals ?? 'Medals'}
-            description={dictionary.playerProfile?.hints?.medalsHint ?? undefined}
-            locale={locale}
-          />
+          <div className="space-y-4">
+            <Card className="bg-white/6 border border-white/10 backdrop-blur-xl rounded-3xl overflow-hidden shadow-[0_30px_90px_-50px_rgba(0,0,0,0.7)]">
+              <CardHeader className="bg-white/5 border-b border-white/10 flex flex-col items-center justify-center text-center gap-1">
+                <CardTitle className="text-white flex items-center gap-2 justify-center">
+                  <motion.div
+                    animate={{ rotate: [0, -6, 6, -6, 0] }}
+                    transition={{ duration: 0.6 }}
+                    aria-hidden
+                  >
+                    <Award className="w-5 h-5 text-white/85" />
+                  </motion.div>
+                  <span className="tracking-tight">
+                    {dictionary.playerProfile?.achievements?.bilingualTitle ?? 'Achievements'}
+                  </span>
+                </CardTitle>
+                <p className="text-sm text-white/65">
+                  {dictionary.playerProfile?.achievements?.bilingualSubtitle ?? 'Unlocked medals earned through progress.'}
+                </p>
+              </CardHeader>
+            </Card>
+
+            <StudentMedalsDisplay
+              studentId={currentKid.id}
+              hideHeader
+              locale={locale}
+            />
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -1237,7 +1310,11 @@ export function KidProfileClient({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" className="border-2" onClick={() => setAssessmentDialogOpen(false)}>
+            <Button
+              variant="outline"
+              className="border-white/20 bg-white/10 text-white hover:bg-white/15"
+              onClick={() => setAssessmentDialogOpen(false)}
+            >
               {dictionary.common.cancel}
             </Button>
             <Button className="bg-[#262626] hover:bg-black text-white" disabled={assessmentSubmitting} onClick={handleCreateAssessment}>
@@ -1275,7 +1352,11 @@ export function KidProfileClient({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" className="border-2" onClick={() => setBadgeDialogOpen(false)}>
+            <Button
+              variant="outline"
+              className="border-white/20 bg-white/10 text-white hover:bg-white/15"
+              onClick={() => setBadgeDialogOpen(false)}
+            >
               {dictionary.common.cancel}
             </Button>
             <Button className="bg-[#262626] hover:bg-black text-white" disabled={badgeSubmitting || !selectedBadgeId} onClick={handleGrantBadge}>

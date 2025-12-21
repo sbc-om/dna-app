@@ -4,10 +4,12 @@ import { useRouter } from 'next/navigation';
 import { SessionPlanEditor } from './SessionPlanEditor';
 import { PageContainer, PageHeader } from './ui/page-layout';
 import type { Course } from '@/lib/db/repositories/courseRepository';
+import type { Dictionary } from '@/lib/i18n/getDictionary';
+import type { Locale } from '@/config/i18n';
 
 interface NewSessionClientProps {
-  locale: string;
-  dictionary: any;
+  locale: Locale;
+  dictionary: Dictionary;
   course: Course;
   nextSessionNumber: number;
 }
@@ -19,6 +21,16 @@ export default function NewSessionClient({
   nextSessionNumber,
 }: NewSessionClientProps) {
   const router = useRouter();
+
+  const courseName =
+    locale === 'ar'
+      ? (course.nameAr || course.name)
+      : course.name;
+  const sessionNumberLabel = dictionary.courses?.sessionNumber || 'Session #';
+  const sessionNumberText =
+    locale === 'ar'
+      ? `${sessionNumberLabel} ${nextSessionNumber}`
+      : `${sessionNumberLabel}${nextSessionNumber}`;
 
   const handleSuccess = () => {
     router.refresh();
@@ -36,11 +48,7 @@ export default function NewSessionClient({
     <PageContainer maxWidth="4xl">
       <PageHeader
         title={dictionary.courses?.addSession || 'Add New Session'}
-        description={
-          locale === 'ar' 
-            ? `${course.nameAr} - الجلسة رقم ${nextSessionNumber}`
-            : `${course.name} - Session #${nextSessionNumber}`
-        }
+        description={`${courseName} • ${sessionNumberText}`}
       />
 
       {/* Session Editor */}
@@ -48,7 +56,7 @@ export default function NewSessionClient({
         courseId={course.id}
         sessionNumber={nextSessionNumber}
         sessionDate={today}
-        locale={locale as 'en' | 'ar'}
+        locale={locale}
         dictionary={dictionary}
         onSuccess={handleSuccess}
         onCancel={handleCancel}
