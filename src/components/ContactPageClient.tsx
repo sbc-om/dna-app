@@ -1,39 +1,16 @@
+
 'use client';
 
-import { useState } from 'react';
-import { getDictionary } from '@/lib/i18n/getDictionary';
-import { Locale } from '@/config/i18n';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Mail, Phone, MapPin } from 'lucide-react';
-
-interface ContactPageProps {
-  params: Promise<{ locale: string }>;
-}
-
-interface ContactFormData {
-  name: string;
-  email: string;
-  message: string;
-}
-
-// Since we can't use async in client components, we'll need to pass dictionary as props
-// For now, we'll create a client component that receives the dictionary
-    email: '',
-    message: '',
-  });
+import { ContactForm } from '@/components/ContactForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Dictionary } from '@/lib/i18n/getDictionary';
 import type { Locale } from '@/config/i18n';
-  const handleSubmit = async (e: React.FormEvent) => {
+import { Mail, Phone, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ContactForm } from '@/components/ContactForm';
-    e.preventDefault();
+
 type SessionUser = { fullName?: string; email: string; role?: string };
 
 export default function ContactPageClient({
@@ -45,17 +22,17 @@ export default function ContactPageClient({
   locale: Locale;
   user?: SessionUser | null;
 }) {
-  const email = 'info@discovernaturalability.com';
-  const phone = '+968 7772 2112';
-  const address = 'Oman - Muscat';
-              <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-lg dark:bg-gray-900/80">
-                <CardHeader>
+  const email = dictionary.pages.contact.info.email;
+  const phone = dictionary.pages.contact.info.phone;
+  const address = dictionary.pages.contact.info.address;
+
+  return (
     <div className="min-h-screen flex flex-col bg-[#0a0a0a]" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-                    {dictionary.pages.contact.form.submit}
-                  </CardTitle>
-                  <CardDescription className="text-gray-600 dark:text-gray-400">
+      <Header dictionary={dictionary} locale={locale} user={user} />
+
+      <main className="flex-1">
         {/* Hero */}
-        <section className="relative px-4 pt-18 pb-10 overflow-hidden">
+        <section className="relative px-4 pt-16 pb-10 overflow-hidden">
           <div className="pointer-events-none absolute inset-0 -z-10">
             <div className="absolute inset-0 bg-black" />
             <motion.div
@@ -167,3 +144,9 @@ export default function ContactPageClient({
             </motion.div>
           </div>
         </section>
+      </main>
+
+      <Footer dictionary={dictionary} locale={locale} />
+    </div>
+  );
+}

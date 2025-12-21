@@ -23,6 +23,8 @@ interface ImageUploadProps {
   shape?: 'circle' | 'square';
   size?: 'sm' | 'md' | 'lg';
   icon?: React.ReactNode;
+  hideHint?: boolean;
+  variant?: 'default' | 'minimal';
 }
 
 export function ImageUpload({
@@ -34,6 +36,8 @@ export function ImageUpload({
   shape = 'circle',
   size,
   icon,
+  hideHint = false,
+  variant = 'default',
 }: ImageUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>(currentImage || '');
@@ -149,6 +153,14 @@ export function ImageUpload({
 
   const borderClass = isSquare ? 'rounded-2xl' : 'rounded-full';
   const defaultIconClass = resolvedSize === 'sm' ? 'w-10 h-10' : resolvedSize === 'md' ? 'w-20 h-20' : 'w-24 h-24';
+
+  const isMinimal = variant === 'minimal';
+  const frameClass = isMinimal
+    ? `relative w-full h-full ${borderClass} overflow-hidden border border-white/15 bg-transparent shadow-none transition-transform group-hover:scale-[1.02]`
+    : `relative w-full h-full ${borderClass} overflow-hidden border-4 border-[#30B2D2] shadow-xl transition-transform group-hover:scale-105`;
+  const emptyBgClass = isMinimal
+    ? 'w-full h-full bg-white/5 flex items-center justify-center'
+    : 'w-full h-full bg-linear-to-br from-[#30B2D2]/20 to-[#1E3A8A]/20 flex items-center justify-center';
   
   return (
     <div className="space-y-4">
@@ -163,7 +175,7 @@ export function ImageUpload({
           aria-label="Upload image"
         />
         
-        <div className={`relative w-full h-full ${borderClass} overflow-hidden border-4 border-[#30B2D2] shadow-xl transition-transform group-hover:scale-105`}>
+        <div className={frameClass}>
           {previewUrl ? (
             <img
               key={previewUrl}
@@ -172,7 +184,7 @@ export function ImageUpload({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-linear-to-br from-[#30B2D2]/20 to-[#1E3A8A]/20 flex items-center justify-center">
+            <div className={emptyBgClass}>
               {icon || <UserCircle className={`${defaultIconClass} text-gray-400`} />}
             </div>
           )}
@@ -200,9 +212,11 @@ export function ImageUpload({
         )}
       </div>
 
-      <p className="text-center text-sm text-muted-foreground">
-        Click on the image to upload {isSquare ? 'a document' : 'a new photo'} (Max {maxSizeMB}MB)
-      </p>
+      {!hideHint && (
+        <p className="text-center text-sm text-muted-foreground">
+          Click on the image to upload {isSquare ? 'a document' : 'a new photo'} (Max {maxSizeMB}MB)
+        </p>
+      )}
 
       {/* Crop Dialog */}
       <Dialog open={cropDialogOpen} onOpenChange={setCropDialogOpen}>

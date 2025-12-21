@@ -14,8 +14,7 @@ import {
   Settings,
   BookOpen,
   DollarSign,
-  MessageCircle,
-  Sparkles
+  MessageCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Dictionary } from '@/lib/i18n/getDictionary';
@@ -181,7 +180,7 @@ const SidebarContent = ({
     {/* Navigation */}
     <OverlayScrollbarsComponent
       element="nav"
-      className="flex-1 min-h-0 p-4 space-y-3 relative z-10"
+      className="flex-1 min-h-0 p-4 relative z-10"
       options={{
         scrollbars: {
           theme: 'os-theme-dark',
@@ -196,97 +195,90 @@ const SidebarContent = ({
       }}
       defer
     >
-      {filteredMenuItems.map((item, index) => {
-        const Icon = item.icon;
-        const href = `/${locale}${item.href}`;
-        const isActive = item.key === 'dashboard'
-          ? pathname === href
-          : pathname === href || pathname.startsWith(`${href}/`);
-        
-        return (
-          <motion.div 
-            key={item.key} 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className="relative group/item"
-          >
-            <Link
-              href={href}
-              onClick={() => onMobileClose && onMobileClose()}
-              className="block relative"
+      <div className="flex flex-col gap-2">
+        {filteredMenuItems.map((item, index) => {
+          const Icon = item.icon;
+          const href = `/${locale}${item.href}`;
+          const isActive = item.key === 'dashboard'
+            ? pathname === href
+            : pathname === href || pathname.startsWith(`${href}/`);
+          
+          return (
+            <motion.div 
+              key={item.key} 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="relative group/item"
             >
-              <motion.div
-                whileHover={{ scale: 1.02, x: isRTL ? -4 : 4 }}
-                whileTap={{ scale: 0.98 }}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-4 rounded-xl transition-all duration-300 backdrop-blur-sm relative overflow-hidden",
-                  "min-h-14",
-                  isActive 
-                    ? "bg-linear-to-r from-blue-600/20 to-purple-600/20 text-white border-2 border-blue-500/50 shadow-lg shadow-blue-500/20"
-                    : "text-white/70 hover:text-white hover:bg-white/5 border-2 border-white/5 hover:border-white/10",
-                  isCollapsed && "lg:justify-center lg:px-3"
-                )}
+              <Link
+                href={href}
+                onClick={() => onMobileClose && onMobileClose()}
+                className="block relative"
               >
-                {/* Active indicator glow */}
-                {isActive && (
-                  <motion.div
-                    layoutId="activeIndicator"
-                    className={cn(
-                      "absolute top-0 bottom-0 w-1 bg-linear-to-b from-blue-400 via-purple-500 to-pink-500",
-                      isRTL ? "right-0 rounded-l-full" : "left-0 rounded-r-full"
-                    )}
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  />
-                )}
-                
-                {/* Icon with glow effect */}
-                <motion.div 
-                  className="relative"
-                  animate={isActive ? { 
-                    rotate: [0, -5, 5, -5, 0],
-                  } : {}}
-                  transition={{ duration: 0.5 }}
+                <motion.div
+                  whileHover={{ scale: 1.02, x: isRTL ? -4 : 4 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 backdrop-blur-sm relative overflow-hidden",
+                    "min-h-12",
+                    isActive 
+                      ? "bg-linear-to-r from-blue-600/20 to-purple-600/20 text-white border-2 border-blue-500/50 shadow-lg shadow-blue-500/20"
+                      : "text-white/70 hover:text-white hover:bg-white/5 border-2 border-white/5 hover:border-white/10",
+                    isCollapsed && "lg:justify-center lg:px-3"
+                  )}
                 >
-                  <Icon className={cn(
-                    "h-5 w-5 shrink-0 relative z-10",
-                    isActive && "drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]"
-                  )} />
+                  {/* Active indicator glow */}
                   {isActive && (
                     <motion.div
-                      className="absolute inset-0 bg-blue-500 rounded-full blur-md opacity-50"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
+                      layoutId="activeIndicator"
+                      className={cn(
+                        "absolute top-0 bottom-0 w-1 bg-linear-to-b from-blue-400 via-purple-500 to-pink-500",
+                        isRTL ? "right-0 rounded-l-full" : "left-0 rounded-r-full"
+                      )}
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   )}
+                  
+                  {/* Icon with glow effect */}
+                  <motion.div 
+                    className="relative"
+                    animate={isActive ? { 
+                      rotate: [0, -5, 5, -5, 0],
+                    } : {}}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <Icon className={cn(
+                      "h-5 w-5 shrink-0 relative z-10",
+                      isActive && "drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]"
+                    )} />
+                    {isActive && (
+                      <motion.div
+                        className="absolute inset-0 bg-blue-500 rounded-full blur-md opacity-50"
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      />
+                    )}
+                  </motion.div>
+                  
+                  <AnimatePresence>
+                    {!isCollapsed && (
+                      <motion.span 
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: 'auto' }}
+                        exit={{ opacity: 0, width: 0 }}
+                        className="font-medium truncate flex-1 text-[15px]"
+                      >
+                        {dictionary.nav[item.labelKey]}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
-                
-                <AnimatePresence>
-                  {!isCollapsed && (
-                    <motion.span 
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: 'auto' }}
-                      exit={{ opacity: 0, width: 0 }}
-                      className="font-medium truncate flex-1 text-[15px]"
-                    >
-                      {dictionary.nav[item.labelKey]}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-                
-                {/* Hover sparkle effect */}
-                <motion.div
-                  className="absolute top-1 right-1 opacity-0 group-hover/item:opacity-100 transition-opacity"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                >
-                  <Sparkles className="h-3 w-3 text-yellow-400" />
-                </motion.div>
-              </motion.div>
-            </Link>
-          </motion.div>
-        );
-      })}
+              </Link>
+            </motion.div>
+          );
+        })}
+      </div>
     </OverlayScrollbarsComponent>
 
     {/* Footer */}
@@ -341,7 +333,8 @@ export function DashboardSidebar({
     <>
       {/* Desktop Sidebar */}
       <aside className={cn(
-        "hidden lg:flex flex-col bg-linear-to-b from-[#1a1a2e] via-[#16213e] to-[#0f3460] border-r border-white/10 transition-all duration-500 relative shadow-2xl",
+        "hidden lg:flex flex-col bg-linear-to-b from-[#1a1a2e] via-[#16213e] to-[#0f3460] border-white/10 transition-all duration-500 relative shadow-2xl",
+        isRTL ? "border-l" : "border-r",
         isCollapsed ? "w-20" : "w-72"
       )}>
         {/* Animated mesh gradient overlay */}
@@ -401,7 +394,8 @@ export function DashboardSidebar({
               exit={{ x: isRTL ? '100%' : '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className={cn(
-                "lg:hidden fixed top-0 bottom-0 z-50 bg-linear-to-b from-[#1a1a2e] via-[#16213e] to-[#0f3460] border-r border-white/10 flex flex-col shadow-2xl",
+                "lg:hidden fixed top-0 bottom-0 z-50 bg-linear-to-b from-[#1a1a2e] via-[#16213e] to-[#0f3460] border-white/10 flex flex-col shadow-2xl",
+                isRTL ? "border-l" : "border-r",
                 "w-[85vw] max-w-[320px] sm:w-80",
                 isRTL ? "right-0" : "left-0"
               )}

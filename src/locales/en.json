@@ -677,8 +677,12 @@
       },
       "info": {
         "title": "Contact Information",
-        "email": "Email: contact@dnawebapp.com",
-        "phone": "Phone: +1 (555) 123-4567"
+        "emailLabel": "Email",
+        "phoneLabel": "Phone",
+        "addressLabel": "Address",
+        "email": "info@discovernaturalability.com",
+        "phone": "+968 7772 2112",
+        "address": "Oman - Muscat"
       }
     }
   },

@@ -18,17 +18,19 @@ import {
   Award,
   BookOpen,
   Calendar,
+  Cake,
   CheckCircle2,
   Edit,
   Flag,
+  IdCard,
   Plus,
+  School,
   Save,
   Star,
   Trash2,
   Trophy,
   UserCircle,
 } from 'lucide-react';
-import { AnimatedStatCard } from '@/components/AnimatedStatCard';
 import { ImageUpload } from '@/components/ImageUpload';
 import { StudentMedalsDisplay } from '@/components/StudentMedalsDisplay';
 import { updateUserProfilePictureAction } from '@/lib/actions/userActions';
@@ -483,250 +485,235 @@ export function KidProfileClient({
     }
   };
 
+  const PanelCard = ({
+    title,
+    icon: Icon,
+    children,
+  }: {
+    title: string;
+    icon?: React.ComponentType<{ className?: string }>;
+    children: React.ReactNode;
+  }) => (
+    <Card className="border border-white/10 bg-transparent rounded-2xl shadow-none">
+      <CardHeader className="py-4">
+        <CardTitle className="text-white flex items-center gap-2 text-base">
+          {Icon ? <Icon className="h-4 w-4 text-white/70" /> : null}
+          <span className="truncate">{title}</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0 pb-5">{children}</CardContent>
+    </Card>
+  );
+
+  const InfoChip = ({
+    icon: Icon,
+    label,
+    value,
+  }: {
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+    value: string;
+  }) => (
+    <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+      <Icon className="h-4 w-4 text-white/70" />
+      <div className="min-w-0">
+        <div className="text-[11px] leading-4 text-white/60 truncate">{label}</div>
+        <div className="text-sm font-semibold text-white truncate">{value}</div>
+      </div>
+    </div>
+  );
+
+  const StatTile = ({
+    icon: Icon,
+    title,
+    value,
+  }: {
+    icon: React.ComponentType<{ className?: string }>;
+    title: string;
+    value: React.ReactNode;
+  }) => (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-xs text-white/60 truncate">{title}</div>
+          <div className="mt-1 text-2xl font-bold text-white truncate">{value}</div>
+        </div>
+        <div className="h-10 w-10 rounded-xl border border-white/10 bg-black/20 flex items-center justify-center shrink-0">
+          <Icon className="h-5 w-5 text-white/75" />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, type: 'spring', stiffness: 260, damping: 22 }}
-      className="relative space-y-6"
+      className="space-y-6"
     >
-      {/* Local game-like glow */}
-      <div className="pointer-events-none absolute -inset-x-10 -top-10 -z-10 h-72 bg-[radial-gradient(circle_at_20%_30%,rgba(59,130,246,0.16),transparent_55%),radial-gradient(circle_at_80%_20%,rgba(249,115,22,0.16),transparent_55%),radial-gradient(circle_at_60%_80%,rgba(168,85,247,0.12),transparent_55%)] blur-2xl" />
-
       {/* Header */}
-      <motion.div whileHover={{ rotateX: 2, rotateY: -2 }} style={{ transformStyle: 'preserve-3d' }}>
-        <Card className="bg-white/6 border border-white/10 backdrop-blur-xl overflow-hidden rounded-3xl shadow-[0_30px_90px_-50px_rgba(0,0,0,0.7)]">
-          <CardHeader className="bg-white/5 border-b border-white/10">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-3">
+      <Card className="border border-white/10 bg-transparent rounded-2xl shadow-none">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+            <div className="flex items-start gap-4 min-w-0">
+              <div className="shrink-0">
+                {canAdmin ? (
+                  <ImageUpload
+                    onUpload={handleImageUpload}
+                    currentImage={currentKid.profilePicture}
+                    aspectRatio={1}
+                    maxSizeMB={2}
+                    shape="square"
+                    size="sm"
+                    hideHint
+                    variant="minimal"
+                  />
+                ) : currentKid.profilePicture ? (
+                  <img
+                    src={currentKid.profilePicture}
+                    alt={currentKid.fullName || currentKid.username}
+                    className="w-20 h-20 rounded-2xl object-cover border border-white/15"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/15 flex items-center justify-center">
+                    <UserCircle className="w-10 h-10 text-white/70" />
+                  </div>
+                )}
+              </div>
+
               <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white truncate">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white truncate">
                   {currentKid.fullName || currentKid.username}
                 </h1>
-                <div className="mt-1 flex flex-wrap gap-2">
+
+                <div className="mt-2 flex flex-wrap gap-2">
                   <Badge variant="secondary" className="bg-white/5 border border-white/10 text-white/90">
                     {dictionary.playerProfile?.labels?.stage ?? 'Stage'}: {stageLabel(profile?.currentStage)}
                   </Badge>
                   {latestAssessment && (
-                    <Badge className="border-0 bg-linear-to-r from-orange-500 to-fuchsia-600 text-white">
+                    <Badge variant="secondary" className="bg-white/5 border border-white/10 text-white/90">
                       {dictionary.playerProfile?.labels?.naScore ?? 'NA'}: {latestAssessment.naScore}
                     </Badge>
                   )}
                 </div>
-              </div>
-            </div>
 
-            <div className="flex flex-col md:flex-row gap-4 md:items-start md:justify-between">
-              <div className="flex flex-col sm:flex-row sm:items-start items-center gap-4">
-                <div className="shrink-0 flex flex-col items-center">
-                  {canAdmin ? (
-                    <ImageUpload
-                      onUpload={handleImageUpload}
-                      currentImage={currentKid.profilePicture}
-                      aspectRatio={1}
-                      maxSizeMB={2}
-                      shape="square"
-                      size="sm"
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                  {currentKid.nationalId ? (
+                    <InfoChip icon={IdCard} label={dictionary.users.nationalId} value={currentKid.nationalId} />
+                  ) : null}
+                  {currentKid.birthDate ? (
+                    <InfoChip
+                      icon={Cake}
+                      label={dictionary.playerProfile?.labels?.birthDate ?? 'Birth date'}
+                      value={new Date(currentKid.birthDate).toLocaleDateString(locale)}
                     />
-                  ) : currentKid.profilePicture ? (
-                    <img
-                      src={currentKid.profilePicture}
-                      alt={currentKid.fullName || currentKid.username}
-                      className="w-20 h-20 rounded-2xl object-cover border border-white/15"
+                  ) : null}
+                  {currentKid.school ? (
+                    <InfoChip
+                      icon={School}
+                      label={dictionary.playerProfile?.labels?.school ?? 'School'}
+                      value={`${currentKid.school}${currentKid.grade ? ` · ${currentKid.grade}` : ''}`}
                     />
-                  ) : (
-                    <div className="w-20 h-20 rounded-2xl bg-white/6 border border-white/15 flex items-center justify-center">
-                      <UserCircle className="w-10 h-10 text-white/70" />
-                    </div>
-                  )}
-
-                  {/* Mobile: national ID directly under the photo */}
-                  {currentKid.nationalId && (
-                    <div className="mt-3 sm:hidden text-center">
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/15 bg-white/5">
-                        <span className="text-xs font-semibold text-white/70">
-                          {dictionary.users.nationalId}
-                        </span>
-                        <span className="text-xs font-bold text-white">{currentKid.nationalId}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="min-w-0 w-full sm:w-auto text-sm text-white/80 space-y-1 text-center sm:text-left rtl:sm:text-right">
-                  {currentKid.nationalId && (
-                    <div className="hidden sm:block truncate">
-                      <span className="font-semibold text-white/90">{dictionary.users.nationalId}:</span> {currentKid.nationalId}
-                    </div>
-                  )}
-                  {currentKid.birthDate && (
-                    <div className="truncate">
-                      <span className="font-semibold text-white/90">{dictionary.playerProfile?.labels?.birthDate ?? 'Birth date'}:</span>{' '}
-                      {new Date(currentKid.birthDate).toLocaleDateString(locale)}
-                    </div>
-                  )}
-                  {currentKid.school && (
-                    <div className="truncate">
-                      <span className="font-semibold text-white/90">{dictionary.playerProfile?.labels?.school ?? 'School'}:</span> {currentKid.school}
-                      {currentKid.grade ? ` · ${currentKid.grade}` : ''}
-                    </div>
-                  )}
-                  {currentKid.position && (
-                    <div className="truncate">
-                      <span className="font-semibold text-white/90">{dictionary.playerProfile?.labels?.position ?? 'Position'}:</span> {currentKid.position}
-                    </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
-
-              <div className="flex flex-wrap gap-2 md:justify-end">
-                {canAdmin && (
-                  <Button
-                    type="button"
-                    onClick={() => router.push(`/${locale}/dashboard/kids/${currentKid.id}/edit`)}
-                    variant="outline"
-                    className="border-white/15 bg-white/5 text-white hover:bg-white/10"
-                  >
-                    <Edit className="h-4 w-4 me-2" />
-                    {dictionary.users.editUser}
-                  </Button>
-                )}
-                {canManage && (
-                  <Button
-                    type="button"
-                    onClick={() => setAssessmentDialogOpen(true)}
-                    className="bg-linear-to-r from-orange-500 to-fuchsia-600 text-white shadow-lg shadow-fuchsia-500/20 hover:from-orange-400 hover:to-fuchsia-500"
-                  >
-                    <Plus className="h-4 w-4 me-2" />
-                    {dictionary.playerProfile?.actions?.newAssessment ?? 'New Assessment'}
-                  </Button>
-                )}
-                {canManage && (
-                  <Button
-                    type="button"
-                    onClick={openGrantBadgeDialog}
-                    variant="outline"
-                    className="border-white/15 bg-white/5 text-white hover:bg-white/10"
-                  >
-                    <Award className="h-4 w-4 me-2" />
-                    {dictionary.playerProfile?.actions?.grantBadge ?? 'Grant Badge'}
-                  </Button>
-                )}
-                {canManage && stageEvaluation?.evaluation?.readyForStageUpgrade && (
-                  <Button
-                    type="button"
-                    onClick={handleApproveStageUpgrade}
-                    className="bg-linear-to-r from-emerald-500 to-cyan-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-400 hover:to-cyan-500"
-                  >
-                    <Flag className="h-4 w-4 me-2" />
-                    {dictionary.playerProfile?.actions?.approveStageUpgrade ?? 'Approve Stage Upgrade'}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Trophy className="w-5 h-5 text-white/80" />
-            <div className="font-bold text-white">
-              {dictionary.playerProfile?.labels?.progress ?? 'Stage Progress'}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <progress
-              value={Math.round((stageEvaluation?.evaluation?.overallProgress || 0) * 100)}
-              max={100}
-              className="w-full h-4 rounded-md overflow-hidden border border-white/10 bg-white/5"
-            />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <AnimatedStatCard
-                title={dictionary.playerProfile?.labels?.daysInStage ?? 'Days in stage'}
-                value={stageEvaluation?.evaluation?.timeInStageDays ?? 0}
-                icon={Calendar}
-                gradient="bg-linear-to-br from-blue-500 to-cyan-600"
-                delay={0.05}
-              />
-              <AnimatedStatCard
-                title={dictionary.playerProfile?.labels?.attendance ?? 'Attendance'}
-                value={formatPct(stageEvaluation?.attendance?.attendanceRate)}
-                icon={Activity}
-                gradient="bg-linear-to-br from-emerald-500 to-teal-600"
-                delay={0.1}
-              />
-              <AnimatedStatCard
-                title={dictionary.playerProfile?.labels?.naImprovement ?? 'NA improvement'}
-                value={formatPct(stageEvaluation?.evaluation?.naImprovementPct)}
-                icon={Trophy}
-                gradient="bg-linear-to-br from-orange-500 to-fuchsia-600"
-                delay={0.15}
-              />
-              <AnimatedStatCard
-                title={dictionary.playerProfile?.labels?.xp ?? 'XP'}
-                value={profile?.xpTotal ?? 0}
-                icon={Star}
-                gradient="bg-linear-to-br from-violet-500 to-purple-600"
-                delay={0.2}
-              />
-            </div>
-          </div>
-
-          {loadingProfile && (
-            <div className="mt-4 text-sm text-white/70">{dictionary.common.loading}</div>
-          )}
-          {profileError && (
-            <div className="mt-4 text-sm text-red-600">{profileError}</div>
-          )}
-        </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Sticky mobile actions */}
-      {canManage && (
-        <div className="md:hidden fixed bottom-4 left-3 right-3 z-50">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, type: 'spring', stiffness: 260, damping: 22 }}
-            className="rounded-2xl border border-white/10 bg-black/55 backdrop-blur-xl shadow-[0_20px_60px_-30px_rgba(0,0,0,0.8)] p-2"
-          >
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                type="button"
-                onClick={() => setAssessmentDialogOpen(true)}
-                className="h-11 bg-linear-to-r from-orange-500 to-fuchsia-600 text-white shadow-lg shadow-fuchsia-500/20 hover:from-orange-400 hover:to-fuchsia-500"
-              >
-                <Plus className="h-4 w-4 me-2" />
-                {dictionary.playerProfile?.actions?.newAssessment ?? 'New Assessment'}
-              </Button>
-              <Button
-                type="button"
-                onClick={openGrantBadgeDialog}
-                variant="outline"
-                className="h-11 border-white/15 bg-white/5 text-white hover:bg-white/10"
-              >
-                <Award className="h-4 w-4 me-2" />
-                {dictionary.playerProfile?.actions?.grantBadge ?? 'Grant Badge'}
-              </Button>
             </div>
 
-            {stageEvaluation?.evaluation?.readyForStageUpgrade && (
-              <div className="mt-2">
+            <div className="flex flex-wrap gap-2 lg:justify-end">
+              {canAdmin && (
+                <Button
+                  type="button"
+                  onClick={() => router.push(`/${locale}/dashboard/kids/${currentKid.id}/edit`)}
+                  variant="outline"
+                  className="border-white/15 bg-white/5 text-white hover:bg-white/10"
+                >
+                  <Edit className="h-4 w-4 me-2" />
+                  {dictionary.users.editUser}
+                </Button>
+              )}
+              {canManage && (
+                <Button
+                  type="button"
+                  onClick={() => setAssessmentDialogOpen(true)}
+                  className="bg-blue-600 hover:bg-blue-500 text-white"
+                >
+                  <Plus className="h-4 w-4 me-2" />
+                  {dictionary.playerProfile?.actions?.newAssessment ?? 'New Assessment'}
+                </Button>
+              )}
+              {canManage && (
+                <Button
+                  type="button"
+                  onClick={openGrantBadgeDialog}
+                  variant="outline"
+                  className="border-white/15 bg-white/5 text-white hover:bg-white/10"
+                >
+                  <Award className="h-4 w-4 me-2" />
+                  {dictionary.playerProfile?.actions?.grantBadge ?? 'Grant Badge'}
+                </Button>
+              )}
+              {canManage && stageEvaluation?.evaluation?.readyForStageUpgrade && (
                 <Button
                   type="button"
                   onClick={handleApproveStageUpgrade}
-                  className="h-11 w-full bg-linear-to-r from-emerald-500 to-cyan-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-400 hover:to-cyan-500"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white"
                 >
                   <Flag className="h-4 w-4 me-2" />
                   {dictionary.playerProfile?.actions?.approveStageUpgrade ?? 'Approve Stage Upgrade'}
                 </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Trophy className="w-4 h-4 text-white/70" />
+              <div className="font-semibold text-white">
+                {dictionary.playerProfile?.labels?.progress ?? 'Stage Progress'}
               </div>
-            )}
-          </motion.div>
-        </div>
-      )}
+            </div>
+
+            <div className="space-y-3">
+              <progress
+                value={Math.round((stageEvaluation?.evaluation?.overallProgress || 0) * 100)}
+                max={100}
+                className="w-full h-3 rounded-md overflow-hidden border border-white/10 bg-white/5"
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <StatTile
+                  title={dictionary.playerProfile?.labels?.daysInStage ?? 'Days in stage'}
+                  value={stageEvaluation?.evaluation?.timeInStageDays ?? 0}
+                  icon={Calendar}
+                />
+                <StatTile
+                  title={dictionary.playerProfile?.labels?.attendance ?? 'Attendance'}
+                  value={formatPct(stageEvaluation?.attendance?.attendanceRate)}
+                  icon={Activity}
+                />
+                <StatTile
+                  title={dictionary.playerProfile?.labels?.naImprovement ?? 'NA improvement'}
+                  value={formatPct(stageEvaluation?.evaluation?.naImprovementPct)}
+                  icon={Trophy}
+                />
+                <StatTile
+                  title={dictionary.playerProfile?.labels?.xp ?? 'XP'}
+                  value={profile?.xpTotal ?? 0}
+                  icon={Star}
+                />
+              </div>
+
+              {loadingProfile && (
+                <div className="text-sm text-white/70">{dictionary.common.loading}</div>
+              )}
+              {profileError && (
+                <div className="text-sm text-red-600">{profileError}</div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="overview" className="w-full">
         <div className="-mx-4 sm:mx-0">
@@ -792,13 +779,8 @@ export function KidProfileClient({
 
         <TabsContent value="overview" className="mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="bg-white/6 border border-white/10 backdrop-blur-xl lg:col-span-2 rounded-3xl overflow-hidden shadow-[0_30px_90px_-50px_rgba(0,0,0,0.7)]">
-              <CardHeader className="bg-white/5 border-b border-white/10 flex items-center justify-center min-h-14">
-                <CardTitle className="text-white text-center">
-                  {dictionary.playerProfile?.sections?.insights ?? 'Insights'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6 space-y-6">
+            <PanelCard title={dictionary.playerProfile?.sections?.insights ?? 'Insights'} icon={Activity}>
+              <div className="space-y-6">
                 {!latestAssessment ? (
                   <div className="text-white/70">
                     {dictionary.playerProfile?.empty?.noAssessments ?? 'No assessments yet.'}
@@ -855,16 +837,11 @@ export function KidProfileClient({
                     </div>
                   </>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </PanelCard>
 
-            <Card className="bg-white/6 border border-white/10 backdrop-blur-xl rounded-3xl overflow-hidden shadow-[0_30px_90px_-50px_rgba(0,0,0,0.7)]">
-              <CardHeader className="bg-white/5 border-b border-white/10 flex items-center justify-center min-h-14">
-                <CardTitle className="text-white text-center">
-                  {dictionary.playerProfile?.sections?.status ?? 'Status'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6 space-y-4">
+            <PanelCard title={dictionary.playerProfile?.sections?.status ?? 'Status'} icon={CheckCircle2}>
+              <div className="space-y-4">
                 <div className="p-4 rounded-2xl border border-white/10 bg-white/5">
                   <div className="text-xs text-white/55">{dictionary.playerProfile?.labels?.assessmentStatus ?? 'Assessment status'}</div>
                   <div className="mt-1 text-base font-bold text-white">
@@ -892,8 +869,8 @@ export function KidProfileClient({
                 {profileError && (
                   <div className="text-sm text-red-600">{profileError}</div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </PanelCard>
           </div>
         </TabsContent>
 

@@ -671,8 +671,12 @@
       },
       "info": {
         "title": "معلومات الاتصال",
-        "email": "البريد الإلكتروني: contact@dnawebapp.com",
-        "phone": "الهاتف: +1 (555) 123-4567"
+        "emailLabel": "البريد الإلكتروني",
+        "phoneLabel": "الهاتف",
+        "addressLabel": "العنوان",
+        "email": "info@discovernaturalability.com",
+        "phone": "+968 7772 2112",
+        "address": "عُمان - مسقط"
       }
     }
   },
