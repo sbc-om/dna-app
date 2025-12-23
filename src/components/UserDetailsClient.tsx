@@ -38,6 +38,8 @@ interface UserDetailsClientProps {
   user: User;
   memberships: UserAcademyMembershipView[];
   children?: User[];
+  parents?: User[];
+  kids?: User[];
 }
 
 function formatDate(locale: Locale, iso?: string): string {
@@ -51,7 +53,7 @@ function formatDate(locale: Locale, iso?: string): string {
   });
 }
 
-export function UserDetailsClient({ dictionary, locale, user, memberships, children }: UserDetailsClientProps) {
+export function UserDetailsClient({ dictionary, locale, user, memberships, children, parents = [], kids = [] }: UserDetailsClientProps) {
   const [editingOpen, setEditingOpen] = useState(false);
   const [localUser, setLocalUser] = useState<User>(user);
 
@@ -350,6 +352,8 @@ export function UserDetailsClient({ dictionary, locale, user, memberships, child
         onOpenChange={setEditingOpen}
         dictionary={dictionary}
         locale={locale}
+        parents={parents}
+        kids={kids}
         onUserUpdated={(u) => setLocalUser(u)}
       />
     </div>

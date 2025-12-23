@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { updateUserAction } from '@/lib/actions/userActions';
+import { updateUserAction, updateKidsParentAction } from '@/lib/actions/userActions';
 import { getAcademyUiContextAction, getUserPrimaryAcademyIdAction } from '@/lib/actions/academyActions';
 import type { Academy } from '@/lib/db/repositories/academyRepository';
 
@@ -30,6 +30,7 @@ export interface EditUserDialogProps {
   dictionary: Dictionary;
   onUserUpdated: (user: User) => void;
   parents?: User[];
+  kids?: User[];
   locale: string;
 }
 
@@ -40,12 +41,16 @@ export function EditUserDialog({
   dictionary,
   onUserUpdated,
   parents = [],
+  kids = [],
   locale,
 }: EditUserDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [academies, setAcademies] = useState<Academy[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<UserRole | null>(null);
   const [academyId, setAcademyId] = useState<string>('');
+  const [selectedKidIds, setSelectedKidIds] = useState<string[]>(
+    kids.filter(k => k.parentId === user.id).map(k => k.id)
+  );
   const [formData, setFormData] = useState({
     email: user.email,
     username: user.username,
@@ -108,6 +113,16 @@ export function EditUserDialog({
     });
 
     if (result.success && result.user) {
+      // If user is a parent, update kids' parentId
+      if (formData.role === ROLES.PARENT) {
+        const kidsResult = await updateKidsParentAction(user.id, selectedKidIds, { locale });
+        if (!kidsResult.success) {
+          alert(kidsResult.error || 'Failed to update kids assignments');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
       onUserUpdated(result.user);
       onOpenChange(false);
     } else {
@@ -376,6 +391,48 @@ export function EditUserDialog({
                         />
                       </div>
                     </div>
+
+                    {/* Kids Selection for Parent */}
+                    {formData.role === ROLES.PARENT && kids.length > 0 && (
+                      <div className="rounded-2xl border border-black/10 bg-white/60 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+                        <div className="flex items-center gap-2 text-sm font-bold text-[#262626] dark:text-white mb-4">
+                          <GraduationCap className="h-4 w-4" />
+                          {dictionary.dashboard?.academyAdmin?.selectKids || 'Select Kids'}
+                        </div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                          {locale === 'ar' 
+                            ? 'حدد الأطفال الذين يتبعون لهذا الولي' 
+                            : 'Select the kids that belong to this parent'}
+                        </p>
+                        <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                          {kids.map((kid) => (
+                            <div 
+                              key={kid.id} 
+                              className="flex items-center gap-3 rounded-xl border border-black/5 bg-white/80 px-3 py-2 dark:border-white/5 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 transition-colors"
+                            >
+                              <Checkbox
+                                id={`kid-${kid.id}`}
+                                checked={selectedKidIds.includes(kid.id)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedKidIds([...selectedKidIds, kid.id]);
+                                  } else {
+                                    setSelectedKidIds(selectedKidIds.filter(id => id !== kid.id));
+                                  }
+                                }}
+                              />
+                              <Label 
+                                htmlFor={`kid-${kid.id}`} 
+                                className="flex-1 cursor-pointer text-sm text-[#262626] dark:text-white"
+                              >
+                                {kid.fullName || kid.username} 
+                                <span className="text-xs text-gray-500 ml-2">({kid.email})</span>
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white/60 px-4 py-3 backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
                       <div>

@@ -20,6 +20,7 @@ interface EditKidProfileClientProps {
   kid: User;
   academies: Academy[];
   currentAcademyIds: string[];
+  parents: User[];
 }
 
 export function EditKidProfileClient({
@@ -28,6 +29,7 @@ export function EditKidProfileClient({
   kid,
   academies,
   currentAcademyIds,
+  parents,
 }: EditKidProfileClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -36,6 +38,7 @@ export function EditKidProfileClient({
     email: kid.email || '',
     phoneNumber: kid.phoneNumber || '',
     nationalId: kid.nationalId || '',
+    parentId: kid.parentId || '',
   });
   const [selectedAcademyId, setSelectedAcademyId] = useState<string>(currentAcademyIds[0] || '');
 
@@ -184,6 +187,42 @@ export function EditKidProfileClient({
                   className="bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] focus:border-gray-400 dark:focus:border-gray-600 text-[#262626] dark:text-white h-12 text-base transition-colors"
                 />
               </div>
+
+              {/* Parent Selection */}
+              {parents.length > 0 && (
+                <div className="space-y-2">
+                  <Label 
+                    htmlFor="parentId" 
+                    className="text-sm font-semibold text-[#262626] dark:text-white flex items-center gap-2"
+                  >
+                    <UserIcon className="h-4 w-4 text-gray-700 dark:text-gray-200" />
+                    {dictionary.dashboard?.academyAdmin?.selectParent || 'Parent'}
+                  </Label>
+                  <Select
+                    value={formData.parentId || 'none'}
+                    onValueChange={(value) => setFormData({ ...formData, parentId: value === 'none' ? '' : value })}
+                  >
+                    <SelectTrigger className="w-full h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white">
+                      <SelectValue placeholder={dictionary.dashboard?.academyAdmin?.selectParentPlaceholder || 'Select parent'} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
+                      <SelectItem value="none" className="text-[#262626] dark:text-white cursor-pointer">
+                        {dictionary.dashboard?.academyAdmin?.noParent || 'No parent'}
+                      </SelectItem>
+                      {parents.map((parent) => (
+                        <SelectItem key={parent.id} value={parent.id} className="text-[#262626] dark:text-white cursor-pointer">
+                          {parent.fullName || parent.username} ({parent.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {locale === 'ar'
+                      ? 'حدد الوالد/الوصي المسؤول عن هذا الطفل'
+                      : 'Select the parent/guardian responsible for this kid'}
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

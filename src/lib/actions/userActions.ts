@@ -308,3 +308,43 @@ export async function getCoachesAction() {
     return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch coaches' };
   }
 }
+
+/**
+ * Update parent assignments for multiple kids
+ */
+export async function updateKidsParentAction(
+  parentId: string,
+  kidIds: string[],
+  options?: { locale?: string }
+) {
+  try {
+    const locale = options?.locale ?? 'en';
+    await requireRole([ROLES.ADMIN, ROLES.MANAGER], locale);
+
+    // Get all kids and update their parentId
+    const { getAllUsers } = await import('@/lib/db/repositories/userRepository');
+    const allUsers = await getAllUsers();
+    const allKids = allUsers.filter(u => u.role === ROLES.KID);
+
+    // First, remove this parent from all kids
+    for (const kid of allKids) {
+      if (kid.parentId === parentId) {
+        await updateUser(kid.id, { parentId: '' });
+      }
+    }
+
+    // Then, assign this parent to selected kids
+    for (const kidId of kidIds) {
+      await updateUser(kidId, { parentId });
+    }
+
+    revalidatePath('/[locale]/dashboard/users', 'page');
+    return { success: true as const };
+  } catch (error) {
+    console.error('Update kids parent error:', error);
+    return { 
+      success: false as const, 
+      error: error instanceof Error ? error.message : 'Failed to update kids parent' 
+    };
+  }
+}

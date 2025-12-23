@@ -2,7 +2,7 @@ import { requireRole } from '@/lib/auth/auth';
 import { requireAcademyContext } from '@/lib/academies/academyContext';
 import { getDictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
-import { findUserById, getChildrenByParentId } from '@/lib/db/repositories/userRepository';
+import { findUserById, getChildrenByParentId, getAllUsers } from '@/lib/db/repositories/userRepository';
 import { ROLES } from '@/config/roles';
 import { getAcademyMembership, getUserAcademyRoles } from '@/lib/db/repositories/academyMembershipRepository';
 import { getAllAcademies } from '@/lib/db/repositories/academyRepository';
@@ -56,11 +56,15 @@ export default async function UserProfilePage({
     );
   }
 
-  const [academyRoles, academies, children] = await Promise.all([
+  const [academyRoles, academies, children, allUsers] = await Promise.all([
     getUserAcademyRoles(userId),
     getAllAcademies(),
     targetUser.role === ROLES.PARENT ? getChildrenByParentId(userId) : Promise.resolve([]),
+    getAllUsers(),
   ]);
+
+  const parents = allUsers.filter(u => u.role === ROLES.PARENT);
+  const kids = allUsers.filter(u => u.role === ROLES.KID);
 
   const memberships: UserAcademyMembershipView[] = Object.entries(academyRoles)
     .map(([academyId, memberRole]) => {
@@ -84,6 +88,8 @@ export default async function UserProfilePage({
           user={targetUser}
           memberships={memberships}
           children={children}
+          parents={parents}
+          kids={kids}
         />
       </div>
     </div>

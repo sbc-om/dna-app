@@ -15,7 +15,6 @@ const publicRoutes = [
   '/about',
   '/contact',
   '/offline',
-  '/book-appointment',
 ];
 
 // Define auth routes (redirect to dashboard if already authenticated)

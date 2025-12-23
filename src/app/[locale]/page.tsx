@@ -223,7 +223,7 @@ export default function HomePage({ params }: PageProps) {
                   </p>
 
                   <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                    <Link href={`/${locale}/book-appointment`} className="w-full sm:w-auto">
+                    <Link href={`/${locale}/contact`} className="w-full sm:w-auto">
                       <motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}>
                         <Button
                           size="lg"
@@ -414,14 +414,14 @@ export default function HomePage({ params }: PageProps) {
               transition={{ delay: 0.6, duration: 0.6 }}
               className="text-center mt-16"
             >
-              <Link href={`/${locale}/book-appointment`}>
+              <Link href={`/${locale}/auth/login`}>
                 <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}>
                   <Button
                     size="lg"
                     className="h-14 rounded-2xl bg-linear-to-r from-blue-600 to-purple-600 text-white font-bold px-10 border-2 border-blue-500/50 hover:border-blue-400 shadow-lg shadow-blue-600/50 relative overflow-hidden group"
                   >
                     <span className="relative z-10 flex items-center text-lg">
-                      Start Your Journey
+                      {locale === 'ar' ? 'ابدأ رحلتك' : 'Start Your Journey'}
                       <ArrowRight className="ml-2 w-6 h-6 group-hover:translate-x-1 transition-transform" />
                     </span>
                     <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity" />

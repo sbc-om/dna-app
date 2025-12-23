@@ -650,6 +650,14 @@ export function KidProfileClient({
                   Grant Badge
                 </Button>
               )}
+              <Button
+                type="button"
+                onClick={() => router.push(`/${locale}/dashboard/kids/${currentKid.id}/achievements`)}
+                className="w-full bg-linear-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white shadow-lg"
+              >
+                <Trophy className="h-4 w-4 me-2" />
+                {locale === 'ar' ? 'الإنجازات والآمار' : 'Achievements'}
+              </Button>
               {canManage && stageEvaluation?.evaluation?.readyForStageUpgrade && (
                 <Button
                   type="button"
@@ -666,7 +674,7 @@ export function KidProfileClient({
           {/* Mobile: Action buttons below profile info */}
           <div className="lg:hidden mt-6">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {canAdmin && (
                   <Button
                     type="button"
@@ -700,6 +708,17 @@ export function KidProfileClient({
                     <span className="text-[10px] font-semibold">Badge</span>
                   </Button>
                 )}
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => router.push(`/${locale}/dashboard/kids/${currentKid.id}/achievements`)}
+                  className="bg-linear-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white shadow-lg flex-col h-auto py-3"
+                >
+                  <Trophy className="h-4 w-4 mb-1" />
+                  <span className="text-[10px] font-semibold">
+                    {locale === 'ar' ? 'الإنجازات' : 'Achievements'}
+                  </span>
+                </Button>
                 {canManage && stageEvaluation?.evaluation?.readyForStageUpgrade && (
                   <Button
                     type="button"

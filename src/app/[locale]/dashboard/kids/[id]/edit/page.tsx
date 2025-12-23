@@ -1,11 +1,12 @@
 import { requireAuth } from '@/lib/auth/auth';
 import { getDictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
-import { findUserById } from '@/lib/db/repositories/userRepository';
+import { findUserById, getAllUsers } from '@/lib/db/repositories/userRepository';
 import { notFound, redirect } from 'next/navigation';
 import { EditKidProfileClient } from '@/components/EditKidProfileClient';
 import { getAllAcademies } from '@/lib/db/repositories/academyRepository';
 import { getUserAcademyIds } from '@/lib/db/repositories/academyMembershipRepository';
+import { ROLES } from '@/config/roles';
 
 export default async function EditKidProfilePage({
   params,
@@ -35,6 +36,10 @@ export default async function EditKidProfilePage({
   // Get user's current academies
   const userAcademyIds = await getUserAcademyIds(id);
 
+  // Fetch all parents for selection
+  const allUsers = await getAllUsers();
+  const parents = allUsers.filter(u => u.role === ROLES.PARENT);
+
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-4xl">
       <EditKidProfileClient
@@ -43,6 +48,7 @@ export default async function EditKidProfilePage({
         kid={kid}
         academies={activeAcademies}
         currentAcademyIds={userAcademyIds}
+        parents={parents}
       />
     </div>
   );
