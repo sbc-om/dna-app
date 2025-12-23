@@ -3,14 +3,21 @@ import { getDictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
 import { ROLE_LABELS } from '@/config/roles';
 import { listUsers, getChildrenByParentId, getUsersByIds } from '@/lib/db/repositories/userRepository';
+import { listAcademyMembers } from '@/lib/db/repositories/academyMembershipRepository';
 import { getAllAppointments } from '@/lib/db/repositories/appointmentRepository';
 import { getCoursesByCoachIdAndAcademyId, type Course, getCoursesByAcademyId } from '@/lib/db/repositories/courseRepository';
 import { getPaidEnrollmentsByCourseIdAndAcademyId, getEnrollmentsByAcademyId } from '@/lib/db/repositories/enrollmentRepository';
+import { ensurePlayerProfile } from '@/lib/db/repositories/playerProfileRepository';
+import { getLatestDnaAssessmentSession } from '@/lib/db/repositories/dnaAssessmentRepository';
+import { evaluateStage, daysBetween, type OrganizationType, type PlayerStageKey } from '@/lib/player/stageSystem';
+import { getAttendanceByCourse } from '@/lib/db/repositories/attendanceRepository';
+import { findAcademyById } from '@/lib/db/repositories/academyRepository';
 import { Users, Calendar, Clock, CheckCircle, UserCheck, User, GraduationCap, TrendingUp, Award } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ChildMedalsPreview } from '@/components/ChildMedalsPreview';
 import { AnimatedDashboardClient } from '@/components/AnimatedDashboardClient';
+import { AcademyAdminDashboardHomeClient, type AcademyAdminDashboardData, type AcademyAdminPlayerRow } from '@/components/AcademyAdminDashboardHomeClient';
 
 export default async function DashboardPage({
   params,
@@ -53,6 +60,138 @@ export default async function DashboardPage({
     };
   }
 
+  // Academy Admin (manager) dashboard overview
+  let managerDashboard: AcademyAdminDashboardData | null = null;
+  if (user.role === 'manager') {
+    const members = await listAcademyMembers(ctx.academyId);
+    const ids = Array.from(new Set(members.map((m) => m.userId)));
+    const users = await getUsersByIds(ids);
+    const kids = users.filter((u) => u.role === 'kid' && u.isActive);
+
+    const academy = await findAcademyById(ctx.academyId);
+    const organizationType: OrganizationType = (academy as any)?.organizationType === 'school' ? 'school' : 'academy';
+
+    // Preload player profiles.
+    const profiles = await Promise.all(
+      kids.map(async (k) => ({
+        userId: k.id,
+        profile: await ensurePlayerProfile({ academyId: ctx.academyId, userId: k.id }),
+      }))
+    );
+    const profileByUserId = new Map(profiles.map((p) => [p.userId, p.profile] as const));
+
+    // Batch attendance: scan once per course in this academy.
+    const enrollments = await getEnrollmentsByAcademyId(ctx.academyId);
+    const kidIdSet = new Set(kids.map((k) => k.id));
+    const courseIds = new Set<string>();
+    const studentToCourseIds = new Map<string, Set<string>>();
+
+    for (const e of enrollments) {
+      if (!kidIdSet.has(e.studentId)) continue;
+      courseIds.add(e.courseId);
+      const set = studentToCourseIds.get(e.studentId) ?? new Set<string>();
+      set.add(e.courseId);
+      studentToCourseIds.set(e.studentId, set);
+    }
+
+    const attendanceByStudent = new Map<string, Array<{ sessionDate: string; present: boolean }>>();
+    const attendanceByCourse = await Promise.all(
+      Array.from(courseIds).map(async (courseId) => ({
+        courseId,
+        records: await getAttendanceByCourse(courseId),
+      }))
+    );
+    for (const { courseId, records } of attendanceByCourse) {
+      for (const r of records) {
+        // Only consider students that are enrolled in this course.
+        const allowed = studentToCourseIds.get(r.studentId);
+        if (!allowed || !allowed.has(courseId)) continue;
+        const arr = attendanceByStudent.get(r.studentId) ?? [];
+        arr.push({ sessionDate: r.sessionDate, present: r.present });
+        attendanceByStudent.set(r.studentId, arr);
+      }
+    }
+
+    const stageCounts: Record<PlayerStageKey, number> = {
+      explorer: 0,
+      foundation: 0,
+      active_player: 0,
+      competitor: 0,
+      champion: 0,
+    };
+
+    const reassessmentDays = organizationType === 'school' ? 365 : 90;
+    const nowIso = new Date().toISOString();
+
+    const players: AcademyAdminPlayerRow[] = await Promise.all(
+      kids.map(async (k) => {
+        const profile = profileByUserId.get(k.id)!;
+        stageCounts[profile.currentStage] += 1;
+
+        const latest = await getLatestDnaAssessmentSession({ academyId: ctx.academyId, playerId: k.id });
+        const currentNaScore = latest?.naScore;
+
+        const records = attendanceByStudent.get(k.id) ?? [];
+        const stageStartIso = profile.stageStartDate;
+        const stageStartDay = stageStartIso.slice(0, 10); // YYYY-MM-DD
+        let totalSessions = 0;
+        let presentSessions = 0;
+        for (const r of records) {
+          // attendance sessionDate is YYYY-MM-DD
+          if (r.sessionDate >= stageStartDay) {
+            totalSessions += 1;
+            if (r.present) presentSessions += 1;
+          }
+        }
+        const attendanceRate = totalSessions > 0 ? presentSessions / totalSessions : 0;
+
+        const evaluation = evaluateStage({
+          currentStage: profile.currentStage,
+          stageStartDate: profile.stageStartDate,
+          organizationType,
+          stageEntryNaScore: profile.stageEntryNaScore,
+          currentNaScore,
+          attendanceRate,
+          nowIso,
+        });
+
+        const needsReassessment =
+          !profile.lastAssessmentAt || daysBetween(profile.lastAssessmentAt, nowIso) >= reassessmentDays;
+
+        return {
+          userId: k.id,
+          displayName: k.fullName || k.username,
+          ageCategory: k.ageCategory || 'Unassigned',
+          stage: profile.currentStage,
+          lastAssessmentAt: profile.lastAssessmentAt,
+          readyForStageUpgrade: evaluation.readyForStageUpgrade,
+          needsReassessment,
+        };
+      })
+    );
+
+    const playersReadyForStageUpgrade = players.filter((p) => p.readyForStageUpgrade).length;
+    const playersNeedingReassessment = players.filter((p) => p.needsReassessment).length;
+
+    const groupMap = new Map<string, number>();
+    for (const p of players) {
+      const key = p.ageCategory || 'Unassigned';
+      groupMap.set(key, (groupMap.get(key) ?? 0) + 1);
+    }
+    const groups = Array.from(groupMap.entries())
+      .map(([key, count]) => ({ key, count }))
+      .sort((a, b) => b.count - a.count);
+
+    managerDashboard = {
+      totalPlayers: players.length,
+      stageCounts,
+      playersReadyForStageUpgrade,
+      playersNeedingReassessment,
+      groups,
+      players: players.sort((a, b) => a.displayName.localeCompare(b.displayName)),
+    };
+  }
+
   // Fetch courses for coach
   let coachCourses: Array<{ course: Course; activePlayers: number }> = [];
   if (user.role === 'coach') {
@@ -89,6 +228,11 @@ export default async function DashboardPage({
           username={user.fullName || user.username}
           roleLabel={roleLabel}
         />
+      )}
+
+      {/* Academy Admin (manager) View */}
+      {user.role === 'manager' && managerDashboard && (
+        <AcademyAdminDashboardHomeClient locale={locale} dictionary={dictionary} data={managerDashboard} />
       )}
 
       {/* Parent View: List of Children */}
@@ -134,11 +278,14 @@ export default async function DashboardPage({
                     <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 mb-3">
                       {children[0].nationalId ? `${dictionary.users.nationalId}: ${children[0].nationalId}` : children[0].username}
                     </p>
-                    {children[0].dateOfBirth && (
+                    {((children[0] as any).birthDate ?? (children[0] as any).dateOfBirth) && (
                       <div className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1a1a1a] rounded-full border border-[#DDDDDD] dark:border-[#000000]">
                         <Calendar className="h-4 w-4 text-gray-700 dark:text-gray-200" />
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {new Date(children[0].dateOfBirth).toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                          {new Date(((children[0] as any).birthDate ?? (children[0] as any).dateOfBirth) as string).toLocaleDateString(
+                            locale === 'ar' ? 'ar-SA' : 'en-US',
+                            { year: 'numeric', month: 'long', day: 'numeric' }
+                          )}
                         </span>
                       </div>
                     )}

@@ -41,11 +41,13 @@ export function ParentProfileClient({
   const [childData, setChildData] = useState({
     fullName: '',
     nationalId: '',
+    birthDate: '',
+    ageCategory: '',
   });
   const [loading, setLoading] = useState(false);
 
   const handleAddChild = async () => {
-    if (!childData.fullName || !childData.nationalId) {
+    if (!childData.fullName || !childData.nationalId || !childData.birthDate || !childData.ageCategory) {
       alert('Please fill in all required fields');
       return;
     }
@@ -61,6 +63,8 @@ export function ParentProfileClient({
       password: '11111111',
       role: 'kid',
       parentId: parent.id,
+      birthDate: childData.birthDate,
+      ageCategory: childData.ageCategory,
     }, { locale });
 
     setLoading(false);
@@ -69,12 +73,16 @@ export function ParentProfileClient({
       alert(`Child account created successfully!\n\nNational ID: ${childData.nationalId}\nPassword: 11111111`);
       setChildren([...children, result.user!]);
       setAddChildOpen(false);
-      setChildData({ fullName: '', nationalId: '' });
+      setChildData({ fullName: '', nationalId: '', birthDate: '', ageCategory: '' });
       // Reload page to refresh data
       window.location.reload();
     } else {
       alert(`Failed to create child account: ${result.error}`);
     }
+  };
+
+  const getDisplayedBirthDate = (user: any): string | undefined => {
+    return user?.birthDate ?? user?.dateOfBirth;
   };
 
   return (
@@ -207,9 +215,11 @@ export function ParentProfileClient({
                       <Calendar className="h-6 w-6 text-[#FF5F02]" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-muted-foreground">{locale === 'ar' ? 'تاريخ الميلاد' : 'Date of Birth'}</p>
+                      <p className="text-sm font-medium text-muted-foreground">{dictionary.dashboard?.academyAdmin?.birthDate || 'Birth date'}</p>
                       <p className="text-lg font-bold text-[#262626] dark:text-white">
-                        {children[0].dateOfBirth ? new Date(children[0].dateOfBirth).toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US') : 'N/A'}
+                        {getDisplayedBirthDate(children[0])
+                          ? new Date(getDisplayedBirthDate(children[0])!).toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US')
+                          : 'N/A'}
                       </p>
                     </div>
                   </div>
@@ -218,7 +228,7 @@ export function ParentProfileClient({
                       <Mail className="h-6 w-6 text-[#FF5F02]" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-muted-foreground">{locale === 'ar' ? 'البريد الإلكتروني' : 'Email'}</p>
+                      <p className="text-sm font-medium text-muted-foreground">{dictionary.common.email || 'Email'}</p>
                       <p className="text-lg font-bold text-[#262626] dark:text-white truncate">{children[0].email || 'N/A'}</p>
                     </div>
                   </div>
@@ -298,6 +308,24 @@ export function ParentProfileClient({
               <p className="text-xs text-muted-foreground mt-1">
                 {dictionary.users.nationalIdNote || 'This will be used as the login username'}
               </p>
+            </div>
+            <div>
+              <Label htmlFor="birthDate">{dictionary.dashboard?.academyAdmin?.birthDate || 'Birth date'}</Label>
+              <Input
+                id="birthDate"
+                type="date"
+                value={childData.birthDate}
+                onChange={(e) => setChildData({ ...childData, birthDate: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="ageCategory">{dictionary.dashboard?.academyAdmin?.ageCategory || 'Age category'}</Label>
+              <Input
+                id="ageCategory"
+                value={childData.ageCategory}
+                onChange={(e) => setChildData({ ...childData, ageCategory: e.target.value })}
+                placeholder={dictionary.dashboard?.academyAdmin?.ageCategoryPlaceholder || 'e.g. U10'}
+              />
             </div>
             <div className="bg-[#DDDDDD] dark:bg-[#262626] p-3 rounded-lg">
               <p className="text-sm font-semibold text-[#262626] dark:text-white">

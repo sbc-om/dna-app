@@ -21,10 +21,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { updateUserAction } from '@/lib/actions/userActions';
 import { getAcademyUiContextAction, getUserPrimaryAcademyIdAction } from '@/lib/actions/academyActions';
-import { getActiveCoursesAction } from '@/lib/actions/courseActions';
-import { getEnrollmentsByStudentIdAction, updateEnrollmentCourseAction, createEnrollmentAction } from '@/lib/actions/enrollmentActions';
-import type { Course } from '@/lib/db/repositories/courseRepository';
-import type { Enrollment } from '@/lib/db/repositories/enrollmentRepository';
 import type { Academy } from '@/lib/db/repositories/academyRepository';
 
 export interface EditUserDialogProps {
@@ -45,8 +41,6 @@ export function EditUserDialog({
   locale,
 }: EditUserDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [currentEnrollment, setCurrentEnrollment] = useState<Enrollment | null>(null);
   const [academies, setAcademies] = useState<Academy[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<UserRole | null>(null);
   const [academyId, setAcademyId] = useState<string>('');
@@ -58,14 +52,9 @@ export function EditUserDialog({
     phoneNumber: user.phoneNumber || '',
     role: user.role,
     isActive: user.isActive,
-    courseId: '',
+    birthDate: user.birthDate || '',
+    ageCategory: user.ageCategory || '',
   });
-
-  useEffect(() => {
-    if (open && user.role === ROLES.KID) {
-      loadCoursesAndEnrollment();
-    }
-  }, [open, user.role]);
 
   useEffect(() => {
     if (open) {
@@ -87,21 +76,6 @@ export function EditUserDialog({
     }
   };
 
-  const loadCoursesAndEnrollment = async () => {
-    // Load active courses
-    const coursesResult = await getActiveCoursesAction();
-    if (coursesResult.success && coursesResult.courses) {
-      setCourses(coursesResult.courses);
-    }
-
-    // Load current enrollment
-    const enrollmentsResult = await getEnrollmentsByStudentIdAction(user.id);
-    if (enrollmentsResult.success && enrollmentsResult.enrollments && enrollmentsResult.enrollments.length > 0) {
-      const enrollment = enrollmentsResult.enrollments[0];
-      setCurrentEnrollment(enrollment);
-      setFormData(prev => ({ ...prev, courseId: enrollment.courseId }));
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +90,8 @@ export function EditUserDialog({
       phoneNumber: formData.phoneNumber,
       role: formData.role,
       isActive: formData.isActive,
+      birthDate: formData.role === ROLES.KID ? formData.birthDate : undefined,
+      ageCategory: formData.role === ROLES.KID ? formData.ageCategory : undefined,
     };
 
     if (formData.password) {
@@ -128,23 +104,6 @@ export function EditUserDialog({
     });
 
     if (result.success && result.user) {
-      // Handle enrollment changes for kids
-      if (user.role === ROLES.KID && formData.courseId) {
-        if (currentEnrollment) {
-          // Update existing enrollment
-          if (currentEnrollment.courseId !== formData.courseId) {
-            await updateEnrollmentCourseAction(currentEnrollment.id, formData.courseId);
-          }
-        } else {
-          // Create new enrollment
-          await createEnrollmentAction({
-            studentId: user.id,
-            courseId: formData.courseId,
-            parentId: user.parentId || '',
-          });
-        }
-      }
-
       onUserUpdated(result.user);
       onOpenChange(false);
     } else {
@@ -307,7 +266,14 @@ export function EditUserDialog({
                             <SelectValue placeholder={dictionary.users.role} />
                           </SelectTrigger>
                           <SelectContent>
-                            {Object.entries(ROLES).map(([key, value]) => (
+                            {(currentUserRole === ROLES.MANAGER
+                              ? [
+                                  ['COACH', ROLES.COACH] as const,
+                                  ['PARENT', ROLES.PARENT] as const,
+                                  ['KID', ROLES.KID] as const,
+                                ]
+                              : (Object.entries(ROLES) as Array<[string, UserRole]>)
+                            ).map(([key, value]) => (
                               <SelectItem key={value} value={value}>
                                 {key}
                               </SelectItem>
@@ -316,6 +282,45 @@ export function EditUserDialog({
                         </Select>
                       </div>
                     </div>
+
+                    {/* Kid required fields (age + age category) */}
+                    {formData.role === ROLES.KID && (
+                      <div className="rounded-2xl border border-black/10 bg-white/60 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+                        <div className="flex items-center gap-2 text-sm font-bold text-[#262626] dark:text-white mb-4">
+                          <GraduationCap className="h-4 w-4" />
+                          {dictionary.dashboard?.academyAdmin?.playerRegistration ?? 'Player registration'}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="birthDate" className="text-sm font-semibold text-[#262626] dark:text-white">
+                              {dictionary.dashboard?.academyAdmin?.birthDate ?? 'Birth date'}
+                            </Label>
+                            <Input
+                              id="birthDate"
+                              type="date"
+                              value={formData.birthDate}
+                              onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                              required
+                              className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5"
+                            />
+                          </div>
+
+                          <div className="grid gap-2">
+                            <Label htmlFor="ageCategory" className="text-sm font-semibold text-[#262626] dark:text-white">
+                              {dictionary.dashboard?.academyAdmin?.ageCategory ?? 'Age category'}
+                            </Label>
+                            <Input
+                              id="ageCategory"
+                              value={formData.ageCategory}
+                              onChange={(e) => setFormData({ ...formData, ageCategory: e.target.value })}
+                              placeholder={dictionary.dashboard?.academyAdmin?.ageCategoryPlaceholder ?? 'e.g. U10'}
+                              required
+                              className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="grid gap-2">
@@ -342,37 +347,6 @@ export function EditUserDialog({
                         />
                       </div>
                     </div>
-
-                    {/* Course selection (kids) */}
-                    {user.role === ROLES.KID && courses.length > 0 && (
-                      <div className="rounded-2xl border border-black/10 bg-white/60 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-                        <div className="flex items-center gap-2 text-sm font-bold text-[#262626] dark:text-white mb-4">
-                          <GraduationCap className="h-4 w-4" />
-                          {dictionary.users.course}
-                        </div>
-
-                        <div className="grid gap-2">
-                          <Label htmlFor="courseId" className="text-sm font-semibold text-[#262626] dark:text-white">
-                            {dictionary.users.course}
-                          </Label>
-                          <Select
-                            value={formData.courseId || undefined}
-                            onValueChange={(value) => setFormData({ ...formData, courseId: value })}
-                          >
-                            <SelectTrigger className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5">
-                              <SelectValue placeholder={dictionary.users.selectCourseOptional} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {courses.map((course) => (
-                                <SelectItem key={course.id} value={course.id}>
-                                  {locale === 'ar' ? course.nameAr : course.name} - {course.price} {course.currency}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    )}
 
                     <div className="flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white/60 px-4 py-3 backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
                       <div>

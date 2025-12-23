@@ -16,6 +16,8 @@ export interface User {
   
   // Extended Profile for Kids
   birthDate?: string;
+  ageCategory?: string; // e.g. "U10", "U12" (academy-defined)
+  ageYears?: number; // cached at registration time; optional
   gender?: 'male' | 'female';
   address?: string;
   school?: string;
@@ -46,6 +48,8 @@ export interface CreateUserInput {
   parentId?: string;
   
   birthDate?: string;
+  ageCategory?: string;
+  ageYears?: number;
   gender?: 'male' | 'female';
   address?: string;
   school?: string;
@@ -73,6 +77,8 @@ export interface UpdateUserInput {
   parentId?: string;
   
   birthDate?: string;
+  ageCategory?: string;
+  ageYears?: number;
   gender?: 'male' | 'female';
   address?: string;
   school?: string;
@@ -138,6 +144,8 @@ export async function createUser(input: CreateUserInput): Promise<User> {
     parentId: input.parentId,
     
     birthDate: input.birthDate,
+    ageCategory: input.ageCategory,
+    ageYears: input.ageYears,
     gender: input.gender,
     address: input.address,
     school: input.school,
@@ -252,6 +260,8 @@ export async function updateUser(id: string, input: UpdateUserInput): Promise<Us
     isActive: input.isActive !== undefined ? input.isActive : user.isActive,
     
     birthDate: input.birthDate !== undefined ? input.birthDate : user.birthDate,
+    ageCategory: input.ageCategory !== undefined ? input.ageCategory : user.ageCategory,
+    ageYears: input.ageYears !== undefined ? input.ageYears : user.ageYears,
     gender: input.gender !== undefined ? input.gender : user.gender,
     address: input.address !== undefined ? input.address : user.address,
     school: input.school !== undefined ? input.school : user.school,

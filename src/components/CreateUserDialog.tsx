@@ -20,9 +20,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createUserAction } from '@/lib/actions/userActions';
 import { getAcademyUiContextAction } from '@/lib/actions/academyActions';
-import { getActiveCoursesAction } from '@/lib/actions/courseActions';
-import { createEnrollmentAction } from '@/lib/actions/enrollmentActions';
-import type { Course } from '@/lib/db/repositories/courseRepository';
 import type { Academy } from '@/lib/db/repositories/academyRepository';
 
 export interface CreateUserDialogProps {
@@ -43,10 +40,10 @@ export function CreateUserDialog({
   locale,
 }: CreateUserDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [courses, setCourses] = useState<Course[]>([]);
   const [academies, setAcademies] = useState<Academy[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<UserRole | null>(null);
   const [academyId, setAcademyId] = useState<string>('');
+  const [kidParentMode, setKidParentMode] = useState<'none' | 'existing' | 'create'>('none');
   const [formData, setFormData] = useState({
     email: '',
     username: '',
@@ -55,22 +52,23 @@ export function CreateUserDialog({
     phoneNumber: '',
     role: ROLES.KID as UserRole,
     parentId: '',
-    courseId: '',
+    birthDate: '',
+    ageCategory: '',
+  });
+
+  const [parentFormData, setParentFormData] = useState({
+    email: '',
+    username: '',
+    password: '',
+    fullName: '',
+    phoneNumber: '',
   });
 
   useEffect(() => {
     if (open) {
-      loadCourses();
       loadAcademyContext();
     }
   }, [open]);
-
-  const loadCourses = async () => {
-    const result = await getActiveCoursesAction();
-    if (result.success && result.courses) {
-      setCourses(result.courses);
-    }
-  };
 
   const loadAcademyContext = async () => {
     const result = await getAcademyUiContextAction(locale);
@@ -87,30 +85,50 @@ export function CreateUserDialog({
 
     const canPickAcademy = currentUserRole === ROLES.ADMIN;
 
-    // Create user
-    const result = await createUserAction({
-      email: formData.email,
-      username: formData.username,
-      password: formData.password,
-      fullName: formData.fullName,
-      phoneNumber: formData.phoneNumber,
-      role: formData.role,
-      parentId: formData.role === ROLES.KID && formData.parentId ? formData.parentId : undefined,
-    }, {
-      locale,
-      academyId: canPickAcademy ? academyId : undefined,
-    });
+    let resolvedParentId = formData.parentId;
+    if (formData.role === ROLES.KID && kidParentMode === 'create') {
+      const parentResult = await createUserAction(
+        {
+          email: parentFormData.email,
+          username: parentFormData.username,
+          password: parentFormData.password,
+          fullName: parentFormData.fullName,
+          phoneNumber: parentFormData.phoneNumber,
+          role: ROLES.PARENT,
+        },
+        {
+          locale,
+          academyId: canPickAcademy ? academyId : undefined,
+        }
+      );
+
+      if (!parentResult.success || !parentResult.user) {
+        alert(parentResult.error || 'Failed to create parent');
+        setIsSubmitting(false);
+        return;
+      }
+      resolvedParentId = parentResult.user.id;
+    }
+
+    const result = await createUserAction(
+      {
+        email: formData.email,
+        username: formData.username,
+        password: formData.password,
+        fullName: formData.fullName,
+        phoneNumber: formData.phoneNumber,
+        role: formData.role,
+        parentId: formData.role === ROLES.KID && resolvedParentId ? resolvedParentId : undefined,
+        birthDate: formData.role === ROLES.KID ? formData.birthDate : undefined,
+        ageCategory: formData.role === ROLES.KID ? formData.ageCategory : undefined,
+      },
+      {
+        locale,
+        academyId: canPickAcademy ? academyId : undefined,
+      }
+    );
 
     if (result.success && result.user) {
-      // If kid with course selected, create enrollment
-      if (formData.role === ROLES.KID && formData.courseId && formData.parentId) {
-        await createEnrollmentAction({
-          studentId: result.user.id,
-          courseId: formData.courseId,
-          parentId: formData.parentId,
-        });
-      }
-
       onUserCreated(result.user);
       onOpenChange(false);
       setFormData({
@@ -121,8 +139,11 @@ export function CreateUserDialog({
         phoneNumber: '',
         role: ROLES.KID,
         parentId: '',
-        courseId: '',
+        birthDate: '',
+        ageCategory: '',
       });
+      setKidParentMode('none');
+      setParentFormData({ email: '', username: '', password: '', fullName: '', phoneNumber: '' });
     } else {
       alert(result.error || 'Failed to create user');
     }
@@ -283,7 +304,13 @@ export function CreateUserDialog({
                             <SelectValue placeholder={dictionary.users.role} />
                           </SelectTrigger>
                           <SelectContent>
-                            {Object.entries(ROLES).map(([key, value]) => (
+                            {(currentUserRole === ROLES.MANAGER
+                              ? [
+                                  ['PARENT', ROLES.PARENT] as const,
+                                  ['KID', ROLES.KID] as const,
+                                ]
+                              : (Object.entries(ROLES) as Array<[string, UserRole]>)
+                            ).map(([key, value]) => (
                               <SelectItem key={value} value={value}>
                                 {key}
                               </SelectItem>
@@ -319,24 +346,68 @@ export function CreateUserDialog({
                       </div>
                     </div>
 
-                    {(formData.role === ROLES.KID && (parents.length > 0 || courses.length > 0)) && (
+                    {formData.role === ROLES.KID && (
                       <div className="rounded-2xl border border-black/10 bg-white/60 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
                         <div className="flex items-center gap-2 text-sm font-bold text-[#262626] dark:text-white mb-4">
                           <GraduationCap className="h-4 w-4" />
-                          {dictionary.users.course}
+                          {dictionary.dashboard?.academyAdmin?.playerRegistration ?? 'Player registration'}
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {/* Parent selection (kids) */}
-                          {parents.length > 0 && (
+                          <div className="grid gap-2">
+                            <Label htmlFor="birthDate" className="text-sm font-semibold text-[#262626] dark:text-white">
+                              {dictionary.dashboard?.academyAdmin?.birthDate ?? 'Birth date'}
+                            </Label>
+                            <Input
+                              id="birthDate"
+                              type="date"
+                              value={formData.birthDate}
+                              onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                              required
+                              className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5"
+                            />
+                          </div>
+
+                          <div className="grid gap-2">
+                            <Label htmlFor="ageCategory" className="text-sm font-semibold text-[#262626] dark:text-white">
+                              {dictionary.dashboard?.academyAdmin?.ageCategory ?? 'Age category'}
+                            </Label>
+                            <Input
+                              id="ageCategory"
+                              value={formData.ageCategory}
+                              onChange={(e) => setFormData({ ...formData, ageCategory: e.target.value })}
+                              placeholder={dictionary.dashboard?.academyAdmin?.ageCategoryPlaceholder ?? 'e.g. U10'}
+                              required
+                              className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-4 grid gap-3">
+                          <div className="grid gap-2">
+                            <Label className="text-sm font-semibold text-[#262626] dark:text-white">
+                              {dictionary.dashboard?.academyAdmin?.parentLinking ?? 'Parent linking'}
+                            </Label>
+                            <Select value={kidParentMode} onValueChange={(v) => setKidParentMode(v as any)}>
+                              <SelectTrigger className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5">
+                                <SelectValue placeholder={dictionary.dashboard?.academyAdmin?.parentLinkingPlaceholder ?? 'Select'} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">{dictionary.dashboard?.academyAdmin?.parentNone ?? 'No parent now'}</SelectItem>
+                                {parents.length > 0 && (
+                                  <SelectItem value="existing">{dictionary.dashboard?.academyAdmin?.parentExisting ?? 'Link existing parent'}</SelectItem>
+                                )}
+                                <SelectItem value="create">{dictionary.dashboard?.academyAdmin?.parentCreate ?? 'Create parent now'}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {kidParentMode === 'existing' && parents.length > 0 && (
                             <div className="grid gap-2">
                               <Label htmlFor="parentId" className="text-sm font-semibold text-[#262626] dark:text-white">
                                 {dictionary.users.parent}
                               </Label>
-                              <Select
-                                value={formData.parentId}
-                                onValueChange={(value) => setFormData({ ...formData, parentId: value })}
-                              >
+                              <Select value={formData.parentId} onValueChange={(value) => setFormData({ ...formData, parentId: value })}>
                                 <SelectTrigger className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5">
                                   <SelectValue placeholder={dictionary.users.selectParent} />
                                 </SelectTrigger>
@@ -351,27 +422,53 @@ export function CreateUserDialog({
                             </div>
                           )}
 
-                          {/* Course selection (kids) */}
-                          {courses.length > 0 && (
-                            <div className="grid gap-2">
-                              <Label htmlFor="courseId" className="text-sm font-semibold text-[#262626] dark:text-white">
-                                {dictionary.users.course}
-                              </Label>
-                              <Select
-                                value={formData.courseId || undefined}
-                                onValueChange={(value) => setFormData({ ...formData, courseId: value })}
-                              >
-                                <SelectTrigger className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5">
-                                  <SelectValue placeholder={dictionary.users.selectCourseOptional} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {courses.map((course) => (
-                                    <SelectItem key={course.id} value={course.id}>
-                                      {locale === 'ar' ? course.nameAr : course.name} - {course.price} {course.currency}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                          {kidParentMode === 'create' && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="grid gap-2">
+                                <Label className="text-sm font-semibold text-[#262626] dark:text-white">{dictionary.common.email}</Label>
+                                <Input
+                                  type="email"
+                                  value={parentFormData.email}
+                                  onChange={(e) => setParentFormData({ ...parentFormData, email: e.target.value })}
+                                  required
+                                  className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5"
+                                />
+                              </div>
+                              <div className="grid gap-2">
+                                <Label className="text-sm font-semibold text-[#262626] dark:text-white">{dictionary.common.username}</Label>
+                                <Input
+                                  value={parentFormData.username}
+                                  onChange={(e) => setParentFormData({ ...parentFormData, username: e.target.value })}
+                                  required
+                                  className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5"
+                                />
+                              </div>
+                              <div className="grid gap-2">
+                                <Label className="text-sm font-semibold text-[#262626] dark:text-white">{dictionary.common.password}</Label>
+                                <Input
+                                  type="password"
+                                  value={parentFormData.password}
+                                  onChange={(e) => setParentFormData({ ...parentFormData, password: e.target.value })}
+                                  required
+                                  className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5"
+                                />
+                              </div>
+                              <div className="grid gap-2">
+                                <Label className="text-sm font-semibold text-[#262626] dark:text-white">{dictionary.common.fullName}</Label>
+                                <Input
+                                  value={parentFormData.fullName}
+                                  onChange={(e) => setParentFormData({ ...parentFormData, fullName: e.target.value })}
+                                  className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5"
+                                />
+                              </div>
+                              <div className="grid gap-2 sm:col-span-2">
+                                <Label className="text-sm font-semibold text-[#262626] dark:text-white">{dictionary.common.phoneNumber}</Label>
+                                <Input
+                                  value={parentFormData.phoneNumber}
+                                  onChange={(e) => setParentFormData({ ...parentFormData, phoneNumber: e.target.value })}
+                                  className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5"
+                                />
+                              </div>
                             </div>
                           )}
                         </div>

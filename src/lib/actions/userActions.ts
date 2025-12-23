@@ -5,6 +5,7 @@ import {
   createUser,
   updateUser,
   deleteUser,
+  findUserById,
   type CreateUserInput,
   type UpdateUserInput,
 } from '@/lib/db/repositories/userRepository';
@@ -88,7 +89,29 @@ export async function createUserAction(
       return { success: false as const, error: academyCheck.error };
     }
 
-    const user = await createUser(input);
+    // Registration rules: for kid accounts, age and age category are required.
+    const normalizedInput: CreateUserInput = { ...input };
+    if ((normalizedInput.role ?? ROLES.KID) === ROLES.KID) {
+      if (!normalizedInput.birthDate) {
+        return { success: false as const, error: 'Birth date is required for kids' };
+      }
+      if (!normalizedInput.ageCategory) {
+        return { success: false as const, error: 'Age category is required for kids' };
+      }
+
+      if (normalizedInput.ageYears === undefined) {
+        const dob = new Date(normalizedInput.birthDate);
+        if (!Number.isNaN(dob.getTime())) {
+          const now = new Date();
+          let years = now.getFullYear() - dob.getFullYear();
+          const m = now.getMonth() - dob.getMonth();
+          if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) years -= 1;
+          normalizedInput.ageYears = Math.max(0, years);
+        }
+      }
+    }
+
+    const user = await createUser(normalizedInput);
 
     // Attach new users to the current academy (single membership model).
     if (user.role !== ROLES.ADMIN) {
@@ -131,7 +154,22 @@ export async function updateUserAction(
       }
     }
 
-    const user = await updateUser(id, input);
+    // Registration rules: keep kid records consistent.
+    const normalizedUpdates: UpdateUserInput = { ...input };
+    const existingUser = normalizedUpdates.role === undefined ? await findUserById(id) : null;
+    const isKid = normalizedUpdates.role === ROLES.KID || (normalizedUpdates.role === undefined && existingUser?.role === ROLES.KID);
+    if (isKid && normalizedUpdates.birthDate) {
+      const dob = new Date(normalizedUpdates.birthDate);
+      if (!Number.isNaN(dob.getTime())) {
+        const now = new Date();
+        let years = now.getFullYear() - dob.getFullYear();
+        const m = now.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) years -= 1;
+        normalizedUpdates.ageYears = Math.max(0, years);
+      }
+    }
+
+    const user = await updateUser(id, normalizedUpdates);
     if (!user) {
       return { success: false, error: 'User not found' };
     }

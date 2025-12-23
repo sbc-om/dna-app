@@ -127,3 +127,19 @@ export async function getAttendanceByStudentAndCourse(
   records.sort((a, b) => b.sessionDate.localeCompare(a.sessionDate));
   return records;
 }
+
+export async function getAttendanceByCourse(courseId: string): Promise<AttendanceRecord[]> {
+  const db = getDatabase();
+  const keyPrefix = `${ATTENDANCE_PREFIX}${courseId}:`;
+  const records: AttendanceRecord[] = [];
+
+  for await (const { key, value } of db.getRange({ start: keyPrefix, end: `${keyPrefix}\xFF` })) {
+    const keyStr = String(key);
+    if (keyStr.startsWith(keyPrefix)) {
+      records.push(value as AttendanceRecord);
+    }
+  }
+
+  records.sort((a, b) => b.sessionDate.localeCompare(a.sessionDate));
+  return records;
+}
