@@ -261,6 +261,7 @@ export function UsersTable({ users, dictionary, onUsersChange, locale }: UsersTa
           onOpenChange={(open: boolean) => !open && setEditingUser(null)}
           dictionary={dictionary}
           locale={locale}
+          parents={users.filter(u => u.role === 'parent')}
           onUserUpdated={(updatedUser: User) => {
             onUsersChange(
               users.map((u) => (u.id === updatedUser.id ? updatedUser : u))

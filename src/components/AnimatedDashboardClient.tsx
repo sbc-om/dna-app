@@ -8,9 +8,6 @@ import { Dictionary } from '@/lib/i18n/getDictionary';
 interface AdminStats {
   totalUsers: number;
   activeUsers: number;
-  totalAppointments: number;
-  pendingAppointments: number;
-  todayAppointments: number;
   totalCourses: number;
   activeCourses: number;
   totalEnrollments: number;
@@ -89,36 +86,12 @@ export function AnimatedDashboardClient({
         />
         
         <AnimatedStatCard
-          title={dictionary.dashboard.totalAppointments}
-          value={stats.totalAppointments}
-          icon={Calendar}
-          gradient="bg-linear-to-br from-purple-500 to-purple-600"
-          delay={0.2}
-        />
-        
-        <AnimatedStatCard
-          title={dictionary.dashboard.pendingAppointments}
-          value={stats.pendingAppointments}
-          icon={Clock}
-          gradient="bg-linear-to-br from-yellow-500 to-orange-500"
-          delay={0.3}
-        />
-        
-        <AnimatedStatCard
-          title={dictionary.dashboard.todayAppointments}
-          value={stats.todayAppointments}
-          icon={CheckCircle}
-          gradient="bg-linear-to-br from-cyan-500 to-blue-500"
-          delay={0.4}
-        />
-        
-        <AnimatedStatCard
           title={dictionary.dashboard.totalCourses || 'Total Courses'}
           value={stats.totalCourses}
           subtitle={`${stats.activeCourses} ${dictionary.users.active || 'active'}`}
           icon={GraduationCap}
           gradient="bg-linear-to-br from-indigo-500 to-purple-600"
-          delay={0.5}
+          delay={0.2}
         />
         
         <AnimatedStatCard
@@ -127,7 +100,7 @@ export function AnimatedDashboardClient({
           subtitle={`${stats.paidEnrollments} ${dictionary.payments?.paid || 'paid'}`}
           icon={TrendingUp}
           gradient="bg-linear-to-br from-pink-500 to-rose-600"
-          delay={0.6}
+          delay={0.3}
         />
         
         <AnimatedStatCard
@@ -135,7 +108,7 @@ export function AnimatedDashboardClient({
           value={stats.totalCoaches}
           icon={Award}
           gradient="bg-linear-to-br from-violet-500 to-purple-600"
-          delay={0.7}
+          delay={0.4}
         />
         
         <AnimatedStatCard
@@ -143,7 +116,7 @@ export function AnimatedDashboardClient({
           value={stats.totalKids}
           icon={User}
           gradient="bg-linear-to-br from-teal-500 to-cyan-600"
-          delay={0.8}
+          delay={0.5}
         />
       </div>
     </div>

@@ -270,6 +270,7 @@ export function UsersClient({ dictionary, initialUsers, locale }: UsersClientPro
         onOpenChange={setIsCreateDialogOpen}
         dictionary={dictionary}
         locale={locale}
+        parents={users.filter(u => u.role === 'parent')}
         onUserCreated={(newUser: User) => {
           setUsers((prev) => [...prev, newUser]);
         }}

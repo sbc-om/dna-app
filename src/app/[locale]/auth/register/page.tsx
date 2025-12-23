@@ -10,5 +10,5 @@ interface PageProps {
 export default async function RegisterPage({ params }: PageProps) {
   const { locale: localeParam } = await params;
   const locale = localeParam as Locale;
-  redirect(`/${locale}/book-appointment`);
+  redirect(`/${locale}/dashboard`);
 }

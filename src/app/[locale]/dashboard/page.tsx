@@ -4,7 +4,6 @@ import { Locale } from '@/config/i18n';
 import { ROLE_LABELS } from '@/config/roles';
 import { listUsers, getChildrenByParentId, getUsersByIds } from '@/lib/db/repositories/userRepository';
 import { listAcademyMembers } from '@/lib/db/repositories/academyMembershipRepository';
-import { getAllAppointments } from '@/lib/db/repositories/appointmentRepository';
 import { getCoursesByCoachIdAndAcademyId, type Course, getCoursesByAcademyId } from '@/lib/db/repositories/courseRepository';
 import { getPaidEnrollmentsByCourseIdAndAcademyId, getEnrollmentsByAcademyId } from '@/lib/db/repositories/enrollmentRepository';
 import { ensurePlayerProfile } from '@/lib/db/repositories/playerProfileRepository';
@@ -40,17 +39,12 @@ export default async function DashboardPage({
   let stats = null;
   if (user.role === 'admin') {
     const users = await listUsers();
-    const appointments = await getAllAppointments();
     const courses = await getCoursesByAcademyId(ctx.academyId);
     const enrollments = await getEnrollmentsByAcademyId(ctx.academyId);
-    const today = new Date().toISOString().split('T')[0];
     
     stats = {
       totalUsers: users.length,
       activeUsers: users.filter(u => u.isActive).length,
-      totalAppointments: appointments.length,
-      pendingAppointments: appointments.filter(a => a.status === 'pending').length,
-      todayAppointments: appointments.filter(a => a.appointmentDate === today).length,
       totalCourses: courses.length,
       activeCourses: courses.filter(c => c.isActive).length,
       totalEnrollments: enrollments.length,

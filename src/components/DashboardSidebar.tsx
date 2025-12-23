@@ -39,13 +39,6 @@ const menuItems: MenuItem[] = [
     icon: LayoutDashboard,
   },
   {
-    key: 'appointments',
-    resourceKey: 'dashboard.appointments',
-    labelKey: 'appointments',
-    href: '/dashboard/appointments',
-    icon: CalendarClock,
-  },
-  {
     key: 'users',
     resourceKey: 'dashboard.users',
     labelKey: 'users',

@@ -29,6 +29,7 @@ export interface EditUserDialogProps {
   onOpenChange: (open: boolean) => void;
   dictionary: Dictionary;
   onUserUpdated: (user: User) => void;
+  parents?: User[];
   locale: string;
 }
 
@@ -38,6 +39,7 @@ export function EditUserDialog({
   onOpenChange,
   dictionary,
   onUserUpdated,
+  parents = [],
   locale,
 }: EditUserDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,6 +54,7 @@ export function EditUserDialog({
     phoneNumber: user.phoneNumber || '',
     role: user.role,
     isActive: user.isActive,
+    parentId: user.parentId || '',
     birthDate: user.birthDate || '',
     ageCategory: user.ageCategory || '',
   });
@@ -90,6 +93,7 @@ export function EditUserDialog({
       phoneNumber: formData.phoneNumber,
       role: formData.role,
       isActive: formData.isActive,
+      parentId: formData.role === ROLES.KID && formData.parentId ? formData.parentId : undefined,
       birthDate: formData.role === ROLES.KID ? formData.birthDate : undefined,
       ageCategory: formData.role === ROLES.KID ? formData.ageCategory : undefined,
     };
@@ -290,6 +294,31 @@ export function EditUserDialog({
                           <GraduationCap className="h-4 w-4" />
                           {dictionary.dashboard?.academyAdmin?.playerRegistration ?? 'Player registration'}
                         </div>
+
+                        {parents.length > 0 && (
+                          <div className="grid gap-2 mb-4">
+                            <Label htmlFor="parentId" className="text-sm font-semibold text-[#262626] dark:text-white">
+                              {dictionary.dashboard?.academyAdmin?.selectParent ?? 'Parent'}
+                            </Label>
+                            <Select
+                              value={formData.parentId}
+                              onValueChange={(value) => setFormData({ ...formData, parentId: value })}
+                            >
+                              <SelectTrigger className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5">
+                                <SelectValue placeholder={dictionary.dashboard?.academyAdmin?.selectParentPlaceholder ?? 'Select parent'} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="">{dictionary.dashboard?.academyAdmin?.noParent ?? 'No parent'}</SelectItem>
+                                {parents.map((parent) => (
+                                  <SelectItem key={parent.id} value={parent.id}>
+                                    {parent.fullName || parent.username} ({parent.email})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="grid gap-2">
                             <Label htmlFor="birthDate" className="text-sm font-semibold text-[#262626] dark:text-white">
