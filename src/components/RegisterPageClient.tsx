@@ -6,7 +6,7 @@ import { ArrowLeft, Calendar } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
-import { AppointmentBookingForm } from '@/components/AppointmentBookingForm';
+import { PublicAppointmentBookingForm } from '@/components/PublicAppointmentBookingForm';
 
 interface RegisterPageClientProps {
   dictionary: Dictionary;
@@ -48,7 +48,7 @@ export default function RegisterPageClient({ dictionary, locale }: RegisterPageC
           </CardHeader>
 
           <CardContent className="p-6">
-            <AppointmentBookingForm dictionary={dictionary} locale={locale} />
+            <PublicAppointmentBookingForm dictionary={dictionary} locale={locale} />
 
             <div className="mt-5 text-center p-3 bg-[#DDDDDD] dark:bg-[#262626] rounded-2xl border-2 border-[#DDDDDD] dark:border-[#262626]">
               <p className="text-sm font-medium text-blue-800 dark:text-blue-200">

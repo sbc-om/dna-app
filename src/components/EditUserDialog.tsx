@@ -313,17 +313,17 @@ export function EditUserDialog({
                         {parents.length > 0 && (
                           <div className="grid gap-2 mb-4">
                             <Label htmlFor="parentId" className="text-sm font-semibold text-[#262626] dark:text-white">
-                              {dictionary.dashboard?.academyAdmin?.selectParent ?? 'Parent'}
+                              {dictionary.dashboard?.academyAdmin?.parentLinking ?? 'Parent'}
                             </Label>
                             <Select
                               value={formData.parentId}
                               onValueChange={(value) => setFormData({ ...formData, parentId: value })}
                             >
                               <SelectTrigger className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5">
-                                <SelectValue placeholder={dictionary.dashboard?.academyAdmin?.selectParentPlaceholder ?? 'Select parent'} />
+                                <SelectValue placeholder={dictionary.dashboard?.academyAdmin?.parentLinkingPlaceholder ?? 'Select'} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">{dictionary.dashboard?.academyAdmin?.noParent ?? 'No parent'}</SelectItem>
+                                <SelectItem value="">{dictionary.dashboard?.academyAdmin?.parentNone ?? 'No parent'}</SelectItem>
                                 {parents.map((parent) => (
                                   <SelectItem key={parent.id} value={parent.id}>
                                     {parent.fullName || parent.username} ({parent.email})
@@ -397,7 +397,7 @@ export function EditUserDialog({
                       <div className="rounded-2xl border border-black/10 bg-white/60 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
                         <div className="flex items-center gap-2 text-sm font-bold text-[#262626] dark:text-white mb-4">
                           <GraduationCap className="h-4 w-4" />
-                          {dictionary.dashboard?.academyAdmin?.selectKids || 'Select Kids'}
+                          {dictionary.users?.children || 'Children'}
                         </div>
                         <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
                           {locale === 'ar' 

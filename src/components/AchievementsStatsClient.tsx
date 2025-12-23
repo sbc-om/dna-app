@@ -33,7 +33,6 @@ interface AchievementsStatsClientProps {
   locale: Locale;
   kid: User;
   profile: PlayerProfile | null;
-  currentUser: User;
 }
 
 export function AchievementsStatsClient({
@@ -41,7 +40,6 @@ export function AchievementsStatsClient({
   locale,
   kid,
   profile,
-  currentUser,
 }: AchievementsStatsClientProps) {
   const [activeTab, setActiveTab] = useState('overview');
 

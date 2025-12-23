@@ -1,4 +1,5 @@
 import { requireAuth } from '@/lib/auth/auth';
+import { requireAcademyContext } from '@/lib/academies/academyContext';
 import { getDictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
 import { findUserById } from '@/lib/db/repositories/userRepository';
@@ -15,6 +16,7 @@ export default async function KidAchievementsPage({
   const { locale, id } = await params as { locale: Locale; id: string };
   const dictionary = await getDictionary(locale);
   const currentUser = await requireAuth(locale);
+  const academyCtx = await requireAcademyContext(locale);
 
   // Fetch the kid
   const kid = await findUserById(id);
@@ -32,8 +34,8 @@ export default async function KidAchievementsPage({
     redirect(`/${locale}/dashboard`);
   }
 
-  // Get player profile
-  const profile = await getPlayerProfile(id);
+  // Get player profile (scoped to the currently selected academy)
+  const profile = await getPlayerProfile(academyCtx.academyId, id);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl">
@@ -42,7 +44,6 @@ export default async function KidAchievementsPage({
         locale={locale}
         kid={kid}
         profile={profile}
-        currentUser={currentUser}
       />
     </div>
   );

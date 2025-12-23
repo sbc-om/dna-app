@@ -196,18 +196,18 @@ export function EditKidProfileClient({
                     className="text-sm font-semibold text-[#262626] dark:text-white flex items-center gap-2"
                   >
                     <UserIcon className="h-4 w-4 text-gray-700 dark:text-gray-200" />
-                    {dictionary.dashboard?.academyAdmin?.selectParent || 'Parent'}
+                    {dictionary.dashboard?.academyAdmin?.parentLinking || 'Parent'}
                   </Label>
                   <Select
                     value={formData.parentId || 'none'}
                     onValueChange={(value) => setFormData({ ...formData, parentId: value === 'none' ? '' : value })}
                   >
                     <SelectTrigger className="w-full h-12 bg-white dark:bg-[#1a1a1a] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white">
-                      <SelectValue placeholder={dictionary.dashboard?.academyAdmin?.selectParentPlaceholder || 'Select parent'} />
+                      <SelectValue placeholder={dictionary.dashboard?.academyAdmin?.parentLinkingPlaceholder || 'Select'} />
                     </SelectTrigger>
                     <SelectContent className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
                       <SelectItem value="none" className="text-[#262626] dark:text-white cursor-pointer">
-                        {dictionary.dashboard?.academyAdmin?.noParent || 'No parent'}
+                        {dictionary.dashboard?.academyAdmin?.parentNone || 'No parent'}
                       </SelectItem>
                       {parents.map((parent) => (
                         <SelectItem key={parent.id} value={parent.id} className="text-[#262626] dark:text-white cursor-pointer">
