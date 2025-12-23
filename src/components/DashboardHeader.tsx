@@ -31,6 +31,7 @@ export interface DashboardHeaderProps {
     fullName?: string;
     email: string;
     profilePicture?: string;
+    role?: string;
   };
   onMobileMenuToggle?: () => void;
 }
@@ -361,36 +362,81 @@ export function DashboardHeader({ dictionary, user, onMobileMenuToggle }: Dashbo
                 <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-size-[24px_24px] opacity-[0.10] dark:opacity-[0.07]" />
 
                 <DropdownMenuLabel className="relative bg-gray-50/70 dark:bg-white/5 border-b border-black/10 dark:border-white/10">
-                  <div className="flex flex-col space-y-1">
-                    <span className="text-sm font-bold text-[#262626] dark:text-white truncate">
-                      {user.fullName || dictionary.common.welcome}
-                    </span>
-                    <span className="text-xs text-gray-600 dark:text-gray-400 truncate">{user.email}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-2xl overflow-hidden border border-black/10 dark:border-white/10 bg-linear-to-br from-blue-600 to-purple-600 flex items-center justify-center shrink-0">
+                      {user.profilePicture ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={user.profilePicture}
+                          alt={user.fullName || 'User'}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-white text-sm font-bold">
+                          {user.fullName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-bold text-[#262626] dark:text-white truncate">
+                          {user.fullName || dictionary.common.welcome}
+                        </span>
+                        {user.role && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/20 px-2 py-0.5 text-[11px] font-semibold text-gray-700 dark:text-gray-200 shrink-0">
+                            <Shield className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                            {user.role.toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-600 dark:text-gray-400 truncate">{user.email}</span>
+                    </div>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-black/10 dark:bg-white/10" />
                 
-                {/* Home */}
-                <Link href={`/${locale}`}>
-                  <DropdownMenuItem className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 focus:bg-black/5 dark:focus:bg-white/5">
-                    <Globe className="mr-2 h-4 w-4 text-gray-700 dark:text-gray-200" />
-                    <span className="font-medium text-[#262626] dark:text-white">{dictionary.nav.home}</span>
-                  </DropdownMenuItem>
-                </Link>
+                {/* Quick actions */}
+                <div className="relative px-2 py-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link href={`/${locale}/dashboard`} className="block">
+                      <div className="flex items-center gap-2 rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                        <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-sm font-semibold text-[#262626] dark:text-white">{dictionary.nav.dashboard}</span>
+                      </div>
+                    </Link>
 
-                {/* Profile */}
-                <Link href={`/${locale}/dashboard/profile`}>
-                  <DropdownMenuItem className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 focus:bg-black/5 dark:focus:bg-white/5">
-                    <User className="mr-2 h-4 w-4 text-gray-700 dark:text-gray-200" />
-                    <span className="font-medium text-[#262626] dark:text-white">{dictionary.users.profile}</span>
-                  </DropdownMenuItem>
-                </Link>
+                    <Link href={`/${locale}/dashboard/profile`} className="block">
+                      <div className="flex items-center gap-2 rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                        <User className="h-4 w-4 text-gray-700 dark:text-gray-200" />
+                        <span className="text-sm font-semibold text-[#262626] dark:text-white">{dictionary.users.profile}</span>
+                      </div>
+                    </Link>
+
+                    <Link href={`/${locale}`} className="block col-span-2">
+                      <div className="flex items-center justify-between gap-2 rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Globe className="h-4 w-4 text-gray-700 dark:text-gray-200" />
+                          <span className="text-sm font-semibold text-[#262626] dark:text-white truncate">{dictionary.nav.home}</span>
+                        </div>
+                        <ArrowLeft className="h-4 w-4 text-gray-500 dark:text-gray-400 rtl:rotate-180" />
+                      </div>
+                    </Link>
+                  </div>
+                </div>
 
                 <DropdownMenuSeparator className="bg-black/10 dark:bg-white/10" />
                 
-                {/* Language */}
-                <div className="px-2 py-2 flex items-center justify-end">
-                  <LanguageSwitcher />
+                {/* Language (full width) */}
+                <div className="relative px-2 py-2">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <span className="text-xs font-bold text-gray-700 dark:text-gray-200">{dictionary.common.language}</span>
+                    </div>
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400">{dictionary.common.languageDesc}</span>
+                  </div>
+                  <LanguageSwitcher fullWidth />
                 </div>
 
                 {/* Install App */}
@@ -403,16 +449,6 @@ export function DashboardHeader({ dictionary, user, onMobileMenuToggle }: Dashbo
                     </DropdownMenuItem>
                   </>
                 )}
-
-                <DropdownMenuSeparator className="bg-black/10 dark:bg-white/10" />
-
-                {/* Quick Access */}
-                <Link href={`/${locale}/dashboard`}>
-                  <DropdownMenuItem className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 focus:bg-black/5 dark:focus:bg-white/5">
-                    <Shield className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <span className="font-medium text-[#262626] dark:text-white">{dictionary.nav.dashboard}</span>
-                  </DropdownMenuItem>
-                </Link>
 
                 <DropdownMenuSeparator className="bg-black/10 dark:bg-white/10" />
                 

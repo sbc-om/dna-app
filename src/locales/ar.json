@@ -41,6 +41,8 @@
     "confirmDelete": "هل أنت متأكد أنك تريد حذف هذا العنصر؟",
     "confirmContinue": "هل أنت متأكد أنك تريد المتابعة؟",
     "academy": "أكاديمية",
+    "language": "اللغة",
+    "languageDesc": "اختر EN / AR",
     "errors": {
       "saveFailed": "فشل الحفظ. يرجى المحاولة مرة أخرى."
     }

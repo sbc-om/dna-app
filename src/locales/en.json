@@ -41,6 +41,8 @@
     "confirmDelete": "Are you sure you want to delete this item?",
     "confirmContinue": "Are you sure you want to continue?",
     "academy": "Academy",
+    "language": "Language",
+    "languageDesc": "Choose EN / AR",
     "errors": {
       "saveFailed": "Failed to save. Please try again."
     }

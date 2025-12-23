@@ -24,7 +24,9 @@ export function getMemoryBudget(): MemoryBudget {
     return {
       profile: 'low',
       mapSizeBytes: 64 * 1024 * 1024,
-      maxReaders: 1,
+      // Next.js can execute many concurrent server reads; too-low reader limits cause MDB_READERS_FULL.
+      // maxReaders does not reserve mapSize; it mainly caps concurrent read transactions.
+      maxReaders: 64,
       maxDbs: 4,
       totalMemBytes,
     };
@@ -34,7 +36,7 @@ export function getMemoryBudget(): MemoryBudget {
     return {
       profile: 'medium',
       mapSizeBytes: 96 * 1024 * 1024,
-      maxReaders: 2,
+      maxReaders: 128,
       maxDbs: 8,
       totalMemBytes,
     };
@@ -43,7 +45,7 @@ export function getMemoryBudget(): MemoryBudget {
   return {
     profile: 'high',
     mapSizeBytes: 128 * 1024 * 1024,
-    maxReaders: 4,
+    maxReaders: 256,
     maxDbs: 16,
     totalMemBytes,
   };

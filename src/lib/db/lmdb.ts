@@ -19,24 +19,50 @@ function getLmdbModule(): LmdbModule {
 
 let db: RootDatabase | null = null;
 
-export interface LMDBDatabase extends RootDatabase {}
+declare global {
+  var __dnaLmdbDb: RootDatabase | undefined;
+}
+
+export type LMDBDatabase = RootDatabase;
 
 /**
  * Initialize and return the LMDB database connection
  */
 export function getDatabase(): LMDBDatabase {
   if (!db) {
+    // Reuse across Next.js dev HMR/module reloads to avoid opening multiple LMDB environments.
+    if (globalThis.__dnaLmdbDb) {
+      db = globalThis.__dnaLmdbDb;
+      return db;
+    }
+
     const dbPath = path.join(process.cwd(), 'data', 'lmdb');
     
-    // Use environment variable for map size, with fallback
+    // Environment overrides (optional)
     const envMapSize = process.env.LMDB_MAP_SIZE;
+    const envMaxReaders = process.env.LMDB_MAX_READERS;
+    const envMaxDbs = process.env.LMDB_MAX_DBS;
+
     const parsedEnvSize = envMapSize ? parseInt(envMapSize, 10) : NaN;
+    const parsedEnvMaxReaders = envMaxReaders ? parseInt(envMaxReaders, 10) : NaN;
+    const parsedEnvMaxDbs = envMaxDbs ? parseInt(envMaxDbs, 10) : NaN;
+
     const memoryBudget = getMemoryBudget();
     const mapSize = !Number.isNaN(parsedEnvSize)
       ? parsedEnvSize
       : memoryBudget.mapSizeBytes;
-    const maxReaders = !Number.isNaN(parsedEnvSize) ? 1 : memoryBudget.maxReaders;
-    const maxDbs = !Number.isNaN(parsedEnvSize) ? 4 : memoryBudget.maxDbs;
+
+    // IMPORTANT:
+    // - Do NOT reduce maxReaders just because mapSize is overridden.
+    // - Too-low maxReaders in a Next.js server can quickly trigger MDB_READERS_FULL.
+    const maxReaders = !Number.isNaN(parsedEnvMaxReaders)
+      ? parsedEnvMaxReaders
+      : memoryBudget.maxReaders;
+
+    const maxDbs = !Number.isNaN(parsedEnvMaxDbs)
+      ? parsedEnvMaxDbs
+      : memoryBudget.maxDbs;
+
     const profileLabel = isLowResourceMode() ? 'low-resource' : memoryBudget.profile;
     
     try {
@@ -51,8 +77,10 @@ export function getDatabase(): LMDBDatabase {
         noMemInit: true, // Don't pre-allocate memory
       });
 
+      globalThis.__dnaLmdbDb = db;
+
       console.log(
-        `LMDB initialized at: ${dbPath} (mapSize: ${mapSize / 1024 / 1024}MB, profile:${profileLabel})`
+        `LMDB initialized at: ${dbPath} (mapSize: ${mapSize / 1024 / 1024}MB, maxReaders:${maxReaders}, maxDbs:${maxDbs}, profile:${profileLabel})`
       );
     } catch (error) {
       console.error('LMDB initialization failed:', error);
@@ -70,6 +98,7 @@ export async function closeDatabase(): Promise<void> {
   if (db) {
     await db.close();
     db = null;
+    globalThis.__dnaLmdbDb = undefined;
   }
 }
 
