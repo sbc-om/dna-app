@@ -24,6 +24,7 @@ import {
   addUserToAcademy,
   getAcademyMembership,
   getUserAcademyIds,
+  getUserAcademyRoles,
   listAcademyMembers,
   type AcademyMembership,
 } from '@/lib/db/repositories/academyMembershipRepository';
@@ -243,7 +244,13 @@ export async function getMyAcademiesAction(locale: string = 'en') {
       return { success: true as const, academies, currentAcademyId: ctx.academyId };
     }
 
-    const academyIds = await getUserAcademyIds(ctx.user.id);
+    // Managers should only see academies where they are the academy manager.
+    const academyIds =
+      ctx.user.role === ROLES.MANAGER
+        ? Object.entries(await getUserAcademyRoles(ctx.user.id))
+            .filter(([, r]) => r === 'manager')
+            .map(([id]) => id)
+        : await getUserAcademyIds(ctx.user.id);
     const all = await getAllAcademies();
     const academies = all.filter((a) => academyIds.includes(a.id));
 
@@ -260,7 +267,10 @@ export async function setCurrentAcademyAction(locale: string, academyId: string)
     const ctx = await requireAcademyContext(locale);
 
     if (ctx.user.role !== ROLES.ADMIN) {
-      const allowed = (await getUserAcademyIds(ctx.user.id)).includes(academyId);
+      const allowed =
+        ctx.user.role === ROLES.MANAGER
+          ? (await getUserAcademyRoles(ctx.user.id))[academyId] === 'manager'
+          : (await getUserAcademyIds(ctx.user.id)).includes(academyId);
       if (!allowed) {
         return { success: false as const, error: 'Not allowed for this academy' };
       }

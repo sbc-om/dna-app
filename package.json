@@ -8,6 +8,7 @@
     "start": "next start -p ${PORT:-3016}",
     "lint": "eslint",
     "db:init": "tsx scripts/init-db.ts",
+    "db:reset": "tsx scripts/reset-db-to-admin.ts",
     "create-admin": "tsx scripts/create-admin.ts",
     "generate-icons": "node scripts/generate-icons.js",
     "generate-favicon": "node scripts/generate-favicon.js",

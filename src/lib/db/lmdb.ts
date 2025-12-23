@@ -1,5 +1,3 @@
-import 'server-only';
-
 import type { RootDatabase } from 'lmdb';
 import path from 'path';
 import { getMemoryBudget, isLowResourceMode } from '@/lib/utils/systemResources';

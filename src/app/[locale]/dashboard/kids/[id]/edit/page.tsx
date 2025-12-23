@@ -1,4 +1,5 @@
 import { requireAuth } from '@/lib/auth/auth';
+import { requireAcademyContext } from '@/lib/academies/academyContext';
 import { getDictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
 import { findUserById, getAllUsers } from '@/lib/db/repositories/userRepository';
@@ -7,6 +8,7 @@ import { EditKidProfileClient } from '@/components/EditKidProfileClient';
 import { getAllAcademies } from '@/lib/db/repositories/academyRepository';
 import { getUserAcademyIds } from '@/lib/db/repositories/academyMembershipRepository';
 import { ROLES } from '@/config/roles';
+import { requireUserInAcademy } from '@/lib/academies/academyGuards';
 
 export default async function EditKidProfilePage({
   params,
@@ -16,6 +18,7 @@ export default async function EditKidProfilePage({
   const { locale, id } = await params as { locale: Locale; id: string };
   const dictionary = await getDictionary(locale);
   const user = await requireAuth(locale);
+  const academyCtx = await requireAcademyContext(locale);
 
   // Only admin can edit kid profiles
   if (user.role !== 'admin') {
@@ -28,6 +31,9 @@ export default async function EditKidProfilePage({
   if (!kid) {
     notFound();
   }
+
+  // Enforce that this edit is performed within the currently selected academy.
+  await requireUserInAcademy({ academyId: academyCtx.academyId, userId: id });
 
   // Fetch academies for selection
   const allAcademies = await getAllAcademies();

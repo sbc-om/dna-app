@@ -1,10 +1,12 @@
 import { requireAuth } from '@/lib/auth/auth';
+import { requireAcademyContext } from '@/lib/academies/academyContext';
 import { getDictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
 import { findUserById } from '@/lib/db/repositories/userRepository';
 import { findCourseById } from '@/lib/db/repositories/courseRepository';
 import { notFound, redirect } from 'next/navigation';
 import { CourseDetailClient } from '@/components/CourseDetailClient';
+import { requireUserInAcademy } from '@/lib/academies/academyGuards';
 
 export default async function CourseDetailPage({
   params,
@@ -14,6 +16,9 @@ export default async function CourseDetailPage({
   const { locale, id, courseId } = await params as { locale: Locale; id: string; courseId: string };
   const dictionary = await getDictionary(locale);
   const user = await requireAuth(locale);
+  const academyCtx = await requireAcademyContext(locale);
+
+  await requireUserInAcademy({ academyId: academyCtx.academyId, userId: id });
 
   // Fetch the kid
   const kid = await findUserById(id);
@@ -26,6 +31,11 @@ export default async function CourseDetailPage({
   const course = await findCourseById(courseId);
 
   if (!course) {
+    notFound();
+  }
+
+  // Ensure the course belongs to the selected academy.
+  if (course.academyId !== academyCtx.academyId) {
     notFound();
   }
 

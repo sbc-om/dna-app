@@ -155,15 +155,15 @@ export async function getRolePermissions(role: UserRole): Promise<RolePermission
   const db = getDatabase();
   const permissions = await db.get(`${ROLE_PERMISSIONS_PREFIX}${role}`);
   if (!permissions) {
-    const seeded: RolePermission = {
-      id: generateId(),
+    // Return defaults without persisting.
+    // This keeps the database minimal/empty unless permissions are explicitly updated.
+    return {
+      id: 'default',
       role,
       permissions: DEFAULT_PERMISSIONS[role],
       updatedAt: new Date().toISOString(),
       updatedBy: 'system',
     };
-    await db.put(`${ROLE_PERMISSIONS_PREFIX}${role}`, seeded);
-    return seeded;
   }
 
   const existing = permissions as RolePermission;

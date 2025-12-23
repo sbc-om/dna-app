@@ -5,6 +5,7 @@ import { Locale } from '@/config/i18n';
 import { findUserById } from '@/lib/db/repositories/userRepository';
 import { notFound, redirect } from 'next/navigation';
 import { KidProfileClient } from '@/components/KidProfileClient';
+import { requireUserInAcademy } from '@/lib/academies/academyGuards';
 
 export default async function KidProfilePage({
   params,
@@ -15,6 +16,9 @@ export default async function KidProfilePage({
   const dictionary = await getDictionary(locale);
   const user = await requireAuth(locale);
   const academyCtx = await requireAcademyContext(locale);
+
+  // Prevent cross-academy access via global user IDs.
+  await requireUserInAcademy({ academyId: academyCtx.academyId, userId: id });
 
   // Fetch the kid
   const kid = await findUserById(id);
@@ -27,8 +31,9 @@ export default async function KidProfilePage({
   const isParent = user.role === 'parent' && kid.parentId === user.id;
   const isAdmin = user.role === 'admin';
   const isCoach = user.role === 'coach';
+  const isManager = user.role === 'manager';
 
-  if (!isParent && !isAdmin && !isCoach) {
+  if (!isParent && !isAdmin && !isCoach && !isManager) {
     // If not authorized, redirect to dashboard
     redirect(`/${locale}/dashboard`);
   }

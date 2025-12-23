@@ -7,6 +7,7 @@ import { getPlayerProfile } from '@/lib/db/repositories/playerProfileRepository'
 import { notFound, redirect } from 'next/navigation';
 import { ROLES } from '@/config/roles';
 import { AchievementsStatsClient } from '@/components/AchievementsStatsClient';
+import { requireUserInAcademy } from '@/lib/academies/academyGuards';
 
 export default async function KidAchievementsPage({
   params,
@@ -17,6 +18,9 @@ export default async function KidAchievementsPage({
   const dictionary = await getDictionary(locale);
   const currentUser = await requireAuth(locale);
   const academyCtx = await requireAcademyContext(locale);
+
+  // Prevent cross-academy access via global user IDs.
+  await requireUserInAcademy({ academyId: academyCtx.academyId, userId: id });
 
   // Fetch the kid
   const kid = await findUserById(id);
@@ -36,6 +40,10 @@ export default async function KidAchievementsPage({
 
   // Get player profile (scoped to the currently selected academy)
   const profile = await getPlayerProfile(academyCtx.academyId, id);
+
+  if (!profile) {
+    notFound();
+  }
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl">

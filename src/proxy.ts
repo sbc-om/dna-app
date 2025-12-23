@@ -108,15 +108,10 @@ export default async function proxy(request: NextRequest) {
   if (token) {
     try {
       await jwtVerify(token.value, JWT_SECRET);
-      
-      // If authenticated and trying to access auth routes, redirect to dashboard
-      if (isAuthRoute) {
-        response = NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
-        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
-        response.headers.set('Pragma', 'no-cache');
-        response.headers.set('Expires', '0');
-        return response;
-      }
+
+      // Do not redirect away from auth routes based only on having a valid JWT.
+      // The token may be valid but reference a user that no longer exists (e.g., after a DB reset),
+      // which would cause an infinite redirect loop between /auth/login and /dashboard.
     } catch (error) {
       // Invalid token - this is common when JWT secret changes or tokens expire
       console.warn('Invalid JWT token, clearing and redirecting to login');

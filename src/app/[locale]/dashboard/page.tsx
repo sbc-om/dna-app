@@ -1,11 +1,12 @@
 import { requireAcademyContext } from '@/lib/academies/academyContext';
+import { requireAuth } from '@/lib/auth/auth';
 import { getDictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
 import { ROLE_LABELS } from '@/config/roles';
 import { listUsers, getChildrenByParentId, getUsersByIds } from '@/lib/db/repositories/userRepository';
 import { listAcademyMembers } from '@/lib/db/repositories/academyMembershipRepository';
-import { getCoursesByCoachIdAndAcademyId, type Course, getCoursesByAcademyId } from '@/lib/db/repositories/courseRepository';
-import { getPaidEnrollmentsByCourseIdAndAcademyId, getEnrollmentsByAcademyId } from '@/lib/db/repositories/enrollmentRepository';
+import { getCoursesByCoachIdAndAcademyId, type Course, getCoursesByAcademyId, getAllCourses } from '@/lib/db/repositories/courseRepository';
+import { getPaidEnrollmentsByCourseIdAndAcademyId, getEnrollmentsByAcademyId, getAllEnrollments } from '@/lib/db/repositories/enrollmentRepository';
 import { ensurePlayerProfile } from '@/lib/db/repositories/playerProfileRepository';
 import { getLatestDnaAssessmentSession } from '@/lib/db/repositories/dnaAssessmentRepository';
 import { evaluateStage, daysBetween, type OrganizationType, type PlayerStageKey } from '@/lib/player/stageSystem';
@@ -15,7 +16,6 @@ import { Users, Calendar, Clock, CheckCircle, UserCheck, User, GraduationCap, Tr
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ChildMedalsPreview } from '@/components/ChildMedalsPreview';
-import { AnimatedDashboardClient } from '@/components/AnimatedDashboardClient';
 import { AcademyAdminDashboardHomeClient, type AcademyAdminDashboardData, type AcademyAdminPlayerRow } from '@/components/AcademyAdminDashboardHomeClient';
 
 export default async function DashboardPage({
@@ -25,8 +25,8 @@ export default async function DashboardPage({
 }) {
   const { locale } = await params as { locale: Locale };
   const dictionary = await getDictionary(locale);
-  const ctx = await requireAcademyContext(locale);
-  const user = ctx.user;
+  const user = await requireAuth(locale);
+  const ctx = user.role === 'admin' ? null : await requireAcademyContext(locale);
   const roleLabel = ROLE_LABELS[user.role][locale] || user.role;
 
   // Fetch children for parent
@@ -39,8 +39,8 @@ export default async function DashboardPage({
   let stats = null;
   if (user.role === 'admin') {
     const users = await listUsers();
-    const courses = await getCoursesByAcademyId(ctx.academyId);
-    const enrollments = await getEnrollmentsByAcademyId(ctx.academyId);
+    const courses = await getAllCourses();
+    const enrollments = await getAllEnrollments();
     
     stats = {
       totalUsers: users.length,
@@ -57,25 +57,25 @@ export default async function DashboardPage({
   // Academy Admin (manager) dashboard overview
   let managerDashboard: AcademyAdminDashboardData | null = null;
   if (user.role === 'manager') {
-    const members = await listAcademyMembers(ctx.academyId);
+    const members = await listAcademyMembers(ctx!.academyId);
     const ids = Array.from(new Set(members.map((m) => m.userId)));
     const users = await getUsersByIds(ids);
     const kids = users.filter((u) => u.role === 'kid' && u.isActive);
 
-    const academy = await findAcademyById(ctx.academyId);
+    const academy = await findAcademyById(ctx!.academyId);
     const organizationType: OrganizationType = (academy as any)?.organizationType === 'school' ? 'school' : 'academy';
 
     // Preload player profiles.
     const profiles = await Promise.all(
       kids.map(async (k) => ({
         userId: k.id,
-        profile: await ensurePlayerProfile({ academyId: ctx.academyId, userId: k.id }),
+        profile: await ensurePlayerProfile({ academyId: ctx!.academyId, userId: k.id }),
       }))
     );
     const profileByUserId = new Map(profiles.map((p) => [p.userId, p.profile] as const));
 
     // Batch attendance: scan once per course in this academy.
-    const enrollments = await getEnrollmentsByAcademyId(ctx.academyId);
+    const enrollments = await getEnrollmentsByAcademyId(ctx!.academyId);
     const kidIdSet = new Set(kids.map((k) => k.id));
     const courseIds = new Set<string>();
     const studentToCourseIds = new Map<string, Set<string>>();
@@ -122,7 +122,7 @@ export default async function DashboardPage({
         const profile = profileByUserId.get(k.id)!;
         stageCounts[profile.currentStage] += 1;
 
-        const latest = await getLatestDnaAssessmentSession({ academyId: ctx.academyId, playerId: k.id });
+        const latest = await getLatestDnaAssessmentSession({ academyId: ctx!.academyId, playerId: k.id });
         const currentNaScore = latest?.naScore;
 
         const records = attendanceByStudent.get(k.id) ?? [];
@@ -189,12 +189,12 @@ export default async function DashboardPage({
   // Fetch courses for coach
   let coachCourses: Array<{ course: Course; activePlayers: number }> = [];
   if (user.role === 'coach') {
-    const courses = await getCoursesByCoachIdAndAcademyId(user.id, ctx.academyId);
+    const courses = await getCoursesByCoachIdAndAcademyId(user.id, ctx!.academyId);
 
     if (courses.length > 0) {
       coachCourses = await Promise.all(
         courses.map(async (course) => {
-          const paidEnrollments = await getPaidEnrollmentsByCourseIdAndAcademyId(course.id, ctx.academyId);
+          const paidEnrollments = await getPaidEnrollmentsByCourseIdAndAcademyId(course.id, ctx!.academyId);
 
           if (paidEnrollments.length === 0) {
             return { course, activePlayers: 0 };
@@ -216,12 +216,65 @@ export default async function DashboardPage({
       
       {/* Statistics Cards for Admin */}
       {user.role === 'admin' && stats && (
-        <AnimatedDashboardClient 
-          stats={stats}
-          dictionary={dictionary}
-          username={user.fullName || user.username}
-          roleLabel={roleLabel}
-        />
+        <div className="space-y-6">
+          <div className="relative overflow-hidden rounded-3xl border-2 border-white/20 dark:border-white/10 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
+            <div className="absolute inset-0 bg-linear-to-r from-blue-600/8 via-purple-600/8 to-pink-600/8" />
+            <div className="relative">
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+                {dictionary.common.welcome} {user.fullName || user.username}
+              </h1>
+              <p className="mt-2 text-base font-semibold text-gray-700 dark:text-gray-300">
+                {dictionary.users.role}: <span className="text-blue-600 dark:text-blue-400">{roleLabel}</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="rounded-2xl border border-white/15 dark:border-white/10 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl p-6">
+              <div className="text-sm font-semibold text-gray-600 dark:text-gray-300">{dictionary.dashboard.totalUsers}</div>
+              <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{stats.totalUsers}</div>
+            </div>
+
+            <div className="rounded-2xl border border-white/15 dark:border-white/10 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl p-6">
+              <div className="text-sm font-semibold text-gray-600 dark:text-gray-300">{dictionary.dashboard.activeUsers}</div>
+              <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{stats.activeUsers}</div>
+            </div>
+
+            <div className="rounded-2xl border border-white/15 dark:border-white/10 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl p-6">
+              <div className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                {dictionary.dashboard.totalCourses || 'Total Courses'}
+              </div>
+              <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{stats.totalCourses}</div>
+              <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                {stats.activeCourses} {dictionary.users.active || 'active'}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/15 dark:border-white/10 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl p-6">
+              <div className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                {dictionary.dashboard.totalEnrollments || 'Total Enrollments'}
+              </div>
+              <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{stats.totalEnrollments}</div>
+              <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                {stats.paidEnrollments} {dictionary.payments?.paid || 'paid'}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/15 dark:border-white/10 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl p-6">
+              <div className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                {dictionary.dashboard.totalCoaches || 'Total Coaches'}
+              </div>
+              <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{stats.totalCoaches}</div>
+            </div>
+
+            <div className="rounded-2xl border border-white/15 dark:border-white/10 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl p-6">
+              <div className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                {dictionary.dashboard.totalKids || 'Total Kids'}
+              </div>
+              <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{stats.totalKids}</div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Academy Admin (manager) View */}

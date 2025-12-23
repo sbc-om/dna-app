@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/auth';
+import { requireAcademyContext } from '@/lib/academies/academyContext';
 import { getDictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
 import { findEnrollmentById } from '@/lib/db/repositories/enrollmentRepository';
@@ -7,6 +8,7 @@ import { findCourseById } from '@/lib/db/repositories/courseRepository';
 import { findUserById } from '@/lib/db/repositories/userRepository';
 import { getAdminSettings } from '@/lib/db/repositories/adminSettingsRepository';
 import PaymentUploadClient from '@/components/PaymentUploadClient';
+import { requireUserInAcademy } from '@/lib/academies/academyGuards';
 
 interface PageProps {
   params: Promise<{ locale: string; enrollmentId: string }>;
@@ -15,6 +17,8 @@ interface PageProps {
 export default async function PaymentUploadPage({ params }: PageProps) {
   const { locale, enrollmentId } = await params;
   const currentUser = await getCurrentUser();
+
+  const academyCtx = await requireAcademyContext(locale);
 
   if (!currentUser) {
     redirect(`/${locale}/auth/login`);
@@ -31,6 +35,11 @@ export default async function PaymentUploadPage({ params }: PageProps) {
     redirect(`/${locale}/dashboard/payments`);
   }
 
+  // Enrollment must belong to the currently selected academy.
+  if (enrollment.academyId !== academyCtx.academyId) {
+    redirect(`/${locale}/dashboard/payments`);
+  }
+
   // Verify parent owns this enrollment
   if (enrollment.parentId !== currentUser.id) {
     redirect(`/${locale}/dashboard/payments`);
@@ -38,6 +47,14 @@ export default async function PaymentUploadPage({ params }: PageProps) {
 
   const course = await findCourseById(enrollment.courseId);
   const student = await findUserById(enrollment.studentId);
+
+  if (course && course.academyId !== academyCtx.academyId) {
+    redirect(`/${locale}/dashboard/payments`);
+  }
+
+  if (student) {
+    await requireUserInAcademy({ academyId: academyCtx.academyId, userId: student.id });
+  }
   const adminSettings = await getAdminSettings();
   const dict = await getDictionary(locale as Locale);
 

@@ -9,6 +9,7 @@ import {
 } from '@/lib/db/repositories/academyRepository';
 import {
   getUserAcademyIds,
+  getUserAcademyRoles,
   getUserRoleInAcademy,
   addUserToAcademy,
   type AcademyMemberRole,
@@ -70,6 +71,17 @@ async function pickDefaultAcademyIdForUser(user: AuthUser): Promise<{ academyId:
     return { academyId, role: 'global_admin' };
   }
 
+  // Managers should default to an academy where they are an academy manager.
+  if (user.role === 'manager') {
+    const rolesByAcademy = await getUserAcademyRoles(user.id);
+    const managerAcademyId = Object.entries(rolesByAcademy).find(([, r]) => r === 'manager')?.[0];
+    const fallbackAcademyId = Object.keys(rolesByAcademy)[0];
+    const academyId = managerAcademyId || fallbackAcademyId || DEFAULT_ACADEMY_ID;
+    await ensureLegacyUserMembership(user, academyId);
+    const role = (await getUserRoleInAcademy(user.id, academyId)) || 'coach';
+    return { academyId, role };
+  }
+
   const academyIds = await getUserAcademyIds(user.id);
   const academyId = academyIds[0] || DEFAULT_ACADEMY_ID;
   await ensureLegacyUserMembership(user, academyId);
@@ -85,12 +97,30 @@ async function pickDefaultAcademyIdForUser(user: AuthUser): Promise<{ academyId:
  */
 export async function requireAcademyContext(locale: string = 'en'): Promise<AcademyContext> {
   const user = await requireAuth(locale);
-  await ensureDefaultAcademyExists('system');
+
+  // Keep admin flows database-minimal: do not auto-seed a default academy.
+  // Non-admin users still require an academy to function correctly.
+  if (user.role !== 'admin') {
+    await ensureDefaultAcademyExists('system');
+  }
 
   const selected = await getSelectedAcademyIdFromCookie();
 
+  if (user.role === 'admin') {
+    // If an academy is selected and exists, honor it; otherwise operate without creating one.
+    if (selected) {
+      const academy = await findAcademyById(selected);
+      if (academy && academy.isActive) {
+        return { user, academyId: selected, academyRole: 'global_admin' };
+      }
+    }
+
+    return { user, academyId: DEFAULT_ACADEMY_ID, academyRole: 'global_admin' };
+  }
+
   if (!selected) {
     const picked = await pickDefaultAcademyIdForUser(user);
+    await setSelectedAcademyIdCookie(picked.academyId);
     return { user, academyId: picked.academyId, academyRole: picked.role };
   }
 
@@ -98,11 +128,8 @@ export async function requireAcademyContext(locale: string = 'en'): Promise<Acad
   const academy = await findAcademyById(selected);
   if (!academy || !academy.isActive) {
     const picked = await pickDefaultAcademyIdForUser(user);
+    await setSelectedAcademyIdCookie(picked.academyId);
     return { user, academyId: picked.academyId, academyRole: picked.role };
-  }
-
-  if (user.role === 'admin') {
-    return { user, academyId: selected, academyRole: 'global_admin' };
   }
 
   // Backward compatibility: ensure the user has a membership record for the selected academy
@@ -113,6 +140,13 @@ export async function requireAcademyContext(locale: string = 'en'): Promise<Acad
     redirect(`/${locale}/dashboard/forbidden`);
   }
 
+  // Enforce that a "manager" user can only operate within academies where they are a manager.
+  if (user.role === 'manager' && role !== 'manager') {
+    const picked = await pickDefaultAcademyIdForUser(user);
+    await setSelectedAcademyIdCookie(picked.academyId);
+    return { user, academyId: picked.academyId, academyRole: picked.role };
+  }
+
   return { user, academyId: selected, academyRole: role };
 }
 
@@ -120,22 +154,34 @@ export async function getAcademyContextIfAuthenticated(): Promise<AcademyContext
   const user = await getCurrentUser();
   if (!user) return null;
 
-  await ensureDefaultAcademyExists('system');
+  // Keep admin flows database-minimal: do not auto-seed a default academy.
+  if (user.role !== 'admin') {
+    await ensureDefaultAcademyExists('system');
+  }
   const selected = await getSelectedAcademyIdFromCookie();
+
+  if (user.role === 'admin') {
+    if (selected) {
+      const academy = await findAcademyById(selected);
+      if (academy && academy.isActive) {
+        return { user, academyId: selected, academyRole: 'global_admin' };
+      }
+    }
+
+    return { user, academyId: DEFAULT_ACADEMY_ID, academyRole: 'global_admin' };
+  }
 
   if (!selected) {
     const picked = await pickDefaultAcademyIdForUser(user);
+    await setSelectedAcademyIdCookie(picked.academyId);
     return { user, academyId: picked.academyId, academyRole: picked.role };
   }
 
   const academy = await findAcademyById(selected);
   if (!academy || !academy.isActive) {
     const picked = await pickDefaultAcademyIdForUser(user);
+    await setSelectedAcademyIdCookie(picked.academyId);
     return { user, academyId: picked.academyId, academyRole: picked.role };
-  }
-
-  if (user.role === 'admin') {
-    return { user, academyId: selected, academyRole: 'global_admin' };
   }
 
   await ensureLegacyUserMembership(user, selected);
@@ -143,6 +189,12 @@ export async function getAcademyContextIfAuthenticated(): Promise<AcademyContext
   const role = await getUserRoleInAcademy(user.id, selected);
   if (!role) {
     return null;
+  }
+
+  if (user.role === 'manager' && role !== 'manager') {
+    const picked = await pickDefaultAcademyIdForUser(user);
+    await setSelectedAcademyIdCookie(picked.academyId);
+    return { user, academyId: picked.academyId, academyRole: picked.role };
   }
 
   return { user, academyId: selected, academyRole: role };
