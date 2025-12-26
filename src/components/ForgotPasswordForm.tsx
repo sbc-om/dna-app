@@ -44,7 +44,7 @@ export default function ForgotPasswordPageClient({ dictionary, locale }: ForgotP
           <CardHeader className="text-center">
             <Link href={`/${locale}`} className="flex items-center justify-center space-x-2 mb-4">
               <Image 
-                src="/logo.png" 
+                src="/logo-white.png" 
                 alt="DNA Logo" 
                 width={32} 
                 height={32}
@@ -77,7 +77,7 @@ export default function ForgotPasswordPageClient({ dictionary, locale }: ForgotP
         <CardHeader className="text-center">
           <Link href={`/${locale}`} className="flex items-center justify-center space-x-2 mb-4">
             <Image 
-              src="/logo.png" 
+              src="/logo-white.png" 
               alt="DNA Logo" 
               width={32} 
               height={32}

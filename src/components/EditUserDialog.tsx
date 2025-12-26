@@ -285,14 +285,7 @@ export function EditUserDialog({
                             <SelectValue placeholder={dictionary.users.role} />
                           </SelectTrigger>
                           <SelectContent>
-                            {(currentUserRole === ROLES.MANAGER
-                              ? [
-                                  ['COACH', ROLES.COACH] as const,
-                                  ['PARENT', ROLES.PARENT] as const,
-                                  ['KID', ROLES.KID] as const,
-                                ]
-                              : (Object.entries(ROLES) as Array<[string, UserRole]>)
-                            ).map(([key, value]) => (
+                            {(Object.entries(ROLES) as Array<[string, UserRole]>).map(([key, value]) => (
                               <SelectItem key={value} value={value}>
                                 {key}
                               </SelectItem>
@@ -323,7 +316,7 @@ export function EditUserDialog({
                                 <SelectValue placeholder={dictionary.dashboard?.academyAdmin?.parentLinkingPlaceholder ?? 'Select'} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">{dictionary.dashboard?.academyAdmin?.parentNone ?? 'No parent'}</SelectItem>
+                                <SelectItem value="none">{dictionary.dashboard?.academyAdmin?.parentNone ?? 'No parent'}</SelectItem>
                                 {parents.map((parent) => (
                                   <SelectItem key={parent.id} value={parent.id}>
                                     {parent.fullName || parent.username} ({parent.email})

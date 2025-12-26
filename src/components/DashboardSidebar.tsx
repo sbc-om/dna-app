@@ -156,15 +156,14 @@ const SidebarContent = ({
         isCollapsed && "lg:justify-center"
       )}>
         <motion.div 
-          whileHover={{ scale: 1.1, rotate: 5 }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="h-10 w-10 flex items-center justify-center shrink-0 relative"
+          className="shrink-0 relative"
         >
-          <div className="absolute inset-0 bg-linear-to-br from-blue-500 to-purple-600 rounded-xl blur opacity-50 group-hover:opacity-100 transition-opacity" />
           <img 
-            src="/logo.png" 
+            src="/logo-white.png" 
             alt="DNA Logo" 
-            className="h-10 w-10 object-contain relative z-10"
+            className="h-12 w-auto object-contain"
           />
         </motion.div>
         <AnimatePresence>
@@ -421,13 +420,13 @@ export function DashboardSidebar({
               >
                 <div className="flex items-center gap-3">
                   <motion.div
-                    animate={{ rotate: [0, 360] }}
-                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
                     <img 
-                      src="/logo.png" 
+                      src="/logo-white.png" 
                       alt="DNA Logo" 
-                      className="h-8 w-8 object-contain"
+                      className="h-10 w-auto object-contain"
                     />
                   </motion.div>
                   <div>

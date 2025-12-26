@@ -117,8 +117,8 @@ export function KidProfileClient({
 
   const router = useRouter();
 
-  const canManage = currentUser?.role === 'admin' || currentUser?.role === 'coach';
-  const canAdmin = currentUser?.role === 'admin';
+  const canManage = currentUser?.role === 'admin' || currentUser?.role === 'coach' || currentUser?.role === 'manager';
+  const canAdmin = currentUser?.role === 'admin' || currentUser?.role === 'manager';
 
   const handleImageUpload = async (file: File, croppedImageUrl: string) => {
     try {

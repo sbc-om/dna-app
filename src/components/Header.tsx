@@ -119,30 +119,17 @@ export function Header({ dictionary, locale, user }: HeaderProps) {
       
       <div className="flex h-20 items-center justify-between px-4 sm:px-6 max-w-7xl mx-auto relative z-10 gap-4">
         {/* Logo & Title */}
-        <Link href={`/${locale}`} className="flex items-center gap-3 group h-11">
+        <Link href={`/${locale}`} className="flex items-center gap-3 group h-14">
           <motion.div 
-            whileHover={{ scale: 1.1, rotate: 5 }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="relative"
           >
-            {/* Glow behind logo */}
-            <motion.div
-              className="absolute inset-0 bg-linear-to-br from-blue-500 to-purple-600 rounded-2xl blur-xl opacity-0 group-hover:opacity-60"
-              animate={{
-                scale: [1, 1.2, 1],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-              }}
+            <img 
+              src="/logo-white.png" 
+              alt="DNA Logo" 
+              className="h-14 w-auto object-contain drop-shadow-2xl"
             />
-            <div className="relative h-11 w-11 flex items-center justify-center bg-linear-to-br from-blue-600 via-purple-600 to-pink-600 rounded-2xl border-2 border-white/20">
-              <img 
-                src="/logo.png" 
-                alt="DNA Logo" 
-                className="h-7 w-7 object-contain drop-shadow-2xl"
-              />
-            </div>
           </motion.div>
           
           <motion.h1

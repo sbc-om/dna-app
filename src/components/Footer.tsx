@@ -37,14 +37,11 @@ export function Footer({ dictionary, locale }: FooterProps) {
           <div className="space-y-4">
             <Link href={`/${locale}`} className="inline-flex items-center gap-3 group">
               <motion.div
-                whileHover={{ scale: 1.08, rotate: 2 }}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.96 }}
                 className="relative"
               >
-                <div className="absolute inset-0 rounded-2xl bg-white/5 blur-lg opacity-60" />
-                <div className="relative p-2.5 rounded-2xl bg-white/10 backdrop-blur-xl border-2 border-white/15">
-                  <img src="/logo.png" alt="DNA Logo" className="h-9 w-9 object-contain" />
-                </div>
+                <img src="/logo-white.png" alt="DNA Logo" className="h-12 w-auto object-contain" />
               </motion.div>
 
               <div className="min-w-0">
