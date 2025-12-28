@@ -1,13 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { requireAcademyContext, isAcademyAdmin } from '@/lib/academies/academyContext';
-import { findUserById, updateUser } from '@/lib/db/repositories/userRepository';
+import { updateUser } from '@/lib/db/repositories/userRepository';
 import { getAcademyMembership, addUserToAcademy } from '@/lib/db/repositories/academyMembershipRepository';
 import {
-  createOrRotatePlayerActivation,
   getPlayerActivationByToken,
-  listPlayerActivationsByAcademy,
   updatePlayerActivationByToken,
   type PlayerActivation,
 } from '@/lib/db/repositories/playerActivationRepository';
@@ -17,65 +14,6 @@ function isExpired(activation: PlayerActivation): boolean {
   if (!activation.expiresAt) return false;
   const t = new Date(activation.expiresAt).getTime();
   return Number.isFinite(t) && Date.now() > t;
-}
-
-export async function createPlayerActivationLinkAction(params: {
-  locale: string;
-  playerId: string;
-}): Promise<{ success: true; token: string; url: string; activation: PlayerActivation } | { success: false; error: string }> {
-  try {
-    const ctx = await requireAcademyContext(params.locale);
-    if (!isAcademyAdmin(ctx) && ctx.user.role !== 'admin') {
-      return { success: false, error: 'Unauthorized' };
-    }
-
-    const player = await findUserById(params.playerId);
-    if (!player || player.role !== 'player') {
-      return { success: false, error: 'Invalid player' };
-    }
-
-    // Prevent cross-academy leaks: player must belong to current academy.
-    const membership = await getAcademyMembership(ctx.academyId, player.id);
-    if (!membership) {
-      return { success: false, error: 'Player is not part of this academy' };
-    }
-
-    const activation = await createOrRotatePlayerActivation({
-      academyId: ctx.academyId,
-      playerId: player.id,
-      playerDisplayName: player.fullName || player.username,
-      parentName: player.parentContactName,
-      parentEmail: player.parentContactEmail,
-      parentPhone: player.parentContactPhone,
-      // Optional: expire in 30 days
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString(),
-    });
-
-    const url = `/${params.locale}/activate/${activation.token}`;
-
-    revalidatePath(`/${params.locale}/dashboard/activations`);
-    return { success: true, token: activation.token, url, activation };
-  } catch (error) {
-    console.error('Create activation link error:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to create activation link' };
-  }
-}
-
-export async function listAcademyActivationsAction(params: {
-  locale: string;
-}): Promise<{ success: true; activations: PlayerActivation[] } | { success: false; error: string }> {
-  try {
-    const ctx = await requireAcademyContext(params.locale);
-    if (!isAcademyAdmin(ctx) && ctx.user.role !== 'admin') {
-      return { success: false, error: 'Unauthorized' };
-    }
-
-    const activations = await listPlayerActivationsByAcademy(ctx.academyId);
-    return { success: true, activations };
-  } catch (error) {
-    console.error('List activations error:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to load activations' };
-  }
 }
 
 /**
@@ -192,7 +130,6 @@ export async function completePaymentByTokenAction(params: {
     if (!activated) return { success: false, error: 'Activation not found' };
 
     revalidatePath(`/${params.locale}/dashboard`);
-    revalidatePath(`/${params.locale}/dashboard/activations`);
     revalidatePath(`/${params.locale}/dashboard/players/${paid.playerId}`);
 
     return { success: true, activation: activated };

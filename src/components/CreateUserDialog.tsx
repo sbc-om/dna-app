@@ -49,7 +49,6 @@ export function CreateUserDialog({
   const [birthDay, setBirthDay] = useState('');
   const [birthMonth, setBirthMonth] = useState('');
   const [birthYear, setBirthYear] = useState('');
-  const [ageCategories, setAgeCategories] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     email: '',
     username: '',
@@ -59,8 +58,6 @@ export function CreateUserDialog({
     role: (fixedRole || ROLES.PLAYER) as UserRole,
     parentId: '',
     birthDate: '',
-    ageCategory: '',
-    stage: '',
   });
 
   const [parentFormData, setParentFormData] = useState({
@@ -83,21 +80,6 @@ export function CreateUserDialog({
       setAcademies(result.academies);
       setCurrentUserRole(result.userRole as UserRole);
       setAcademyId(result.currentAcademyId);
-      
-      // Load age categories from training days
-      try {
-        const trainingDaysResp = await fetch('/api/training-days?locale=' + locale);
-        if (trainingDaysResp.ok) {
-          const trainingDaysData = await trainingDaysResp.json();
-          if (trainingDaysData.success && trainingDaysData.trainingDays) {
-            const categories = trainingDaysData.trainingDays.map((td: any) => td.groupKey).filter(Boolean);
-            setAgeCategories(categories);
-          }
-        }
-      } catch (e) {
-        // fallback to default categories
-        setAgeCategories(['U6', 'U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'U21']);
-      }
     }
   };
 
@@ -147,7 +129,6 @@ export function CreateUserDialog({
         role: formData.role,
         parentId: formData.role === ROLES.PLAYER && resolvedParentId ? resolvedParentId : undefined,
         birthDate: formData.role === ROLES.PLAYER ? birthDate : undefined,
-        ageCategory: formData.role === ROLES.PLAYER ? formData.ageCategory : undefined,
       },
       {
         locale,
@@ -167,7 +148,6 @@ export function CreateUserDialog({
         role: ROLES.PLAYER,
         parentId: '',
         birthDate: '',
-        ageCategory: '',
       });      setBirthDay('');
       setBirthMonth('');
       setBirthYear('');      setPlayerParentMode('none');
@@ -435,59 +415,7 @@ export function CreateUserDialog({
                             </div>
                           </div>
 
-                          <div className="grid gap-2">
-                            <Label htmlFor="ageCategory" className="text-sm font-semibold text-[#262626] dark:text-white">
-                              {dictionary.dashboard?.academyAdmin?.ageCategory ?? 'Age category'}
-                            </Label>
-                            <Select 
-                              value={formData.ageCategory} 
-                              onValueChange={(value) => setFormData({ ...formData, ageCategory: value })}
-                            >
-                              <SelectTrigger className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5 font-medium">
-                                <SelectValue placeholder={dictionary.dashboard?.academyAdmin?.ageCategoryPlaceholder ?? 'Select age category'} />
-                              </SelectTrigger>
-                              <SelectContent className="max-h-[300px]">
-                                {ageCategories.length > 0 ? (
-                                  ageCategories.map((category) => (
-                                    <SelectItem key={category} value={category}>
-                                      {category}
-                                    </SelectItem>
-                                  ))
-                                ) : (
-                                  <>
-                                    <SelectItem value="U6">U6</SelectItem>
-                                    <SelectItem value="U8">U8</SelectItem>
-                                    <SelectItem value="U10">U10</SelectItem>
-                                    <SelectItem value="U12">U12</SelectItem>
-                                    <SelectItem value="U14">U14</SelectItem>
-                                    <SelectItem value="U16">U16</SelectItem>
-                                    <SelectItem value="U18">U18</SelectItem>
-                                    <SelectItem value="U21">U21</SelectItem>
-                                  </>
-                                )}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="stage" className="text-sm font-semibold text-[#262626] dark:text-white">
-                              {dictionary.dashboard?.academyAdmin?.stage ?? 'Stage'}
-                            </Label>
-                            <Select 
-                              value={formData.stage || ''} 
-                              onValueChange={(value) => setFormData({ ...formData, stage: value })}
-                            >
-                              <SelectTrigger className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5 font-medium">
-                                <SelectValue placeholder={dictionary.dashboard?.academyAdmin?.stagePlaceholder ?? 'Select stage'} />
-                              </SelectTrigger>
-                              <SelectContent className="max-h-[300px]">
-                                <SelectItem value="explorer">Explorer – Discovery stage</SelectItem>
-                                <SelectItem value="foundation">Foundation – Building base</SelectItem>
-                                <SelectItem value="active">Active Player – Consistent & engaged</SelectItem>
-                                <SelectItem value="competitor">Competitor – Performance-driven</SelectItem>
-                                <SelectItem value="champion">Champion – High consistency & growth</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>                        </div>
+                        </div>
 
                         <div className="mt-4 grid gap-3">
                           <div className="grid gap-2">

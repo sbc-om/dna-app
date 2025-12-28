@@ -40,12 +40,6 @@ export default async function DashboardLayout({
   if (permissions?.canManageSchedules) {
     accessibleResources.push('dashboard.schedules');
   }
-  if (permissions?.canManageTrainingDays) {
-    accessibleResources.push('dashboard.training-days');
-  }
-  if (permissions?.canManageActivations) {
-    accessibleResources.push('dashboard.activations');
-  }
   if (permissions?.canManageNotifications) {
     accessibleResources.push('dashboard.notifications');
   }

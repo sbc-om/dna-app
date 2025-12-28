@@ -61,8 +61,6 @@ export function EditUserDialog({
     isActive: user.isActive,
     parentId: user.parentId || '',
     birthDate: user.birthDate || '',
-    ageCategory: user.ageCategory || '',
-    stage: user.stage || '',
   });
 
   useEffect(() => {
@@ -101,8 +99,6 @@ export function EditUserDialog({
       isActive: formData.isActive,
       parentId: formData.role === ROLES.PLAYER && formData.parentId ? formData.parentId : undefined,
       birthDate: formData.role === ROLES.PLAYER ? formData.birthDate : undefined,
-      ageCategory: formData.role === ROLES.PLAYER ? formData.ageCategory : undefined,
-      stage: formData.role === ROLES.PLAYER ? formData.stage : undefined,
     };
 
     if (formData.password) {
@@ -343,40 +339,7 @@ export function EditUserDialog({
                               className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5"
                             />
                           </div>
-
-                          <div className="grid gap-2">
-                            <Label htmlFor="ageCategory" className="text-sm font-semibold text-[#262626] dark:text-white">
-                              {dictionary.dashboard?.academyAdmin?.ageCategory ?? 'Age category'}
-                            </Label>
-                            <Input
-                              id="ageCategory"
-                              value={formData.ageCategory}
-                              onChange={(e) => setFormData({ ...formData, ageCategory: e.target.value })}
-                              placeholder={dictionary.dashboard?.academyAdmin?.ageCategoryPlaceholder ?? 'e.g. U10'}
-                              required
-                              className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5"
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="stage" className="text-sm font-semibold text-[#262626] dark:text-white">
-                              {locale === 'ar' ? 'المرحلة' : 'Stage'}
-                            </Label>
-                            <Select 
-                              value={formData.stage || ''} 
-                              onValueChange={(value) => setFormData({ ...formData, stage: value })}
-                            >
-                              <SelectTrigger className="h-12 rounded-xl border-2 border-[#DDDDDD] bg-white/80 dark:border-[#000000] dark:bg-white/5 font-medium">
-                                <SelectValue placeholder={locale === 'ar' ? 'اختر المرحلة' : 'Select stage'} />
-                              </SelectTrigger>
-                              <SelectContent className="max-h-[300px]">
-                                <SelectItem value="explorer">Explorer – Discovery stage</SelectItem>
-                                <SelectItem value="foundation">Foundation – Building base</SelectItem>
-                                <SelectItem value="active">Active Player – Consistent & engaged</SelectItem>
-                                <SelectItem value="competitor">Competitor – Performance-driven</SelectItem>
-                                <SelectItem value="champion">Champion – High consistency & growth</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>                        </div>
+                        </div>
                       </div>
                     )}
 

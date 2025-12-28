@@ -42,12 +42,11 @@ export function ParentProfileClient({
     fullName: '',
     nationalId: '',
     birthDate: '',
-    ageCategory: '',
   });
   const [loading, setLoading] = useState(false);
 
   const handleAddChild = async () => {
-    if (!childData.fullName || !childData.nationalId || !childData.birthDate || !childData.ageCategory) {
+    if (!childData.fullName || !childData.nationalId || !childData.birthDate) {
       alert('Please fill in all required fields');
       return;
     }
@@ -64,7 +63,6 @@ export function ParentProfileClient({
       role: 'player',
       parentId: parent.id,
       birthDate: childData.birthDate,
-      ageCategory: childData.ageCategory,
     }, { locale });
 
     setLoading(false);
@@ -73,7 +71,7 @@ export function ParentProfileClient({
       alert(`Child account created successfully!\n\nNational ID: ${childData.nationalId}\nPassword: 11111111`);
       setChildren([...children, result.user!]);
       setAddChildOpen(false);
-      setChildData({ fullName: '', nationalId: '', birthDate: '', ageCategory: '' });
+      setChildData({ fullName: '', nationalId: '', birthDate: '' });
       // Reload page to refresh data
       window.location.reload();
     } else {
@@ -316,15 +314,6 @@ export function ParentProfileClient({
                 type="date"
                 value={childData.birthDate}
                 onChange={(e) => setChildData({ ...childData, birthDate: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="ageCategory">{dictionary.dashboard?.academyAdmin?.ageCategory || 'Age category'}</Label>
-              <Input
-                id="ageCategory"
-                value={childData.ageCategory}
-                onChange={(e) => setChildData({ ...childData, ageCategory: e.target.value })}
-                placeholder={dictionary.dashboard?.academyAdmin?.ageCategoryPlaceholder || 'e.g. U10'}
               />
             </div>
             <div className="bg-[#DDDDDD] dark:bg-[#262626] p-3 rounded-lg">

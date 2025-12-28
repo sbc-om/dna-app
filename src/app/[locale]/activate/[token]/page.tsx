@@ -32,7 +32,6 @@ export default async function ParentActivationPage({
         player={{
           id: player.id,
           fullName: player.fullName || player.username,
-          ageCategory: player.ageCategory || 'Unassigned',
           birthDate: player.birthDate,
         }}
         initialParent={{

@@ -69,9 +69,7 @@
     "courses": "الدورات",
     "payments": "المدفوعات",
     "settings": "الإعدادات",
-    "academies": "الأكاديميات",
-    "trainingDays": "أيام التدريب",
-    "activations": "التفعيلات"
+    "academies": "الأكاديميات"
   },
   "footer": {
     "description": "كن بطلاً!",
@@ -276,8 +274,6 @@
 
       "playerRegistration": "تسجيل اللاعب",
       "birthDate": "تاريخ الميلاد",
-      "ageCategory": "الفئة العمرية",
-      "ageCategoryPlaceholder": "مثل U10",
       "parentLinking": "ربط ولي الأمر",
       "parentLinkingPlaceholder": "اختر",
       "parentNone": "بدون ولي أمر الآن",
@@ -521,14 +517,6 @@
       "canManageSchedules": {
         "title": "إدارة الجداول",
         "description": "إنشاء جداول المواعيد وإدارتها."
-      },
-      "canManageTrainingDays": {
-        "title": "إدارة أيام التدريب",
-        "description": "ضبط أيام التدريب للمجموعات (أيام فقط) داخل الأكاديمية."
-      },
-      "canManageActivations": {
-        "title": "إدارة التفعيلات",
-        "description": "إنشاء وإدارة روابط تفعيل ولي الأمر وتدفق الاشتراك."
       },
       "canManageCourses": {
         "title": "إدارة الدورات",

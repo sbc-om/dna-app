@@ -152,7 +152,6 @@ export default async function DashboardPage({
         return {
           userId: k.id,
           displayName: k.fullName || k.username,
-          ageCategory: k.ageCategory || 'Unassigned',
           stage: profile.currentStage,
           lastAssessmentAt: profile.lastAssessmentAt,
           readyForStageUpgrade: evaluation.readyForStageUpgrade,
@@ -164,15 +163,6 @@ export default async function DashboardPage({
     const playersReadyForStageUpgrade = players.filter((p) => p.readyForStageUpgrade).length;
     const playersNeedingReassessment = players.filter((p) => p.needsReassessment).length;
 
-    const groupMap = new Map<string, number>();
-    for (const p of players) {
-      const key = p.ageCategory || 'Unassigned';
-      groupMap.set(key, (groupMap.get(key) ?? 0) + 1);
-    }
-    const groups = Array.from(groupMap.entries())
-      .map(([key, count]) => ({ key, count }))
-      .sort((a, b) => b.count - a.count);
-
     managerDashboard = {
       academyName: academy?.name,
       academyNameAr: academy?.nameAr,
@@ -181,7 +171,6 @@ export default async function DashboardPage({
       stageCounts,
       playersReadyForStageUpgrade,
       playersNeedingReassessment,
-      groups,
       players: players.sort((a, b) => a.displayName.localeCompare(b.displayName)),
     };
   }

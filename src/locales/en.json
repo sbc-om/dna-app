@@ -69,9 +69,7 @@
     "courses": "Courses",
     "payments": "Payments",
     "settings": "Settings",
-    "academies": "Academies",
-    "trainingDays": "Training Days",
-    "activations": "Activations"
+    "academies": "Academies"
   },
   "footer": {
     "description": "Be a Champion!",
@@ -276,8 +274,6 @@
 
       "playerRegistration": "Player registration",
       "birthDate": "Birth date",
-      "ageCategory": "Age category",
-      "ageCategoryPlaceholder": "e.g. U10",
       "parentLinking": "Parent linking",
       "parentLinkingPlaceholder": "Select",
       "parentNone": "No parent now",
@@ -521,14 +517,6 @@
       "canManageSchedules": {
         "title": "Manage schedules",
         "description": "Create and manage appointment schedules."
-      },
-      "canManageTrainingDays": {
-        "title": "Manage training days",
-        "description": "Configure days-only training schedules for academy groups."
-      },
-      "canManageActivations": {
-        "title": "Manage activations",
-        "description": "Create and manage parent activation links and subscription flow."
       },
       "canManageCourses": {
         "title": "Manage courses",

@@ -89,14 +89,11 @@ export async function createUserAction(
       return { success: false as const, error: academyCheck.error };
     }
 
-    // Registration rules: for player accounts, age and age category are required.
+    // Registration rules: for player accounts, birth date is required.
     const normalizedInput: CreateUserInput = { ...input };
     if ((normalizedInput.role ?? ROLES.PLAYER) === ROLES.PLAYER) {
       if (!normalizedInput.birthDate) {
         return { success: false as const, error: 'Birth date is required for kids' };
-      }
-      if (!normalizedInput.ageCategory) {
-        return { success: false as const, error: 'Age category is required for kids' };
       }
 
       if (normalizedInput.ageYears === undefined) {

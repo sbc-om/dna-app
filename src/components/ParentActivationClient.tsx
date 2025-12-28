@@ -16,7 +16,7 @@ type Props = {
   dictionary: Dictionary;
   token: string;
   academy: { id: string; name: string };
-  player: { id: string; fullName: string; ageCategory: string; birthDate?: string };
+  player: { id: string; fullName: string; birthDate?: string };
   initialParent: { name: string; email: string; phone: string };
   initialStatus: string;
 };
@@ -139,7 +139,6 @@ export function ParentActivationClient({
             <div className="rounded-2xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-white/5 p-4">
               <div className="text-xs font-semibold text-gray-600 dark:text-gray-400">Player</div>
               <div className="mt-1 font-black text-[#262626] dark:text-white">{player.fullName}</div>
-              <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">Group: {player.ageCategory}</div>
             </div>
             <div className="rounded-2xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-white/5 p-4">
               <div className="text-xs font-semibold text-gray-600 dark:text-gray-400">Step</div>

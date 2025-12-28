@@ -23,7 +23,6 @@ import type { PlayerStageKey } from '@/lib/player/stageSystem';
 export type AcademyAdminPlayerRow = {
   userId: string;
   displayName: string;
-  ageCategory: string;
   stage: PlayerStageKey;
   lastAssessmentAt?: string;
   needsReassessment: boolean;
@@ -38,7 +37,6 @@ export type AcademyAdminDashboardData = {
   stageCounts: Record<PlayerStageKey, number>;
   playersReadyForStageUpgrade: number;
   playersNeedingReassessment: number;
-  groups: Array<{ key: string; count: number }>;
   players: AcademyAdminPlayerRow[];
 };
 
@@ -80,25 +78,21 @@ function formatDate(locale: Locale, iso?: string) {
 
 export function AcademyAdminDashboardHomeClient({ locale, dictionary, data, hideHero = false }: Props) {
   const [stageFilter, setStageFilter] = useState<PlayerStageKey | 'all'>('all');
-  const [groupFilter, setGroupFilter] = useState<string>('all');
   const [flagFilter, setFlagFilter] = useState<FilterFlag>('all');
 
   const filteredPlayers = useMemo(() => {
     return data.players.filter((p) => {
       if (stageFilter !== 'all' && p.stage !== stageFilter) return false;
-      if (groupFilter !== 'all' && p.ageCategory !== groupFilter) return false;
       if (flagFilter === 'ready_upgrade' && !p.readyForStageUpgrade) return false;
       if (flagFilter === 'needs_reassessment' && !p.needsReassessment) return false;
       return true;
     });
-  }, [data.players, flagFilter, groupFilter, stageFilter]);
+  }, [data.players, flagFilter, stageFilter]);
 
-  const activeFiltersCount =
-    (stageFilter !== 'all' ? 1 : 0) + (groupFilter !== 'all' ? 1 : 0) + (flagFilter !== 'all' ? 1 : 0);
+  const activeFiltersCount = (stageFilter !== 'all' ? 1 : 0) + (flagFilter !== 'all' ? 1 : 0);
 
   const resetFilters = () => {
     setStageFilter('all');
-    setGroupFilter('all');
     setFlagFilter('all');
   };
 
@@ -176,7 +170,6 @@ export function AcademyAdminDashboardHomeClient({ locale, dictionary, data, hide
           onClick={() => {
             setFlagFilter('all');
             setStageFilter('all');
-            setGroupFilter('all');
           }}
           className={cardBase + ' text-left'}
         >
@@ -304,77 +297,6 @@ export function AcademyAdminDashboardHomeClient({ locale, dictionary, data, hide
         </motion.button>
       </div>
 
-      {/* Middle section: groups */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black text-[#262626] dark:text-white">
-              {dictionary.dashboard?.academyAdmin?.groupsTitle ?? 'Training groups'}
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              {dictionary.dashboard?.academyAdmin?.groupsSubtitle ?? 'Navigate by age category (group-based).'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="rounded-full">
-              {dictionary.dashboard?.academyAdmin?.groupsCountLabel ?? 'Groups'}: {data.groups.length}
-            </Badge>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setGroupFilter('all')}
-            className={
-              'rounded-2xl border-2 p-4 text-left ' +
-              (groupFilter === 'all'
-                ? 'border-blue-500/60 bg-blue-500/10'
-                : 'border-[#DDDDDD] dark:border-[#000000] bg-white/70 dark:bg-white/5')
-            }
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                  {dictionary.dashboard?.academyAdmin?.allGroups ?? 'All groups'}
-                </div>
-                <div className="mt-1 text-2xl font-black text-[#262626] dark:text-white">{data.totalPlayers}</div>
-              </div>
-              <Filter className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            </div>
-          </motion.button>
-
-          {data.groups.map((g, idx) => (
-            <motion.button
-              key={g.key}
-              type="button"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setGroupFilter(g.key)}
-              className={
-                'rounded-2xl border-2 p-4 text-left ' +
-                (groupFilter === g.key
-                  ? 'border-emerald-500/60 bg-emerald-500/10'
-                  : 'border-[#DDDDDD] dark:border-[#000000] bg-white/70 dark:bg-white/5')
-              }
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-sm font-semibold text-gray-600 dark:text-gray-400">{g.key}</div>
-                  <div className="mt-1 text-2xl font-black text-[#262626] dark:text-white">{g.count}</div>
-                </div>
-                <ChevronRight className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      </div>
-
       {/* Bottom section: player list */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -411,9 +333,6 @@ export function AcademyAdminDashboardHomeClient({ locale, dictionary, data, hide
                     {dictionary.dashboard?.academyAdmin?.colPlayer ?? 'Player'}
                   </th>
                   <th className="p-4 text-xs font-black uppercase tracking-wide text-gray-600 dark:text-gray-300">
-                    {dictionary.dashboard?.academyAdmin?.colGroup ?? 'Group'}
-                  </th>
-                  <th className="p-4 text-xs font-black uppercase tracking-wide text-gray-600 dark:text-gray-300">
                     {dictionary.dashboard?.academyAdmin?.colStage ?? 'Stage'}
                   </th>
                   <th className="p-4 text-xs font-black uppercase tracking-wide text-gray-600 dark:text-gray-300">
@@ -438,11 +357,6 @@ export function AcademyAdminDashboardHomeClient({ locale, dictionary, data, hide
                     >
                       <td className="p-4">
                         <div className="font-bold text-[#262626] dark:text-white">{p.displayName}</div>
-                      </td>
-                      <td className="p-4">
-                        <Badge variant="secondary" className="rounded-full">
-                          {p.ageCategory || (dictionary.dashboard?.academyAdmin?.groupUnassigned ?? 'Unassigned')}
-                        </Badge>
                       </td>
                       <td className="p-4">
                         <Badge className="rounded-full" variant="outline">
