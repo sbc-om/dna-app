@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
   Activity,
@@ -36,10 +36,14 @@ import { StudentMedalsDisplay } from '@/components/StudentMedalsDisplay';
 import { updateUserProfilePictureAction } from '@/lib/actions/userActions';
 import { getEnrollmentsByStudentIdAction, updateEnrollmentCourseAction, createEnrollmentAction, deleteEnrollmentAction } from '@/lib/actions/enrollmentActions';
 import { getActiveCoursesAction } from '@/lib/actions/courseActions';
+import { getPlayerProgramEnrollmentsAction, addCoachNoteToProgramPlayerAction } from '@/lib/actions/programEnrollmentActions';
 import { useEffect, useMemo, useState } from 'react';
 import type { Enrollment } from '@/lib/db/repositories/enrollmentRepository';
 import type { Course } from '@/lib/db/repositories/courseRepository';
 import type { PlayerProfile } from '@/lib/db/repositories/playerProfileRepository';
+import type { Program } from '@/lib/db/repositories/programRepository';
+import type { ProgramLevel } from '@/lib/db/repositories/programLevelRepository';
+import type { ProgramCoachNote } from '@/lib/db/repositories/programEnrollmentRepository';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import {
   ensurePlayerProfileAction,
@@ -78,6 +82,19 @@ export function KidProfileClient({
   type EnrichedEnrollment = Enrollment & { course?: Course | null };
   type AssessmentFieldKey = 'speed' | 'agility' | 'balance' | 'power' | 'reaction' | 'coordination' | 'flexibility';
   type AssessmentFormState = { sessionDate: string; notes: string } & Record<AssessmentFieldKey, string>;
+  type PlayerProgramEnrollment = {
+    id: string;
+    academyId: string;
+    programId: string;
+    userId: string;
+    status: string;
+    joinedAt: string;
+    currentLevelId?: string;
+    pointsTotal: number;
+    coachNotes: ProgramCoachNote[];
+    program: Program | null;
+    currentLevel: ProgramLevel | null;
+  };
 
   const [currentKid, setCurrentKid] = useState<User>(kid);
   const [enrollments, setEnrollments] = useState<EnrichedEnrollment[]>([]);
@@ -93,6 +110,16 @@ export function KidProfileClient({
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [stageEvaluation, setStageEvaluation] = useState<StageEvaluationSuccess | null>(null);
   const [assessments, setAssessments] = useState<DnaAssessmentSession[]>([]);
+
+  const [programEnrollments, setProgramEnrollments] = useState<PlayerProgramEnrollment[]>([]);
+  const [loadingProgramEnrollments, setLoadingProgramEnrollments] = useState(false);
+  const [programEnrollmentsError, setProgramEnrollmentsError] = useState<string | null>(null);
+
+  const [programNoteDialogOpen, setProgramNoteDialogOpen] = useState(false);
+  const [programNoteTarget, setProgramNoteTarget] = useState<PlayerProgramEnrollment | null>(null);
+  const [programNotePointsDelta, setProgramNotePointsDelta] = useState<string>('');
+  const [programNoteComment, setProgramNoteComment] = useState<string>('');
+  const [programNoteSubmitting, setProgramNoteSubmitting] = useState(false);
 
   const [assessmentDialogOpen, setAssessmentDialogOpen] = useState(false);
   const [assessmentSubmitting, setAssessmentSubmitting] = useState(false);
@@ -140,6 +167,10 @@ export function KidProfileClient({
 
   useEffect(() => {
     void loadPlayerProfile();
+  }, [kid.id, academyId]);
+
+  useEffect(() => {
+    void loadProgramEnrollments();
   }, [kid.id, academyId]);
 
   async function loadEnrollmentAndCourses() {
@@ -207,6 +238,85 @@ export function KidProfileClient({
       setLoadingProfile(false);
     }
   }
+
+  async function loadProgramEnrollments() {
+    setLoadingProgramEnrollments(true);
+    setProgramEnrollmentsError(null);
+
+    try {
+      const res = await getPlayerProgramEnrollmentsAction({
+        locale,
+        academyId,
+        userId: kid.id,
+      });
+
+      if (!res.success || !res.enrollments) {
+        setProgramEnrollments([]);
+        setProgramEnrollmentsError(res.error || dictionary.common.error);
+        return;
+      }
+
+      setProgramEnrollments(res.enrollments as PlayerProgramEnrollment[]);
+    } catch (error) {
+      console.error('Load program enrollments error:', error);
+      setProgramEnrollments([]);
+      setProgramEnrollmentsError(dictionary.common.error);
+    } finally {
+      setLoadingProgramEnrollments(false);
+    }
+  }
+
+  const openProgramNoteDialog = (enrollment: PlayerProgramEnrollment) => {
+    setProgramNoteTarget(enrollment);
+    setProgramNotePointsDelta('');
+    setProgramNoteComment('');
+    setProgramNoteDialogOpen(true);
+  };
+
+  const submitProgramNote = async () => {
+    if (!programNoteTarget) return;
+
+    const rawDelta = programNotePointsDelta.trim();
+    const pointsDelta: number | undefined = rawDelta ? Number(rawDelta) : undefined;
+    if (rawDelta) {
+      if (typeof pointsDelta !== 'number' || !Number.isFinite(pointsDelta) || Math.abs(pointsDelta) > 100000) {
+        alert(dictionary.common.error);
+        return;
+      }
+    }
+
+    const comment = programNoteComment.trim() ? programNoteComment.trim() : undefined;
+    if (!comment && typeof pointsDelta !== 'number') {
+      alert(dictionary.common.error);
+      return;
+    }
+
+    setProgramNoteSubmitting(true);
+    try {
+      const res = await addCoachNoteToProgramPlayerAction({
+        locale,
+        academyId,
+        programId: programNoteTarget.programId,
+        userId: kid.id,
+        pointsDelta: typeof pointsDelta === 'number' ? pointsDelta : undefined,
+        comment,
+      });
+
+      if (!res.success) {
+        alert(res.error || dictionary.common.error);
+        return;
+      }
+
+      setProgramNoteDialogOpen(false);
+      setProgramNoteTarget(null);
+      await loadProgramEnrollments();
+    } catch (error) {
+      console.error('Submit program note error:', error);
+      alert(dictionary.common.error);
+    } finally {
+      setProgramNoteSubmitting(false);
+    }
+  };
 
   const handleSaveCourse = async () => {
     if (!selectedCourseId) return;
@@ -935,6 +1045,72 @@ export function KidProfileClient({
                 )}
               </div>
             </PanelCard>
+
+            <PanelCard title={dictionary.programs?.playerProgramsTitle ?? dictionary.programs?.title ?? 'Programs'} icon={BookOpen}>
+              <div className="space-y-4">
+                {loadingProgramEnrollments ? (
+                  <div className="text-sm text-white/70">{dictionary.common.loading}</div>
+                ) : programEnrollmentsError ? (
+                  <div className="text-sm text-red-600">{programEnrollmentsError}</div>
+                ) : programEnrollments.length === 0 ? (
+                  <div className="text-white/70">
+                    {dictionary.programs?.noPlayerPrograms ?? 'No program memberships yet.'}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3">
+                    {programEnrollments.map((e) => (
+                      <div
+                        key={e.id}
+                        className="p-4 rounded-2xl border border-white/10 bg-white/5"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="font-bold text-white truncate">
+                              {e.program ? (locale === 'ar' ? e.program.nameAr : e.program.name) : e.programId}
+                            </div>
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
+                              {e.currentLevel ? (
+                                <Badge className="bg-white/10 text-white border-white/15">
+                                  {dictionary.programs?.currentLevelLabel ?? 'Level'}: {locale === 'ar' ? e.currentLevel.nameAr : e.currentLevel.name}
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-white/10 text-white/70 border-white/10">
+                                  {dictionary.programs?.noLevel || 'No level'}
+                                </Badge>
+                              )}
+                              <Badge className="bg-blue-600/15 text-blue-200 border-blue-600/20">
+                                {dictionary.programs?.pointsLabel ?? 'Points'}: {e.pointsTotal}
+                              </Badge>
+                              <Badge className="bg-white/10 text-white/70 border-white/10">
+                                {dictionary.programs?.notesLabel ?? 'Notes'}: {e.coachNotes?.length ?? 0}
+                              </Badge>
+                            </div>
+
+                            {e.coachNotes?.[0]?.comment ? (
+                              <div className="mt-2 text-sm text-white/70 line-clamp-2">
+                                <span className="font-semibold text-white/85">{dictionary.programs?.latestNoteLabel ?? 'Latest'}:</span>{' '}
+                                {e.coachNotes[0].comment}
+                              </div>
+                            ) : null}
+                          </div>
+
+                          {canManage && (
+                            <Button
+                              variant="outline"
+                              className="border-white/20 bg-white/10 text-white hover:bg-white/15"
+                              onClick={() => openProgramNoteDialog(e)}
+                            >
+                              <Plus className="h-4 w-4 me-2" />
+                              {dictionary.programs?.addNote ?? 'Add note'}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </PanelCard>
           </div>
         </TabsContent>
 
@@ -1067,6 +1243,57 @@ export function KidProfileClient({
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Program note dialog */}
+      <Dialog
+        open={programNoteDialogOpen}
+        onOpenChange={(open) => {
+          setProgramNoteDialogOpen(open);
+          if (!open) setProgramNoteTarget(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[680px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{dictionary.programs?.addNoteTitle ?? 'Add coach note'}</DialogTitle>
+            <DialogDescription>
+              {programNoteTarget?.program
+                ? locale === 'ar'
+                  ? programNoteTarget.program.nameAr
+                  : programNoteTarget.program.name
+                : programNoteTarget?.programId}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">{dictionary.programs?.pointsDeltaLabel ?? 'Points change'}</Label>
+              <Input
+                value={programNotePointsDelta}
+                onChange={(e) => setProgramNotePointsDelta(e.target.value)}
+                inputMode="numeric"
+                placeholder={dictionary.programs?.pointsDeltaHint ?? 'e.g. 5 or -2'}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">{dictionary.programs?.commentLabel ?? 'Comment'}</Label>
+              <Input
+                value={programNoteComment}
+                onChange={(e) => setProgramNoteComment(e.target.value)}
+                placeholder={dictionary.programs?.commentHint ?? 'Short coaching note'}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProgramNoteDialogOpen(false)} disabled={programNoteSubmitting}>
+              {dictionary.common.cancel}
+            </Button>
+            <Button onClick={() => void submitProgramNote()} disabled={programNoteSubmitting}>
+              {programNoteSubmitting ? dictionary.common.saving : dictionary.common.save}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Assessment dialog */}
       <Dialog open={assessmentDialogOpen} onOpenChange={setAssessmentDialogOpen}>

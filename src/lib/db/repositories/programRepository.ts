@@ -8,6 +8,7 @@ export interface Program {
   nameAr: string;
   description?: string;
   descriptionAr?: string;
+  image?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -19,6 +20,7 @@ export interface CreateProgramInput {
   nameAr: string;
   description?: string;
   descriptionAr?: string;
+  image?: string;
 }
 
 export interface UpdateProgramInput {
@@ -26,6 +28,7 @@ export interface UpdateProgramInput {
   nameAr?: string;
   description?: string;
   descriptionAr?: string;
+  image?: string;
   isActive?: boolean;
 }
 
@@ -86,6 +89,7 @@ export async function createProgram(input: CreateProgramInput): Promise<Program>
     nameAr: input.nameAr,
     description: input.description,
     descriptionAr: input.descriptionAr,
+    image: input.image,
     isActive: true,
     createdAt: now,
     updatedAt: now,

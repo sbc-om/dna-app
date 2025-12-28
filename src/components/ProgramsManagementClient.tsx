@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Layers, Sparkles, ShieldCheck } from 'lucide-react';
+import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Layers, Sparkles, ShieldCheck, Search } from 'lucide-react';
+import Link from 'next/link';
 import type { Locale } from '@/config/i18n';
 import type { Dictionary } from '@/lib/i18n/getDictionary';
 import type { Program } from '@/lib/db/repositories/programRepository';
@@ -34,6 +35,10 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
+import { ImageUpload } from '@/components/ImageUpload';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 export interface ProgramsManagementClientProps {
   locale: Locale;
@@ -45,6 +50,7 @@ type ProgramFormState = {
   nameAr: string;
   description: string;
   descriptionAr: string;
+  image: string;
   isActive: boolean;
 };
 
@@ -53,10 +59,34 @@ type LevelFormState = {
   nameAr: string;
   description: string;
   descriptionAr: string;
+  image: string;
   minDaysInLevel: string;
   minAttendanceRatePercent: string;
   minNaImprovementPercent: string;
 };
+
+async function uploadCroppedImage(file: File, croppedImageUrl: string): Promise<string | null> {
+  try {
+    const uploadFormData = new FormData();
+
+    // Convert cropped data URL to Blob
+    const response = await fetch(croppedImageUrl);
+    const blob = await response.blob();
+    uploadFormData.append('file', blob, file.name);
+
+    const uploadResponse = await fetch('/api/upload', {
+      method: 'POST',
+      body: uploadFormData,
+    });
+
+    if (!uploadResponse.ok) return null;
+    const data = await uploadResponse.json();
+    return typeof data?.url === 'string' ? data.url : null;
+  } catch (error) {
+    console.error('Upload error:', error);
+    return null;
+  }
+}
 
 function parseOptionalNumber(value: string): number | undefined {
   const v = value.trim();
@@ -64,6 +94,40 @@ function parseOptionalNumber(value: string): number | undefined {
   const n = Number(v);
   if (!Number.isFinite(n)) return undefined;
   return n;
+}
+
+function parseOptionalInteger(value: string): number | undefined {
+  const n = parseOptionalNumber(value);
+  if (typeof n !== 'number') return undefined;
+  if (!Number.isInteger(n)) return undefined;
+  return n;
+}
+
+function clampPercent(n: number): number {
+  if (n < 0) return 0;
+  if (n > 100) return 100;
+  return n;
+}
+
+function validateRulesForm(form: LevelFormState): string | null {
+  const minDaysRaw = form.minDaysInLevel.trim();
+  if (minDaysRaw) {
+    const parsed = parseOptionalInteger(minDaysRaw);
+    if (typeof parsed !== 'number' || parsed < 0) return 'Minimum days must be a non-negative integer.';
+  }
+
+  const percentFields: Array<{ raw: string; label: string }> = [
+    { raw: form.minAttendanceRatePercent.trim(), label: 'Minimum attendance rate' },
+    { raw: form.minNaImprovementPercent.trim(), label: 'Minimum NA improvement' },
+  ];
+
+  for (const f of percentFields) {
+    if (!f.raw) continue;
+    const n = parseOptionalNumber(f.raw);
+    if (typeof n !== 'number' || n < 0) return `${f.label} must be a number between 0 and 100.`;
+  }
+
+  return null;
 }
 
 function rulesToForm(rules: ProgramLevelPassRules | undefined): Pick<LevelFormState, 'minDaysInLevel' | 'minAttendanceRatePercent' | 'minNaImprovementPercent'> {
@@ -77,10 +141,18 @@ function rulesToForm(rules: ProgramLevelPassRules | undefined): Pick<LevelFormSt
 }
 
 function formToRules(form: LevelFormState): ProgramLevelPassRules {
+  const minDaysRaw = form.minDaysInLevel.trim();
+  const minAttRaw = form.minAttendanceRatePercent.trim();
+  const minNaRaw = form.minNaImprovementPercent.trim();
+
+  const minDays = minDaysRaw ? parseOptionalInteger(minDaysRaw) : undefined;
+  const minAttendance = minAttRaw ? parseOptionalNumber(minAttRaw) : undefined;
+  const minNa = minNaRaw ? parseOptionalNumber(minNaRaw) : undefined;
+
   return {
-    minDaysInLevel: parseOptionalNumber(form.minDaysInLevel),
-    minAttendanceRatePercent: parseOptionalNumber(form.minAttendanceRatePercent),
-    minNaImprovementPercent: parseOptionalNumber(form.minNaImprovementPercent),
+    minDaysInLevel: minDays,
+    minAttendanceRatePercent: typeof minAttendance === 'number' ? clampPercent(minAttendance) : undefined,
+    minNaImprovementPercent: typeof minNa === 'number' ? clampPercent(minNa) : undefined,
   };
 }
 
@@ -96,21 +168,25 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
 
   const [programDialogOpen, setProgramDialogOpen] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
+  const [programImageUploading, setProgramImageUploading] = useState(false);
   const [programForm, setProgramForm] = useState<ProgramFormState>({
     name: '',
     nameAr: '',
     description: '',
     descriptionAr: '',
+    image: '',
     isActive: true,
   });
 
   const [levelDialogOpen, setLevelDialogOpen] = useState(false);
   const [editingLevel, setEditingLevel] = useState<ProgramLevel | null>(null);
+  const [levelImageUploading, setLevelImageUploading] = useState(false);
   const [levelForm, setLevelForm] = useState<LevelFormState>({
     name: '',
     nameAr: '',
     description: '',
     descriptionAr: '',
+    image: '',
     minDaysInLevel: '',
     minAttendanceRatePercent: '',
     minNaImprovementPercent: '',
@@ -122,6 +198,24 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
   );
 
   const t = dict.programs;
+
+  const { confirm, ConfirmDialog } = useConfirm();
+
+  type StatusFilter = 'all' | 'active' | 'inactive';
+  const [programsQuery, setProgramsQuery] = useState('');
+  const [programsStatusFilter, setProgramsStatusFilter] = useState<StatusFilter>('all');
+  const [levelsQuery, setLevelsQuery] = useState('');
+
+  const cardShell =
+    'bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000] rounded-2xl shadow-lg relative overflow-hidden';
+  const subtleText = 'text-gray-600 dark:text-gray-400';
+  const fieldLabelClass = 'text-sm font-semibold text-[#262626] dark:text-white';
+  const inputClass =
+    'h-12 bg-white dark:bg-[#111114] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500';
+  const textareaClass =
+    'min-h-[120px] bg-white dark:bg-[#111114] border-2 border-[#DDDDDD] dark:border-[#000000] text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500';
+  const outlineButtonClass =
+    'h-10 border-2 border-[#DDDDDD] dark:border-[#000000] bg-white/80 dark:bg-[#111114] text-[#262626] dark:text-white hover:bg-gray-50 dark:hover:bg-[#1a1a1d]';
 
   const loadPrograms = useCallback(async () => {
     setLoadingPrograms(true);
@@ -184,7 +278,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
 
   const openCreateProgram = () => {
     setEditingProgram(null);
-    setProgramForm({ name: '', nameAr: '', description: '', descriptionAr: '', isActive: true });
+    setProgramForm({ name: '', nameAr: '', description: '', descriptionAr: '', image: '', isActive: true });
     setProgramDialogOpen(true);
   };
 
@@ -195,6 +289,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
       nameAr: program.nameAr || '',
       description: program.description || '',
       descriptionAr: program.descriptionAr || '',
+      image: program.image || '',
       isActive: program.isActive,
     });
     setProgramDialogOpen(true);
@@ -218,6 +313,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
             nameAr,
             description: programForm.description.trim() || undefined,
             descriptionAr: programForm.descriptionAr.trim() || undefined,
+            image: programForm.image.trim() || undefined,
             isActive: programForm.isActive,
           },
           locale
@@ -236,6 +332,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
             nameAr,
             description: programForm.description.trim() || undefined,
             descriptionAr: programForm.descriptionAr.trim() || undefined,
+            image: programForm.image.trim() || undefined,
           },
           locale
         );
@@ -257,7 +354,14 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
   };
 
   const confirmDeleteProgram = async (program: Program) => {
-    const ok = confirm(t?.confirmDeleteProgram || dict.common?.confirmDelete || 'Are you sure?');
+    const programName = locale === 'ar' ? program.nameAr : program.name;
+    const ok = await confirm({
+      title: t?.confirmDeleteProgram || dict.common?.confirmDelete || 'Delete program',
+      description: `This will permanently delete the program "${programName || program.id}".\n\nThis action cannot be undone.`,
+      confirmText: dict.common?.delete || 'Delete',
+      cancelText: dict.common?.cancel || 'Cancel',
+      variant: 'destructive',
+    });
     if (!ok) return;
 
     try {
@@ -282,6 +386,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
       nameAr: '',
       description: '',
       descriptionAr: '',
+      image: '',
       minDaysInLevel: '',
       minAttendanceRatePercent: '',
       minNaImprovementPercent: '',
@@ -297,6 +402,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
       nameAr: level.nameAr || '',
       description: level.description || '',
       descriptionAr: level.descriptionAr || '',
+      image: level.image || '',
       ...rules,
     });
     setLevelDialogOpen(true);
@@ -313,6 +419,12 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
       return;
     }
 
+    const rulesError = validateRulesForm(levelForm);
+    if (rulesError) {
+      toast.error(rulesError);
+      return;
+    }
+
     const rules = formToRules(levelForm);
 
     try {
@@ -324,6 +436,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
             nameAr,
             description: levelForm.description.trim() || undefined,
             descriptionAr: levelForm.descriptionAr.trim() || undefined,
+            image: levelForm.image.trim() || undefined,
             passRules: rules,
           },
           locale
@@ -343,6 +456,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
             nameAr,
             description: levelForm.description.trim() || undefined,
             descriptionAr: levelForm.descriptionAr.trim() || undefined,
+            image: levelForm.image.trim() || undefined,
             passRules: rules,
           },
           locale
@@ -365,7 +479,14 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
   };
 
   const confirmDeleteLevel = async (level: ProgramLevel) => {
-    const ok = confirm(t?.confirmDeleteLevel || dict.common?.confirmDelete || 'Are you sure?');
+    const levelName = locale === 'ar' ? level.nameAr : level.name;
+    const ok = await confirm({
+      title: t?.confirmDeleteLevel || dict.common?.confirmDelete || 'Delete level',
+      description: `This will permanently delete the level "${levelName || level.id}".\n\nThis action cannot be undone.`,
+      confirmText: dict.common?.delete || 'Delete',
+      cancelText: dict.common?.cancel || 'Cancel',
+      variant: 'destructive',
+    });
     if (!ok) return;
 
     try {
@@ -423,6 +544,30 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
     );
   };
 
+  const visiblePrograms = useMemo(() => {
+    const q = programsQuery.trim().toLowerCase();
+    return programs
+      .filter((p) => {
+        if (programsStatusFilter === 'active' && !p.isActive) return false;
+        if (programsStatusFilter === 'inactive' && p.isActive) return false;
+        return true;
+      })
+      .filter((p) => {
+        if (!q) return true;
+        const hay = `${p.name || ''} ${p.nameAr || ''} ${p.description || ''} ${p.descriptionAr || ''}`.toLowerCase();
+        return hay.includes(q);
+      });
+  }, [programs, programsQuery, programsStatusFilter]);
+
+  const visibleLevels = useMemo(() => {
+    const q = levelsQuery.trim().toLowerCase();
+    if (!q) return levels;
+    return levels.filter((lvl) => {
+      const hay = `${lvl.name || ''} ${lvl.nameAr || ''} ${lvl.description || ''} ${lvl.descriptionAr || ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [levels, levelsQuery]);
+
   if (loadingPrograms) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -444,38 +589,75 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
       className="space-y-6"
     >
       {/* Header */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/40">
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-cyan-500/10 via-purple-500/10 to-[#FF5F02]/15" />
-        <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-linear-to-br from-[#FF5F02]/25 to-purple-500/20 blur-3xl" />
-        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <div className="flex items-center gap-3">
-              <motion.div
-                animate={{ rotate: [0, -6, 6, -6, 0] }}
-                transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 2.5 }}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15"
-              >
-                <Layers className="h-5 w-5 text-[#FF5F02]" />
-              </motion.div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white">{t?.title || 'Programs'}</h1>
-                <p className="mt-1 text-sm text-white/70">{t?.description || ''}</p>
-              </div>
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, delay: 0.1 }}
+        className="space-y-4"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="relative">
+            <motion.div
+              className="absolute -inset-4 bg-linear-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10 rounded-2xl blur-xl"
+              animate={{ opacity: [0.5, 0.8, 0.5], scale: [1, 1.05, 1] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <div className="relative">
+              <h1 className="text-3xl sm:text-4xl font-bold bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent flex items-center gap-3">
+                <motion.div
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                >
+                  <Layers className="h-8 w-8 text-purple-600" />
+                </motion.div>
+                {t?.title || 'Programs'}
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">{t?.description || ''}</p>
             </div>
           </div>
 
-          <Button
-            onClick={openCreateProgram}
-            className="h-11 rounded-2xl bg-linear-to-r from-[#FF5F02] to-orange-600 text-white shadow-lg shadow-orange-500/20 hover:from-[#FF5F02]/90 hover:to-orange-600/90"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            <span className="font-semibold">{t?.createProgram || dict.common?.create || 'Create'}</span>
-            <Sparkles className="h-4 w-4 ml-2 text-white/80" />
-          </Button>
-        </div>
-      </div>
+          <div className="w-full sm:w-auto">
+            <div className="relative overflow-hidden rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white/80 dark:bg-[#262626]/80 backdrop-blur-xl shadow-lg">
+              <motion.div
+                className="absolute inset-0 bg-linear-to-r from-blue-600/8 via-purple-600/8 to-pink-600/8"
+                animate={{ opacity: [0.35, 0.6, 0.35] }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              <div className="relative p-2">
+                <div className="flex h-12 w-full items-stretch overflow-hidden rounded-xl border-2 border-black/60 bg-[#0b0b0f] text-white shadow-lg shadow-black/30">
+                  <div className="flex-1 min-w-0 h-full">
+                    <Button
+                      onClick={openCreateProgram}
+                      className="h-full w-full justify-center rounded-none border-0 bg-transparent px-4 text-white hover:bg-[#14141a]"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      <span className="font-semibold">{t?.createProgram || dict.common?.create || 'Create'}</span>
+                      <Sparkles className="h-4 w-4 ml-2 text-white/80" />
+                    </Button>
+                  </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-4">
+                  <div className="w-px bg-white/10" />
+
+                  <div className="shrink-0">
+                    <Button asChild className="h-full rounded-none border-0 bg-transparent px-4 text-white hover:bg-[#14141a]">
+                      <Link href={`/${locale}/dashboard/programs/members`}>
+                        <ShieldCheck className="h-4 w-4 mr-2" />
+                        <span className="font-semibold">{t?.membersTitle || 'Members'}</span>
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v === 'programs' || v === 'levels' ? v : 'programs')}
+        className="space-y-4"
+      >
         <TabsList>
           <TabsTrigger value="programs">{t?.title || 'Programs'}</TabsTrigger>
           <TabsTrigger value="levels" disabled={!selectedProgramId}>
@@ -484,119 +666,267 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
         </TabsList>
 
         <TabsContent value="programs">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {programs.length === 0 ? (
-              <Card className="rounded-3xl border border-white/10 bg-white/5">
-                <CardHeader>
-                  <CardTitle className="text-white">{t?.noPrograms || 'No programs yet'}</CardTitle>
-                  <CardDescription className="text-white/70">{t?.description || ''}</CardDescription>
-                </CardHeader>
-              </Card>
-            ) : (
-              programs.map((p, idx) => {
-                const isSelected = selectedProgramId === p.id;
-                return (
-                  <motion.div
-                    key={p.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.04 }}
-                  >
-                    <Card
-                      onClick={() => {
-                        setSelectedProgramId(p.id);
-                        setActiveTab('levels');
-                      }}
-                      className={
-                        'cursor-pointer rounded-3xl border bg-white/5 transition-all ' +
-                        (isSelected
-                          ? 'border-[#FF5F02]/60 shadow-lg shadow-orange-500/10'
-                          : 'border-white/10 hover:border-white/20')
-                      }
-                    >
-                      <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0">
-                            <CardTitle className="text-white truncate">{locale === 'ar' ? p.nameAr : p.name}</CardTitle>
-                            <CardDescription className="text-white/70 line-clamp-2">
-                              {locale === 'ar' ? p.descriptionAr : p.description}
-                            </CardDescription>
-                          </div>
-                          <Badge className={p.isActive ? 'bg-emerald-500/15 text-emerald-200 border-emerald-500/20' : 'bg-white/10 text-white/70 border-white/10'}>
-                            {p.isActive ? (dict.common?.active || 'Active') : (dict.common?.inactive || 'Inactive')}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-2">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2 text-xs text-white/60">
-                            <ShieldCheck className="h-4 w-4" />
-                            <span>{t?.levelsTitle || 'Levels'}: {levels.length && isSelected ? levels.length : '—'}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              className="h-9 rounded-xl border-white/15 bg-white/5 text-white hover:bg-white/10"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                openEditProgram(p);
-                              }}
-                            >
-                              <Pencil className="h-4 w-4 mr-2" />
-                              {t?.editProgram || dict.common?.edit || 'Edit'}
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              className="h-9 rounded-xl"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                void confirmDeleteProgram(p);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              {t?.deleteProgram || dict.common?.delete || 'Delete'}
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })
-            )}
+          <div className={`${cardShell} p-5 sm:p-6`}>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-linear-to-br from-blue-500/10 to-purple-500/10 flex items-center justify-center">
+                  <Layers className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-base font-bold text-[#262626] dark:text-white">{t?.title || 'Programs'}</div>
+                  <div className={`text-sm ${subtleText} truncate`}>
+                    {'Showing'} {visiblePrograms.length} / {programs.length}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col lg:flex-row gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex h-12 w-full items-stretch overflow-hidden rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#262626]">
+                    <div className="shrink-0 min-w-[180px]">
+                      <Select value={programsStatusFilter} onValueChange={(v) => setProgramsStatusFilter(v as StatusFilter)}>
+                        <SelectTrigger className="h-full! w-full rounded-none border-0 bg-transparent px-4 py-0! text-[#262626] dark:text-white hover:bg-gray-50 dark:hover:bg-[#1a1a1a]">
+                          <SelectValue placeholder={dict.common?.status || 'Status'} className="leading-none" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
+                          <SelectItem value="all">{'All'}</SelectItem>
+                          <SelectItem value="active">{dict.common?.active || 'Active'}</SelectItem>
+                          <SelectItem value="inactive">{dict.common?.inactive || 'Inactive'}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="w-px bg-[#DDDDDD] dark:bg-[#000000]" />
+
+                    <div className="flex-1 min-w-0 relative">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        value={programsQuery}
+                        onChange={(e) => setProgramsQuery(e.target.value)}
+                        placeholder={dict.common?.search ? `${dict.common.search}...` : 'Search...'}
+                        className="h-full! rounded-none border-0 bg-transparent pl-11 pr-4 py-0! text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus-visible:ring-0"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {visiblePrograms.map((p, idx) => {
+              const isSelected = selectedProgramId === p.id;
+              const programName = (locale === 'ar' ? p.nameAr : p.name) || p.name || p.nameAr;
+              const programDesc = (locale === 'ar' ? p.descriptionAr : p.description) || '';
+
+              return (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.03 }}
+                  whileHover={{ scale: 1.01, rotateX: 1, rotateY: -1 }}
+                  style={{ transformStyle: 'preserve-3d' }}
+                >
+                  <Card
+                    className={
+                      `${cardShell} overflow-hidden ` +
+                      (isSelected
+                        ? 'border-[#FF5F02]/60 shadow-xl shadow-orange-500/10'
+                        : '')
+                    }
+                  >
+                    <div className="relative h-44 bg-gray-100 dark:bg-black/40 overflow-hidden">
+                      {p.image ? (
+                        <img src={p.image} alt={programName || 'Program'} className="absolute inset-0 h-full w-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Layers className="h-16 w-16 text-gray-300 dark:text-white/20" />
+                        </div>
+                      )}
+
+                      <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/25 to-transparent" />
+
+                      <div className="absolute top-3 right-3">
+                        {p.isActive ? (
+                          <div className="px-3 py-1 bg-green-600/90 backdrop-blur-sm rounded-full text-xs font-bold text-white flex items-center gap-1">
+                            <ShieldCheck className="h-3 w-3" />
+                            {dict.common?.active || 'Active'}
+                          </div>
+                        ) : (
+                          <div className="px-3 py-1 bg-gray-500/90 backdrop-blur-sm rounded-full text-xs font-bold text-white">
+                            {dict.common?.inactive || 'Inactive'}
+                          </div>
+                        )}
+                      </div>
+
+                      {isSelected ? (
+                        <div className="absolute bottom-3 left-3">
+                          <div className="px-3 py-1 bg-[#FF5F02]/90 backdrop-blur-sm rounded-full text-xs font-black text-white">
+                            {t?.selectedProgram || 'Selected'}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <CardContent className="p-4 space-y-3">
+                      <div className="min-w-0">
+                        <div className="font-black text-lg text-[#262626] dark:text-white truncate">{programName || p.id}</div>
+                        {programDesc ? <div className={`text-sm ${subtleText} line-clamp-2`}>{programDesc}</div> : null}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          onClick={() => {
+                            setSelectedProgramId(p.id);
+                            setActiveTab('levels');
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className={outlineButtonClass}
+                        >
+                          <ShieldCheck className="h-4 w-4 mr-1" />
+                          {t?.levelsTitle || 'Levels'}
+                        </Button>
+
+                        <Button asChild variant="outline" size="sm" className={outlineButtonClass}>
+                          <Link href={`/${locale}/dashboard/programs/members`}>
+                            <Layers className="h-4 w-4 mr-1" />
+                            {t?.membersTitle || 'Members'}
+                          </Link>
+                        </Button>
+
+                        <Button
+                          onClick={() => openEditProgram(p)}
+                          variant="outline"
+                          size="sm"
+                          className="h-10 border-2 border-blue-500/40 bg-white/80 dark:bg-[#111114] text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-[#1a1a1d]"
+                        >
+                          <Pencil className="h-4 w-4 mr-1" />
+                          {dict.common?.edit || 'Edit'}
+                        </Button>
+
+                        <Button
+                          onClick={() => void confirmDeleteProgram(p)}
+                          variant="outline"
+                          size="sm"
+                          className="h-10 border-2 border-red-500/40 bg-white/80 dark:bg-[#111114] text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-[#1a1a1d]"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          {dict.common?.delete || 'Delete'}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {programs.length === 0 && (
+            <div className={`${cardShell} p-10 text-center`}>
+              <Layers className="w-16 h-16 mx-auto text-gray-300 dark:text-white/20 mb-4" />
+              <div className="text-[#262626] dark:text-white font-bold">{t?.noPrograms || 'No programs yet'}</div>
+              <div className={`text-sm mt-2 ${subtleText}`}>{t?.description || 'Create your first program to get started.'}</div>
+            </div>
+          )}
+
+          {programs.length > 0 && visiblePrograms.length === 0 && (
+            <div className={`${cardShell} p-10 text-center`}>
+              <Search className="w-16 h-16 mx-auto text-gray-300 dark:text-white/20 mb-4" />
+              <div className="text-[#262626] dark:text-white font-bold">{'No results'}</div>
+              <div className={`text-sm mt-2 ${subtleText}`}>{'Try adjusting your filters.'}</div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="levels">
           {!selectedProgram ? (
-            <Card className="rounded-3xl border border-white/10 bg-white/5">
-              <CardHeader>
-                <CardTitle className="text-white">{t?.selectProgramPrompt || 'Select a program'}</CardTitle>
-              </CardHeader>
-            </Card>
+            <div className={`${cardShell} p-10 text-center`}>
+              <ShieldCheck className="w-16 h-16 mx-auto text-gray-300 dark:text-white/20 mb-4" />
+              <div className="text-[#262626] dark:text-white font-bold">{t?.selectProgramPrompt || 'Select a program'}</div>
+              <div className={`text-sm mt-2 ${subtleText}`}>{'Choose a program from the Programs tab to manage levels.'}</div>
+            </div>
           ) : (
             <div className="space-y-4">
-              <Card className="rounded-3xl border border-white/10 bg-white/5">
-                <CardHeader className="pb-3">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <CardTitle className="text-white truncate">
-                        {t?.levelsTitle || 'Levels'} — {locale === 'ar' ? selectedProgram.nameAr : selectedProgram.name}
-                      </CardTitle>
-                      <CardDescription className="text-white/70">{t?.rulesTitle || 'Pass Rules'}</CardDescription>
+              <div className={`${cardShell} p-5 sm:p-6`}>
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-linear-to-br from-blue-500/10 to-purple-500/10 flex items-center justify-center">
+                      <ShieldCheck className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                     </div>
-                    <Button
-                      onClick={openCreateLevel}
-                      className="h-10 rounded-2xl bg-white/10 text-white hover:bg-white/15 border border-white/10"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      {t?.createLevel || 'Create Level'}
-                    </Button>
+                    <div className="min-w-0">
+                      <div className="text-base font-bold text-[#262626] dark:text-white">
+                        {t?.levelsTitle || 'Levels'}
+                      </div>
+                      <div className={`text-sm ${subtleText} truncate`}>
+                        {(locale === 'ar' ? selectedProgram.nameAr : selectedProgram.name) || selectedProgram.id}
+                      </div>
+                    </div>
                   </div>
-                </CardHeader>
-              </Card>
+
+                  <div className="flex flex-col lg:flex-row gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex h-12 w-full items-stretch overflow-hidden rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#262626]">
+                        <div className="shrink-0 min-w-[260px]">
+                          <Select
+                            value={selectedProgramId || ''}
+                            onValueChange={(v) => {
+                              setSelectedProgramId(v || null);
+                              setLevelsQuery('');
+                            }}
+                          >
+                            <SelectTrigger className="h-full! w-full rounded-none border-0 bg-transparent px-4 py-0! text-[#262626] dark:text-white hover:bg-gray-50 dark:hover:bg-[#1a1a1a]">
+                              <SelectValue placeholder={t?.selectedProgram || 'Selected program'} className="leading-none" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000]">
+                              {programs.map((p) => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {(locale === 'ar' ? p.nameAr : p.name) || p.id}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="w-px bg-[#DDDDDD] dark:bg-[#000000]" />
+
+                        <div className="flex-1 min-w-0 relative">
+                          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            value={levelsQuery}
+                            onChange={(e) => setLevelsQuery(e.target.value)}
+                            placeholder={'Search levels...'}
+                            className="h-full! rounded-none border-0 bg-transparent pl-11 pr-4 py-0! text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus-visible:ring-0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="w-full lg:w-auto">
+                      <div className="relative overflow-hidden rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white/80 dark:bg-[#262626]/80 backdrop-blur-xl shadow-lg">
+                        <motion.div
+                          className="absolute inset-0 bg-linear-to-r from-blue-600/8 via-purple-600/8 to-pink-600/8"
+                          animate={{ opacity: [0.35, 0.6, 0.35] }}
+                          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                        />
+                        <div className="relative p-2">
+                          <div className="flex h-12 w-full items-stretch overflow-hidden rounded-xl border-2 border-black/60 bg-[#0b0b0f] text-white shadow-lg shadow-black/30">
+                            <Button
+                              onClick={openCreateLevel}
+                              className="h-full w-full justify-center rounded-none border-0 bg-transparent px-4 text-white hover:bg-[#14141a]"
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              <span className="font-semibold">{t?.createLevel || 'Create Level'}</span>
+                              <Sparkles className="h-4 w-4 ml-2 text-white/80" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {loadingLevels ? (
                 <div className="flex items-center justify-center py-10">
@@ -608,86 +938,115 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
                   <span className="ml-3 text-sm text-white/70">{dict.common?.loading || 'Loading...'}</span>
                 </div>
               ) : levels.length === 0 ? (
-                <Card className="rounded-3xl border border-white/10 bg-white/5">
-                  <CardHeader>
-                    <CardTitle className="text-white">{t?.noLevels || 'No levels yet'}</CardTitle>
-                    <CardDescription className="text-white/70">{t?.selectProgramPrompt || ''}</CardDescription>
-                  </CardHeader>
-                </Card>
+                <div className={`${cardShell} p-10 text-center`}>
+                  <ShieldCheck className="w-16 h-16 mx-auto text-gray-300 dark:text-white/20 mb-4" />
+                  <div className="text-[#262626] dark:text-white font-bold">{t?.noLevels || 'No levels yet'}</div>
+                  <div className={`text-sm mt-2 ${subtleText}`}>{'Create the first level for this program.'}</div>
+                </div>
               ) : (
-                <div className="grid grid-cols-1 gap-4">
-                  <AnimatePresence>
-                    {levels.map((lvl, idx) => (
-                      <motion.div
-                        key={lvl.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        transition={{ delay: idx * 0.03 }}
-                      >
-                        <Card className="rounded-3xl border border-white/10 bg-white/5 overflow-hidden">
-                          <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-white/5 via-transparent to-white/5" />
-                          <CardContent className="relative pt-6">
-                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-3">
-                                  <Badge className="bg-white/10 text-white border-white/15">#{lvl.order}</Badge>
-                                  <h3 className="text-lg font-semibold text-white truncate">
-                                    {locale === 'ar' ? lvl.nameAr : lvl.name}
-                                  </h3>
-                                </div>
-                                {(lvl.description || lvl.descriptionAr) && (
-                                  <p className="mt-2 text-sm text-white/70 line-clamp-2">
-                                    {locale === 'ar' ? lvl.descriptionAr : lvl.description}
-                                  </p>
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <AnimatePresence>
+                      {visibleLevels.map((lvl, idx) => {
+                        const levelName = (locale === 'ar' ? lvl.nameAr : lvl.name) || lvl.name || lvl.nameAr;
+                        const levelDesc = (locale === 'ar' ? lvl.descriptionAr : lvl.description) || '';
+
+                        return (
+                          <motion.div
+                            key={lvl.id}
+                            initial={{ opacity: 0, y: 14 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            transition={{ delay: idx * 0.03 }}
+                            whileHover={{ scale: 1.01, rotateX: 1, rotateY: 1 }}
+                            style={{ transformStyle: 'preserve-3d' }}
+                          >
+                            <Card className={`${cardShell} overflow-hidden`}>
+                              <div className="relative h-40 bg-gray-100 dark:bg-black/40 overflow-hidden">
+                                {lvl.image ? (
+                                  <img src={lvl.image} alt={levelName || 'Level'} className="absolute inset-0 h-full w-full object-cover" />
+                                ) : (
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <ShieldCheck className="h-16 w-16 text-gray-300 dark:text-white/20" />
+                                  </div>
                                 )}
-                                <div className="mt-3 flex items-center gap-2">
-                                  <span className="text-xs text-white/60">{t?.rulesTitle || 'Pass Rules'}:</span>
-                                  {rulesBadges(lvl.passRules)}
+                                <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/25 to-transparent" />
+
+                                <div className="absolute top-3 left-3">
+                                  <div className="px-3 py-1 bg-black/60 backdrop-blur-sm rounded-full text-xs font-black text-white">
+                                    #{lvl.order}
+                                  </div>
                                 </div>
                               </div>
 
-                              <div className="flex flex-wrap items-center gap-2">
-                                <Button
-                                  variant="outline"
-                                  className="h-9 rounded-xl border-white/15 bg-white/5 text-white hover:bg-white/10"
-                                  onClick={() => void moveLevel(lvl, 'up')}
-                                  disabled={idx === 0}
-                                >
-                                  <ArrowUp className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  className="h-9 rounded-xl border-white/15 bg-white/5 text-white hover:bg-white/10"
-                                  onClick={() => void moveLevel(lvl, 'down')}
-                                  disabled={idx === levels.length - 1}
-                                >
-                                  <ArrowDown className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  className="h-9 rounded-xl border-white/15 bg-white/5 text-white hover:bg-white/10"
-                                  onClick={() => openEditLevel(lvl)}
-                                >
-                                  <Pencil className="h-4 w-4 mr-2" />
-                                  {t?.editLevel || dict.common?.edit || 'Edit'}
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  className="h-9 rounded-xl"
-                                  onClick={() => void confirmDeleteLevel(lvl)}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  {t?.deleteLevel || dict.common?.delete || 'Delete'}
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
+                              <CardContent className="p-4 space-y-3">
+                                <div className="min-w-0">
+                                  <div className="font-black text-lg text-[#262626] dark:text-white truncate">{levelName || lvl.id}</div>
+                                  {levelDesc ? <div className={`text-sm ${subtleText} line-clamp-2`}>{levelDesc}</div> : null}
+                                </div>
+
+                                <div className="rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-gray-50 dark:bg-[#1a1a1a] p-3">
+                                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">{t?.rulesTitle || 'Pass Rules'}</div>
+                                  {rulesBadges(lvl.passRules)}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className={outlineButtonClass}
+                                    onClick={() => void moveLevel(lvl, 'up')}
+                                    disabled={lvl.order <= 1}
+                                  >
+                                    <ArrowUp className="h-4 w-4 mr-1" />
+                                    {'Up'}
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className={outlineButtonClass}
+                                    onClick={() => void moveLevel(lvl, 'down')}
+                                    disabled={lvl.order >= (levels.at(-1)?.order || lvl.order)}
+                                  >
+                                    <ArrowDown className="h-4 w-4 mr-1" />
+                                    {'Down'}
+                                  </Button>
+
+                                  <Button
+                                    onClick={() => openEditLevel(lvl)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-10 border-2 border-blue-500/40 bg-white/80 dark:bg-[#111114] text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-[#1a1a1d]"
+                                  >
+                                    <Pencil className="h-4 w-4 mr-1" />
+                                    {dict.common?.edit || 'Edit'}
+                                  </Button>
+                                  <Button
+                                    onClick={() => void confirmDeleteLevel(lvl)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-10 border-2 border-red-500/40 bg-white/80 dark:bg-[#111114] text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-[#1a1a1d]"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    {dict.common?.delete || 'Delete'}
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </div>
+
+                  {levels.length > 0 && visibleLevels.length === 0 && (
+                    <div className={`${cardShell} p-10 text-center`}>
+                      <Search className="w-16 h-16 mx-auto text-gray-300 dark:text-white/20 mb-4" />
+                      <div className="text-[#262626] dark:text-white font-bold">{'No results'}</div>
+                      <div className={`text-sm mt-2 ${subtleText}`}>{'Try adjusting your search.'}</div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -696,45 +1055,92 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
 
       {/* Program Dialog */}
       <Dialog open={programDialogOpen} onOpenChange={setProgramDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="sm:max-w-[860px] bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Layers className="h-5 w-5" />
+            <DialogTitle className="text-xl font-black text-[#262626] dark:text-white flex items-center gap-2">
+              <Layers className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               {editingProgram ? (t?.editProgram || 'Edit Program') : (t?.createProgram || 'Create Program')}
             </DialogTitle>
-            <DialogDescription>{t?.description || ''}</DialogDescription>
+            {t?.description ? <DialogDescription className={subtleText}>{t.description}</DialogDescription> : null}
           </DialogHeader>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="text-sm font-medium">{t?.fields?.nameEn || 'Name (English)'}</div>
-              <Input value={programForm.name} onChange={(e) => setProgramForm((p) => ({ ...p, name: e.target.value }))} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-1">
+              <div className="space-y-2">
+                <Label className={fieldLabelClass}>{t?.fields?.image || 'Program image'}</Label>
+                <div className="rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-gray-50 dark:bg-[#111114] p-4">
+                  <ImageUpload
+                    currentImage={programForm.image || undefined}
+                    onUpload={async (file, croppedImageUrl) => {
+                      setProgramImageUploading(true);
+                      const url = await uploadCroppedImage(file, croppedImageUrl);
+                      if (url) {
+                        setProgramForm((p) => ({ ...p, image: url }));
+                        toast.success(dict.common?.success || 'Uploaded');
+                      } else {
+                        toast.error(dict.common?.error || 'Failed to upload');
+                      }
+                      setProgramImageUploading(false);
+                    }}
+                    onError={(message) => toast.error(message)}
+                    shape="square"
+                    size="md"
+                    aspectRatio={16 / 9}
+                    hideHint
+                    variant="minimal"
+                  />
+                  <div className={`mt-3 text-xs ${subtleText}`}>{t?.imageHint || 'Upload a cover image (max 5MB).'}</div>
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">{t?.fields?.nameAr || 'Name (Arabic)'}</div>
-              <Input value={programForm.nameAr} onChange={(e) => setProgramForm((p) => ({ ...p, nameAr: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">{t?.fields?.descriptionEn || 'Description (English)'}</div>
-              <Textarea
-                value={programForm.description}
-                onChange={(e) => setProgramForm((p) => ({ ...p, description: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">{t?.fields?.descriptionAr || 'Description (Arabic)'}</div>
-              <Textarea
-                value={programForm.descriptionAr}
-                onChange={(e) => setProgramForm((p) => ({ ...p, descriptionAr: e.target.value }))}
-              />
+
+            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className={fieldLabelClass}>{t?.fields?.nameEn || 'Name (English)'}</Label>
+                <Input
+                  dir="ltr"
+                  value={programForm.name}
+                  onChange={(e) => setProgramForm((p) => ({ ...p, name: e.target.value }))}
+                  className={inputClass}
+                  placeholder={t?.fields?.nameEn || 'Name (English)'}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className={fieldLabelClass}>{t?.fields?.nameAr || 'Name (Arabic)'}</Label>
+                <Input
+                  dir="rtl"
+                  value={programForm.nameAr}
+                  onChange={(e) => setProgramForm((p) => ({ ...p, nameAr: e.target.value }))}
+                  className={inputClass}
+                  placeholder={t?.fields?.nameAr || 'Name (Arabic)'}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className={fieldLabelClass}>{t?.fields?.descriptionEn || 'Description (English)'}</Label>
+                <Textarea
+                  dir="ltr"
+                  value={programForm.description}
+                  onChange={(e) => setProgramForm((p) => ({ ...p, description: e.target.value }))}
+                  className={textareaClass}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className={fieldLabelClass}>{t?.fields?.descriptionAr || 'Description (Arabic)'}</Label>
+                <Textarea
+                  dir="rtl"
+                  value={programForm.descriptionAr}
+                  onChange={(e) => setProgramForm((p) => ({ ...p, descriptionAr: e.target.value }))}
+                  className={textareaClass}
+                />
+              </div>
             </div>
           </div>
 
           {editingProgram && (
-            <div className="flex items-center justify-between rounded-xl border border-border p-3">
-              <div>
-                <div className="text-sm font-medium">{dict.common?.status || 'Status'}</div>
-                <div className="text-xs text-muted-foreground">{dict.common?.active || 'Active'} / {dict.common?.inactive || 'Inactive'}</div>
+            <div className="flex items-center justify-between gap-4 p-4 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-gray-50 dark:bg-[#1a1a1a]">
+              <div className="min-w-0">
+                <Label className="font-semibold text-[#262626] dark:text-white">{dict.common?.status || 'Status'}</Label>
+                <div className={`text-xs mt-1 ${subtleText}`}>{dict.common?.active || 'Active'} / {dict.common?.inactive || 'Inactive'}</div>
               </div>
               <Switch
                 checked={programForm.isActive}
@@ -743,11 +1149,15 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
             </div>
           )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setProgramDialogOpen(false)}>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setProgramDialogOpen(false)} className="h-12 border-2">
               {dict.common?.cancel || 'Cancel'}
             </Button>
-            <Button onClick={() => void saveProgram()} className="bg-linear-to-r from-[#FF5F02] to-orange-600 text-white">
+            <Button
+              onClick={() => void saveProgram()}
+              disabled={programImageUploading}
+              className="h-12 bg-[#0b0b0f] text-white hover:bg-[#14141a]"
+            >
               {dict.common?.save || 'Save'}
             </Button>
           </DialogFooter>
@@ -756,35 +1166,86 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
 
       {/* Level Dialog */}
       <Dialog open={levelDialogOpen} onOpenChange={setLevelDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="sm:max-w-[980px] bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5" />
+            <DialogTitle className="text-xl font-black text-[#262626] dark:text-white flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               {editingLevel ? (t?.editLevel || 'Edit Level') : (t?.createLevel || 'Create Level')}
             </DialogTitle>
-            <DialogDescription>{t?.rulesTitle || 'Pass Rules'}</DialogDescription>
+            <DialogDescription className={subtleText}>{t?.rulesTitle || 'Pass Rules'}</DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="text-sm font-medium">{t?.fields?.levelNameEn || 'Level name (English)'}</div>
-              <Input value={levelForm.name} onChange={(e) => setLevelForm((p) => ({ ...p, name: e.target.value }))} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-1">
+              <div className="space-y-2">
+                <Label className={fieldLabelClass}>{t?.fields?.levelImage || 'Level image'}</Label>
+                <div className="rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-gray-50 dark:bg-[#111114] p-4">
+                  <ImageUpload
+                    currentImage={levelForm.image || undefined}
+                    onUpload={async (file, croppedImageUrl) => {
+                      setLevelImageUploading(true);
+                      const url = await uploadCroppedImage(file, croppedImageUrl);
+                      if (url) {
+                        setLevelForm((p) => ({ ...p, image: url }));
+                        toast.success(dict.common?.success || 'Uploaded');
+                      } else {
+                        toast.error(dict.common?.error || 'Failed to upload');
+                      }
+                      setLevelImageUploading(false);
+                    }}
+                    onError={(message) => toast.error(message)}
+                    shape="square"
+                    size="md"
+                    aspectRatio={1}
+                    hideHint
+                    variant="minimal"
+                  />
+                  <div className={`mt-3 text-xs ${subtleText}`}>{t?.levelImageHint || 'Upload a level image (max 5MB).'}</div>
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">{t?.fields?.levelNameAr || 'Level name (Arabic)'}</div>
-              <Input value={levelForm.nameAr} onChange={(e) => setLevelForm((p) => ({ ...p, nameAr: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">{t?.fields?.descriptionEn || 'Description (English)'}</div>
-              <Textarea value={levelForm.description} onChange={(e) => setLevelForm((p) => ({ ...p, description: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">{t?.fields?.descriptionAr || 'Description (Arabic)'}</div>
-              <Textarea value={levelForm.descriptionAr} onChange={(e) => setLevelForm((p) => ({ ...p, descriptionAr: e.target.value }))} />
+
+            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className={fieldLabelClass}>{t?.fields?.levelNameEn || 'Level name (English)'}</Label>
+                <Input
+                  dir="ltr"
+                  value={levelForm.name}
+                  onChange={(e) => setLevelForm((p) => ({ ...p, name: e.target.value }))}
+                  className={inputClass}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className={fieldLabelClass}>{t?.fields?.levelNameAr || 'Level name (Arabic)'}</Label>
+                <Input
+                  dir="rtl"
+                  value={levelForm.nameAr}
+                  onChange={(e) => setLevelForm((p) => ({ ...p, nameAr: e.target.value }))}
+                  className={inputClass}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className={fieldLabelClass}>{t?.fields?.descriptionEn || 'Description (English)'}</Label>
+                <Textarea
+                  dir="ltr"
+                  value={levelForm.description}
+                  onChange={(e) => setLevelForm((p) => ({ ...p, description: e.target.value }))}
+                  className={textareaClass}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className={fieldLabelClass}>{t?.fields?.descriptionAr || 'Description (Arabic)'}</Label>
+                <Textarea
+                  dir="rtl"
+                  value={levelForm.descriptionAr}
+                  onChange={(e) => setLevelForm((p) => ({ ...p, descriptionAr: e.target.value }))}
+                  className={textareaClass}
+                />
+              </div>
             </div>
           </div>
 
-          <Card className="rounded-2xl">
+          <Card className="rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-gray-50 dark:bg-[#1a1a1a]">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
@@ -796,45 +1257,54 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
             </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <div className="text-sm font-medium">{t?.minDaysInLevel || 'Minimum days in level'}</div>
+                <Label className={fieldLabelClass}>{t?.minDaysInLevel || 'Minimum days in level'}</Label>
                 <Input
                   inputMode="numeric"
                   value={levelForm.minDaysInLevel}
                   onChange={(e) => setLevelForm((p) => ({ ...p, minDaysInLevel: e.target.value }))}
                   placeholder="e.g. 90"
+                  className={inputClass}
                 />
               </div>
               <div className="space-y-2">
-                <div className="text-sm font-medium">{t?.minAttendanceRate || 'Minimum attendance rate (%)'}</div>
+                <Label className={fieldLabelClass}>{t?.minAttendanceRate || 'Minimum attendance rate (%)'}</Label>
                 <Input
                   inputMode="numeric"
                   value={levelForm.minAttendanceRatePercent}
                   onChange={(e) => setLevelForm((p) => ({ ...p, minAttendanceRatePercent: e.target.value }))}
                   placeholder="e.g. 70"
+                  className={inputClass}
                 />
               </div>
               <div className="space-y-2">
-                <div className="text-sm font-medium">{t?.minNaImprovementPercent || 'Minimum NA improvement (%)'}</div>
+                <Label className={fieldLabelClass}>{t?.minNaImprovementPercent || 'Minimum NA improvement (%)'}</Label>
                 <Input
                   inputMode="numeric"
                   value={levelForm.minNaImprovementPercent}
                   onChange={(e) => setLevelForm((p) => ({ ...p, minNaImprovementPercent: e.target.value }))}
                   placeholder="e.g. 10"
+                  className={inputClass}
                 />
               </div>
             </CardContent>
           </Card>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setLevelDialogOpen(false)}>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setLevelDialogOpen(false)} className="h-12 border-2">
               {dict.common?.cancel || 'Cancel'}
             </Button>
-            <Button onClick={() => void saveLevel()} className="bg-linear-to-r from-[#FF5F02] to-orange-600 text-white">
+            <Button
+              onClick={() => void saveLevel()}
+              disabled={levelImageUploading}
+              className="h-12 bg-[#0b0b0f] text-white hover:bg-[#14141a]"
+            >
               {dict.common?.save || 'Save'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog />
     </motion.div>
   );
 }

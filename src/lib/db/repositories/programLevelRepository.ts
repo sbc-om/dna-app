@@ -16,6 +16,7 @@ export interface ProgramLevel {
   nameAr: string;
   description?: string;
   descriptionAr?: string;
+  image?: string;
   passRules: ProgramLevelPassRules;
   createdAt: string;
   updatedAt: string;
@@ -28,6 +29,7 @@ export interface CreateProgramLevelInput {
   nameAr: string;
   description?: string;
   descriptionAr?: string;
+  image?: string;
   passRules?: ProgramLevelPassRules;
 }
 
@@ -36,6 +38,7 @@ export interface UpdateProgramLevelInput {
   nameAr?: string;
   description?: string;
   descriptionAr?: string;
+  image?: string;
   passRules?: ProgramLevelPassRules;
 }
 
@@ -130,6 +133,7 @@ export async function createProgramLevel(input: CreateProgramLevelInput): Promis
     nameAr: input.nameAr,
     description: input.description,
     descriptionAr: input.descriptionAr,
+    image: input.image,
     passRules: safeRules(input.passRules),
     createdAt: now,
     updatedAt: now,
