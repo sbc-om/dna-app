@@ -26,6 +26,7 @@ export interface RolePermission {
     canCreateGroup: boolean;
     canSendPushNotifications: boolean;
     canManageCourses: boolean;
+    canManagePrograms: boolean;
     canViewPayments: boolean;
     canSendWhatsApp: boolean;
   };
@@ -53,6 +54,7 @@ const DEFAULT_PERMISSIONS: Record<UserRole, RolePermission['permissions']> = {
     canCreateGroup: true,
     canSendPushNotifications: true,
     canManageCourses: true,
+    canManagePrograms: true,
     canViewPayments: true,
     canSendWhatsApp: true,
   },
@@ -73,6 +75,7 @@ const DEFAULT_PERMISSIONS: Record<UserRole, RolePermission['permissions']> = {
     canCreateGroup: true,
     canSendPushNotifications: true,
     canManageCourses: true,
+    canManagePrograms: true,
     canViewPayments: true,
     canSendWhatsApp: true,
   },
@@ -93,6 +96,7 @@ const DEFAULT_PERMISSIONS: Record<UserRole, RolePermission['permissions']> = {
     canCreateGroup: true,
     canSendPushNotifications: true,
     canManageCourses: false,
+    canManagePrograms: false,
     canViewPayments: false,
     canSendWhatsApp: true,
   },
@@ -113,6 +117,7 @@ const DEFAULT_PERMISSIONS: Record<UserRole, RolePermission['permissions']> = {
     canCreateGroup: false,
     canSendPushNotifications: false,
     canManageCourses: false,
+    canManagePrograms: false,
     canViewPayments: true,
     canSendWhatsApp: false,
   },
@@ -133,6 +138,7 @@ const DEFAULT_PERMISSIONS: Record<UserRole, RolePermission['permissions']> = {
     canCreateGroup: false,
     canSendPushNotifications: false,
     canManageCourses: false,
+    canManagePrograms: false,
     canViewPayments: false,
     canSendWhatsApp: false,
   },

@@ -148,7 +148,7 @@ export async function createEnrollmentAction(input: CreateEnrollmentInput) {
   try {
     // Validate student exists
     const student = await findUserById(input.studentId);
-    if (!student || student.role !== 'kid') {
+    if (!student || student.role !== 'player') {
       return { success: false, error: 'Invalid student' };
     }
     

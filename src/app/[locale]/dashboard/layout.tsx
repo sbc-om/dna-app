@@ -52,6 +52,9 @@ export default async function DashboardLayout({
   if (permissions?.canManageCourses) {
     accessibleResources.push('dashboard.courses');
   }
+  if (permissions?.canManagePrograms) {
+    accessibleResources.push('dashboard.programs');
+  }
   if (permissions?.canViewPayments) {
     accessibleResources.push('dashboard.payments');
   }

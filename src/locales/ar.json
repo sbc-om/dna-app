@@ -15,10 +15,14 @@
     "cancel": "إلغاء",
     "save": "حفظ",
     "saved": "تم الحفظ",
+    "created": "تم الإنشاء",
     "delete": "حذف",
     "deleted": "تم الحذف",
     "edit": "تعديل",
     "create": "إنشاء",
+    "status": "الحالة",
+    "active": "نشط",
+    "inactive": "غير نشط",
     "search": "بحث",
     "actions": "الإجراءات",
     "loading": "جاري التحميل...",
@@ -69,7 +73,8 @@
     "courses": "الدورات",
     "payments": "المدفوعات",
     "settings": "الإعدادات",
-    "academies": "الأكاديميات"
+    "academies": "الأكاديميات",
+    "programs": "البرامج"
   },
   "footer": {
     "description": "كن بطلاً!",
@@ -521,6 +526,10 @@
       "canManageCourses": {
         "title": "إدارة الدورات",
         "description": "إنشاء الدورات وتعديلها وإدارتها."
+      },
+      "canManagePrograms": {
+        "title": "إدارة البرامج",
+        "description": "إنشاء برامج الأكاديمية وإدارة المستويات وقواعد النجاح."
       },
       "canViewPayments": {
         "title": "عرض المدفوعات",
@@ -1055,6 +1064,35 @@
     "noTrainingSessionsPlanned": "لم يتم تخطيط أي جلسات تدريب بعد",
     "sessionsList": "قائمة الجلسات",
     "activitiesCount": "نشاط"
+  },
+  "programs": {
+    "title": "البرامج",
+    "description": "إنشاء البرامج، تعريف المستويات المرتبة، وتكوين قواعد النجاح.",
+    "createProgram": "إنشاء برنامج",
+    "editProgram": "تعديل البرنامج",
+    "deleteProgram": "حذف البرنامج",
+    "noPrograms": "لا توجد برامج بعد",
+    "selectProgramPrompt": "اختر برنامجاً لإدارة المستويات",
+    "levelsTitle": "المستويات",
+    "createLevel": "إنشاء مستوى",
+    "editLevel": "تعديل المستوى",
+    "deleteLevel": "حذف المستوى",
+    "noLevels": "لا توجد مستويات بعد",
+    "rulesTitle": "قواعد النجاح",
+    "rulesHint": "حدد الشروط المطلوبة لاجتياز هذا المستوى. اترك الحقل فارغاً لتجاهل هذا الشرط.",
+    "minDaysInLevel": "الحد الأدنى للأيام في المستوى",
+    "minAttendanceRate": "الحد الأدنى لنسبة الحضور (%)",
+    "minNaImprovementPercent": "الحد الأدنى لتحسن NA (%)",
+    "confirmDeleteProgram": "هل أنت متأكد من حذف هذا البرنامج؟",
+    "confirmDeleteLevel": "هل أنت متأكد من حذف هذا المستوى؟",
+    "fields": {
+      "nameEn": "الاسم (بالإنجليزية)",
+      "nameAr": "الاسم (بالعربية)",
+      "descriptionEn": "الوصف (بالإنجليزية)",
+      "descriptionAr": "الوصف (بالعربية)",
+      "levelNameEn": "اسم المستوى (بالإنجليزية)",
+      "levelNameAr": "اسم المستوى (بالعربية)"
+    }
   },
   "payments": {
     "title": "المدفوعات",

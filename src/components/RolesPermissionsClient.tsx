@@ -59,6 +59,7 @@ export function RolesPermissionsClient({ dictionary, initialRolePermissions, loc
       { key: 'canManageAppointments', group: 'management' },
       { key: 'canManageSchedules', group: 'management' },
       { key: 'canManageCourses', group: 'management' },
+      { key: 'canManagePrograms', group: 'management' },
       { key: 'canViewPayments', group: 'management' },
       { key: 'canManageNotifications', group: 'management' },
       { key: 'canManageBackups', group: 'management' },

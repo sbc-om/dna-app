@@ -11,8 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Settings,
-  BookOpen,
-  DollarSign,
+  Layers,
   MessageCircle,
   
 } from 'lucide-react';
@@ -58,6 +57,13 @@ const menuItems: MenuItem[] = [
     labelKey: 'academies',
     href: '/dashboard/academies',
     icon: Building2,
+  },
+  {
+    key: 'programs',
+    resourceKey: 'dashboard.programs',
+    labelKey: 'programs',
+    href: '/dashboard/programs',
+    icon: Layers,
   },
   {
     key: 'messages',
