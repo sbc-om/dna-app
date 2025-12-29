@@ -1,5 +1,6 @@
 import { getDatabase, generateId } from '../lmdb';
 import { DEFAULT_ACADEMY_ID } from './academyRepository';
+import { getDefaultProgramLevelColor, normalizeHexColor } from '@/lib/theme/accentColors';
 
 export type ProgramLevelPassRules = {
   minDaysInLevel?: number;
@@ -17,6 +18,8 @@ export interface ProgramLevel {
   description?: string;
   descriptionAr?: string;
   image?: string;
+  /** Hex color used as the UI accent for this level (e.g. "#FF5F02"). */
+  color: string;
   passRules: ProgramLevelPassRules;
   createdAt: string;
   updatedAt: string;
@@ -30,6 +33,7 @@ export interface CreateProgramLevelInput {
   description?: string;
   descriptionAr?: string;
   image?: string;
+  color?: string;
   passRules?: ProgramLevelPassRules;
 }
 
@@ -39,21 +43,39 @@ export interface UpdateProgramLevelInput {
   description?: string;
   descriptionAr?: string;
   image?: string;
+  color?: string;
   passRules?: ProgramLevelPassRules;
 }
 
 const LEVEL_PREFIX = 'program_level:';
 
-function normalizeLevelAcademy(level: ProgramLevel | any, key?: string): ProgramLevel {
-  if (!level?.academyId) {
-    const normalized: ProgramLevel = { ...level, academyId: DEFAULT_ACADEMY_ID };
-    if (key) {
-      const db = getDatabase();
-      db.put(key, normalized);
-    }
-    return normalized;
+function normalizeLevel(level: ProgramLevel | any, key?: string): ProgramLevel {
+  const academyId = level?.academyId || DEFAULT_ACADEMY_ID;
+  const order = typeof level?.order === 'number' ? level.order : 1;
+  const color = normalizeHexColor(level?.color) ?? getDefaultProgramLevelColor(order);
+
+  const normalized: ProgramLevel = {
+    ...level,
+    academyId,
+    order,
+    color,
+  };
+
+  const changed =
+    normalized.academyId !== level?.academyId ||
+    normalized.color !== level?.color ||
+    normalized.order !== level?.order;
+
+  if (changed && key) {
+    const db = getDatabase();
+    db.put(key, normalized);
   }
-  return level as ProgramLevel;
+
+  return normalized;
+}
+
+function safeColor(input: unknown, order: number): string {
+  return normalizeHexColor(input) ?? getDefaultProgramLevelColor(order);
 }
 
 function safeRules(input?: ProgramLevelPassRules): ProgramLevelPassRules {
@@ -85,7 +107,7 @@ export async function getAllProgramLevels(): Promise<ProgramLevel[]> {
   for (const { key, value } of range) {
     const keyStr = String(key);
     if (keyStr.startsWith(LEVEL_PREFIX) && value) {
-      levels.push(normalizeLevelAcademy(value as ProgramLevel, keyStr));
+      levels.push(normalizeLevel(value as ProgramLevel, keyStr));
     }
   }
 
@@ -108,7 +130,7 @@ export async function findProgramLevelById(id: string): Promise<ProgramLevel | n
   const db = getDatabase();
   const key = `${LEVEL_PREFIX}${id}`;
   const level = db.get(key);
-  return level ? normalizeLevelAcademy(level as ProgramLevel, key) : null;
+  return level ? normalizeLevel(level as ProgramLevel, key) : null;
 }
 
 async function nextOrderForProgram(programId: string): Promise<number> {
@@ -134,6 +156,7 @@ export async function createProgramLevel(input: CreateProgramLevelInput): Promis
     description: input.description,
     descriptionAr: input.descriptionAr,
     image: input.image,
+    color: safeColor(input.color, order),
     passRules: safeRules(input.passRules),
     createdAt: now,
     updatedAt: now,
@@ -154,6 +177,7 @@ export async function updateProgramLevel(id: string, updates: UpdateProgramLevel
     academyId: existing.academyId,
     programId: existing.programId,
     order: existing.order,
+    color: updates.color !== undefined ? safeColor(updates.color, existing.order) : existing.color,
     passRules: updates.passRules ? safeRules(updates.passRules) : existing.passRules,
     updatedAt: new Date().toISOString(),
   };

@@ -32,8 +32,9 @@ export default async function KidProfilePage({
   const isAdmin = user.role === 'admin';
   const isCoach = user.role === 'coach';
   const isManager = user.role === 'manager';
+  const isSelfPlayer = user.role === 'player' && user.id === id;
 
-  if (!isParent && !isAdmin && !isCoach && !isManager) {
+  if (!isParent && !isAdmin && !isCoach && !isManager && !isSelfPlayer) {
     // If not authorized, redirect to dashboard
     redirect(`/${locale}/dashboard`);
   }

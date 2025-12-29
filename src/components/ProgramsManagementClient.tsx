@@ -39,6 +39,7 @@ import { ImageUpload } from '@/components/ImageUpload';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConfirm } from '@/components/ConfirmDialog';
+import { DEFAULT_ACCENT_COLOR, normalizeHexColor, getDefaultProgramLevelColor } from '@/lib/theme/accentColors';
 
 export interface ProgramsManagementClientProps {
   locale: Locale;
@@ -60,6 +61,7 @@ type LevelFormState = {
   description: string;
   descriptionAr: string;
   image: string;
+  color: string;
   minDaysInLevel: string;
   minAttendanceRatePercent: string;
   minNaImprovementPercent: string;
@@ -187,6 +189,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
     description: '',
     descriptionAr: '',
     image: '',
+    color: DEFAULT_ACCENT_COLOR,
     minDaysInLevel: '',
     minAttendanceRatePercent: '',
     minNaImprovementPercent: '',
@@ -387,6 +390,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
       description: '',
       descriptionAr: '',
       image: '',
+      color: getDefaultProgramLevelColor((levels?.length || 0) + 1),
       minDaysInLevel: '',
       minAttendanceRatePercent: '',
       minNaImprovementPercent: '',
@@ -403,6 +407,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
       description: level.description || '',
       descriptionAr: level.descriptionAr || '',
       image: level.image || '',
+      color: level.color || getDefaultProgramLevelColor(level.order),
       ...rules,
     });
     setLevelDialogOpen(true);
@@ -426,6 +431,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
     }
 
     const rules = formToRules(levelForm);
+    const color = normalizeHexColor(levelForm.color) || DEFAULT_ACCENT_COLOR;
 
     try {
       if (editingLevel) {
@@ -437,6 +443,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
             description: levelForm.description.trim() || undefined,
             descriptionAr: levelForm.descriptionAr.trim() || undefined,
             image: levelForm.image.trim() || undefined,
+            color,
             passRules: rules,
           },
           locale
@@ -457,6 +464,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
             description: levelForm.description.trim() || undefined,
             descriptionAr: levelForm.descriptionAr.trim() || undefined,
             image: levelForm.image.trim() || undefined,
+            color,
             passRules: rules,
           },
           locale
@@ -950,6 +958,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
                       {visibleLevels.map((lvl, idx) => {
                         const levelName = (locale === 'ar' ? lvl.nameAr : lvl.name) || lvl.name || lvl.nameAr;
                         const levelDesc = (locale === 'ar' ? lvl.descriptionAr : lvl.description) || '';
+                        const levelColor = lvl.color || getDefaultProgramLevelColor(lvl.order);
 
                         return (
                           <motion.div
@@ -977,12 +986,32 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
                                     #{lvl.order}
                                   </div>
                                 </div>
+
+                                <div className="absolute top-3 right-3">
+                                  <div
+                                    className="h-8 w-8 rounded-full border-2 border-white/30 shadow-lg"
+                                    style={{ backgroundColor: levelColor }}
+                                    title={levelColor}
+                                  />
+                                </div>
                               </div>
 
                               <CardContent className="p-4 space-y-3">
                                 <div className="min-w-0">
                                   <div className="font-black text-lg text-[#262626] dark:text-white truncate">{levelName || lvl.id}</div>
                                   {levelDesc ? <div className={`text-sm ${subtleText} line-clamp-2`}>{levelDesc}</div> : null}
+                                </div>
+
+                                <div className="flex items-center justify-between gap-3">
+                                  <div className={`text-xs ${subtleText}`}>{t?.fields?.levelColor || 'Level color'}</div>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-xs font-mono ${subtleText}`}>{levelColor}</span>
+                                    <div
+                                      className="h-4 w-4 rounded-full border border-black/20 dark:border-white/20"
+                                      style={{ backgroundColor: levelColor }}
+                                      aria-hidden
+                                    />
+                                  </div>
                                 </div>
 
                                 <div className="rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-gray-50 dark:bg-[#1a1a1a] p-3">
@@ -1224,6 +1253,28 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
                   className={inputClass}
                 />
               </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <Label className={fieldLabelClass}>{t?.fields?.levelColor || 'Level color'}</Label>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <input
+                    aria-label={t?.fields?.levelColor || 'Level color'}
+                    type="color"
+                    value={normalizeHexColor(levelForm.color) || DEFAULT_ACCENT_COLOR}
+                    onChange={(e) => setLevelForm((p) => ({ ...p, color: e.target.value }))}
+                    className="h-12 w-16 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#111114] p-1"
+                  />
+                  <Input
+                    dir="ltr"
+                    value={levelForm.color}
+                    onChange={(e) => setLevelForm((p) => ({ ...p, color: e.target.value }))}
+                    placeholder="#FF5F02"
+                    className={inputClass}
+                  />
+                  <div className={`text-xs ${subtleText}`}>{t?.levelColorHint || 'Used as the UI accent for this level.'}</div>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label className={fieldLabelClass}>{t?.fields?.descriptionEn || 'Description (English)'}</Label>
                 <Textarea

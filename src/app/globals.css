@@ -78,6 +78,9 @@
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #262626;
   --sidebar-ring: #30B2D2;
+
+  /* Dynamic per-level accent (can be overridden at runtime per user/page) */
+  --dna-accent: #FF5F02;
   
   /* Chart colors */
   --grid-color: #374151;
@@ -117,6 +120,9 @@
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #262626;
   --sidebar-ring: #30B2D2;
+
+  /* Dynamic per-level accent (can be overridden at runtime per user/page) */
+  --dna-accent: #FF5F02;
   
   /* Chart colors for dark mode */
   --grid-color: #374151;

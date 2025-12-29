@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Trophy,
@@ -15,24 +15,30 @@ import {
   ArrowLeft,
   Crown,
   Gift,
+  Flame,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
 import type { User } from '@/lib/db/repositories/userRepository';
 import type { PlayerProfile } from '@/lib/db/repositories/playerProfileRepository';
+import type { DnaAssessmentSession } from '@/lib/db/repositories/dnaAssessmentRepository';
 import { BADGES } from '@/lib/player/badges';
+import { calculateCategoryScores } from '@/lib/player/dnaScoring';
+import { DnaCircularGauge } from '@/components/DnaCircularGauge';
+import { DEFAULT_ACCENT_COLOR } from '@/lib/theme/accentColors';
 
 interface AchievementsStatsClientProps {
   dictionary: Dictionary;
   locale: Locale;
   kid: User;
   profile: PlayerProfile | null;
+  latestAssessment?: DnaAssessmentSession | null;
+  accentColor?: string;
 }
 
 export function AchievementsStatsClient({
@@ -40,8 +46,50 @@ export function AchievementsStatsClient({
   locale,
   kid,
   profile,
+  latestAssessment,
+  accentColor,
 }: AchievementsStatsClientProps) {
   const [activeTab, setActiveTab] = useState('overview');
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--dna-accent', accentColor || DEFAULT_ACCENT_COLOR);
+    return () => {
+      document.documentElement.style.removeProperty('--dna-accent');
+    };
+  }, [accentColor]);
+
+  const t = (path: string): string => {
+    const parts = path.split('.');
+    let cur: unknown = dictionary;
+    for (const p of parts) {
+      if (!cur || typeof cur !== 'object') return path;
+      cur = (cur as Record<string, unknown>)[p];
+    }
+    return typeof cur === 'string' ? cur : path;
+  };
+
+  const fallbackBadgeLabel = (badgeId: string): string =>
+    badgeId
+      .split('_')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+
+  const badgeName = (badgeId: string): string => {
+    const def = BADGES.find((b) => b.id === badgeId);
+    if (!def) return fallbackBadgeLabel(badgeId);
+    const translated = t(def.nameKey);
+    return translated === def.nameKey ? fallbackBadgeLabel(badgeId) : translated;
+  };
+
+  const categoryLabel = (key: string): string => {
+    const categories = (dictionary.playerProfile as any)?.categories as Record<string, string> | undefined;
+    return categories?.[key] ?? key;
+  };
+
+  const dnaScores = useMemo(() => {
+    if (!latestAssessment) return null;
+    return calculateCategoryScores(latestAssessment.tests);
+  }, [latestAssessment]);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -105,7 +153,21 @@ export function AchievementsStatsClient({
     };
   }, [profile]);
 
+  const monthlyBadgeMax = useMemo(() => {
+    const values = Object.values(stats.badgesByMonth);
+    if (values.length === 0) return 0;
+    return Math.max(...values);
+  }, [stats.badgesByMonth]);
+
   const displayName = kid.fullName || kid.username || kid.email;
+
+  const pageTitle =
+    dictionary.playerAchievementsPage?.title ??
+    dictionary.playerProfile?.tabs?.achievements ??
+    'Achievements';
+  const pageSubtitle =
+    dictionary.playerAchievementsPage?.subtitle ??
+    'Track progress and achievements.';
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -130,12 +192,10 @@ export function AchievementsStatsClient({
               >
                 <Trophy className="h-8 w-8 text-yellow-500" />
               </motion.div>
-              {locale === 'ar' ? 'الإنجازات والدستاوردات' : 'Achievements & Badges'}
+              {pageTitle}
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              {locale === 'ar' 
-                ? `تتبع تقدم ${displayName} ونجاحاته` 
-                : `Track ${displayName}'s progress and success`}
+              {pageSubtitle.replace('{name}', displayName)}
             </p>
           </div>
         </div>
@@ -149,9 +209,60 @@ export function AchievementsStatsClient({
         >
           <Badge className="px-4 py-2 text-lg bg-linear-to-r from-yellow-400 to-orange-500 text-white">
             <Star className="h-4 w-4 mr-2" />
-            {stats.earnedBadges}/{stats.totalBadges} {locale === 'ar' ? 'شارة' : 'Badges'}
+            {stats.earnedBadges}/{stats.totalBadges} {dictionary.playerAchievementsPage?.badgesLabel ?? 'Badges'}
           </Badge>
         </motion.div>
+      </motion.div>
+
+      {/* DNA overview */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.15 }}
+      >
+        <Card className="border-2 border-[#DDDDDD] dark:border-[#000000] overflow-hidden">
+          <CardHeader className="bg-gray-50 dark:bg-[#1a1a1a] border-b-2 border-[#DDDDDD] dark:border-[#000000]">
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              {dictionary.playerAchievementsPage?.dnaTitle ?? 'DNA snapshot'}
+            </CardTitle>
+            <CardDescription>
+              {latestAssessment
+                ? (dictionary.playerAchievementsPage?.dnaSubtitleWithDate ?? 'Latest assessment: {date}')
+                    .replace('{date}', latestAssessment.sessionDate)
+                : (dictionary.playerAchievementsPage?.dnaEmpty ?? 'No assessments yet.')}
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="pt-6">
+            {!dnaScores ? (
+              <div className="rounded-xl border-2 border-dashed border-[#DDDDDD] dark:border-[#000000] p-6 text-center text-sm text-gray-600 dark:text-gray-400">
+                {dictionary.playerAchievementsPage?.dnaEmpty ?? 'No assessments yet.'}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
+                {Object.entries(dnaScores).map(([key, value], index) => (
+                  <motion.div
+                    key={String(key)}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.04 }}
+                    className="rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#262626] p-3"
+                  >
+                    <DnaCircularGauge
+                      value={Math.round(value)}
+                      max={100}
+                      size={76}
+                      strokeWidth={10}
+                      label={categoryLabel(String(key))}
+                      ariaLabel={`${String(key)} score`}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </motion.div>
 
       {/* Main Stats Grid */}
@@ -159,11 +270,11 @@ export function AchievementsStatsClient({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch"
       >
         {/* Total Badges Earned */}
-        <motion.div whileHover={{ scale: 1.02, y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
-          <Card className="relative overflow-hidden border-2 border-[#DDDDDD] dark:border-[#000000] bg-linear-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20">
+        <motion.div whileHover={{ scale: 1.02, y: -5 }} transition={{ type: 'spring', stiffness: 300 }} className="h-full">
+          <Card className="relative h-full overflow-hidden border-2 border-[#DDDDDD] dark:border-[#000000] bg-linear-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 flex flex-col">
             <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/20 rounded-full blur-3xl" />
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
@@ -176,44 +287,44 @@ export function AchievementsStatsClient({
                 </motion.div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 flex flex-col justify-end">
               <div className="text-3xl font-black text-[#262626] dark:text-white">
                 {stats.earnedBadges}
               </div>
               <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                {locale === 'ar' ? 'شارات مكتسبة' : 'Badges Earned'}
+                {dictionary.playerAchievementsPage?.badgesEarnedLabel ?? 'Badges earned'}
               </p>
             </CardContent>
           </Card>
         </motion.div>
 
         {/* Completion Rate */}
-        <motion.div whileHover={{ scale: 1.02, y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
-          <Card className="relative overflow-hidden border-2 border-[#DDDDDD] dark:border-[#000000] bg-linear-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20">
+        <motion.div whileHover={{ scale: 1.02, y: -5 }} transition={{ type: 'spring', stiffness: 300 }} className="h-full">
+            <Card className="relative h-full overflow-hidden border-2 border-[#DDDDDD] dark:border-[#000000] bg-linear-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 flex flex-col">
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-400/20 rounded-full blur-3xl" />
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <Target className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                <Badge variant="secondary" className="text-xs">
-                  {stats.completionRate}%
-                </Badge>
+                  <Badge variant="secondary" className="text-xs">{stats.completionRate}%</Badge>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-black text-[#262626] dark:text-white">
-                {stats.completionRate}%
-              </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 mb-2">
-                {locale === 'ar' ? 'معدل الإنجاز' : 'Completion Rate'}
-              </p>
-              <Progress value={stats.completionRate} className="h-2" />
+            <CardContent className="flex-1 flex items-center justify-center">
+                <DnaCircularGauge
+                  value={stats.completionRate}
+                  max={100}
+                  size={84}
+                  strokeWidth={10}
+                  label={dictionary.playerAchievementsPage?.completionRateLabel ?? 'Completion rate'}
+                  valueSuffix="%"
+                  ariaLabel="Completion rate"
+                />
             </CardContent>
           </Card>
         </motion.div>
 
         {/* Total XP from Badges */}
-        <motion.div whileHover={{ scale: 1.02, y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
-          <Card className="relative overflow-hidden border-2 border-[#DDDDDD] dark:border-[#000000] bg-linear-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+        <motion.div whileHover={{ scale: 1.02, y: -5 }} transition={{ type: 'spring', stiffness: 300 }} className="h-full">
+          <Card className="relative h-full overflow-hidden border-2 border-[#DDDDDD] dark:border-[#000000] bg-linear-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 flex flex-col">
             <div className="absolute top-0 right-0 w-32 h-32 bg-green-400/20 rounded-full blur-3xl" />
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
@@ -226,20 +337,20 @@ export function AchievementsStatsClient({
                 </motion.div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 flex flex-col justify-end">
               <div className="text-3xl font-black text-[#262626] dark:text-white">
                 {stats.xpFromBadges}
               </div>
               <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                {locale === 'ar' ? 'نقاط خبرة من الشارات' : 'XP from Badges'}
+                {dictionary.playerAchievementsPage?.xpFromBadgesLabel ?? 'XP from badges'}
               </p>
             </CardContent>
           </Card>
         </motion.div>
 
         {/* Streak */}
-        <motion.div whileHover={{ scale: 1.02, y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
-          <Card className="relative overflow-hidden border-2 border-[#DDDDDD] dark:border-[#000000] bg-linear-to-br from-red-50 to-pink-50 dark:from-red-950/20 dark:to-pink-950/20">
+        <motion.div whileHover={{ scale: 1.02, y: -5 }} transition={{ type: 'spring', stiffness: 300 }} className="h-full">
+          <Card className="relative h-full overflow-hidden border-2 border-[#DDDDDD] dark:border-[#000000] bg-linear-to-br from-red-50 to-pink-50 dark:from-red-950/20 dark:to-pink-950/20 flex flex-col">
             <div className="absolute top-0 right-0 w-32 h-32 bg-red-400/20 rounded-full blur-3xl" />
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
@@ -249,17 +360,17 @@ export function AchievementsStatsClient({
                     animate={{ y: [0, -5, 0] }}
                     transition={{ duration: 1, repeat: Infinity }}
                   >
-                    🔥
+                    <Flame className="h-5 w-5 text-red-500" />
                   </motion.div>
                 )}
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 flex flex-col justify-end">
               <div className="text-3xl font-black text-[#262626] dark:text-white">
                 {stats.streak}
               </div>
               <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                {locale === 'ar' ? 'أشهر متتالية' : 'Month Streak'}
+                {dictionary.playerAchievementsPage?.streakLabel ?? 'Month streak'}
               </p>
             </CardContent>
           </Card>
@@ -276,15 +387,15 @@ export function AchievementsStatsClient({
           <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
             <TabsTrigger value="overview" className="gap-2">
               <Award className="h-4 w-4" />
-              {locale === 'ar' ? 'نظرة عامة' : 'Overview'}
+              {dictionary.playerAchievementsPage?.tabs?.overview ?? dictionary.playerProfile?.tabs?.overview ?? 'Overview'}
             </TabsTrigger>
             <TabsTrigger value="recent" className="gap-2">
               <Calendar className="h-4 w-4" />
-              {locale === 'ar' ? 'الأخيرة' : 'Recent'}
+              {dictionary.playerAchievementsPage?.tabs?.recent ?? 'Recent'}
             </TabsTrigger>
             <TabsTrigger value="all" className="gap-2">
               <Medal className="h-4 w-4" />
-              {locale === 'ar' ? 'الكل' : 'All Badges'}
+              {dictionary.playerAchievementsPage?.tabs?.all ?? 'All badges'}
             </TabsTrigger>
           </TabsList>
 
@@ -296,23 +407,30 @@ export function AchievementsStatsClient({
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5" />
-                    {locale === 'ar' ? 'التقدم العام' : 'Overall Progress'}
+                    {dictionary.playerAchievementsPage?.overallProgressTitle ?? 'Overall progress'}
                   </CardTitle>
                   <CardDescription>
-                    {locale === 'ar' 
-                      ? `${stats.remainingBadges} شارة متبقية للحصول على الجميع` 
-                      : `${stats.remainingBadges} badges remaining to collect all`}
+                    {(dictionary.playerAchievementsPage?.overallProgressSubtitle ?? '{count} badges remaining to collect all')
+                      .replace('{count}', String(stats.remainingBadges))}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{locale === 'ar' ? 'مكتملة' : 'Completed'}</span>
+                    <span className="text-sm font-medium">{dictionary.playerAchievementsPage?.completedLabel ?? 'Completed'}</span>
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       {stats.earnedBadges} / {stats.totalBadges}
                     </span>
                   </div>
-                  <Progress value={stats.completionRate} className="h-3" />
-                  
+                  <DnaCircularGauge
+                    value={stats.completionRate}
+                    max={100}
+                    size={96}
+                    strokeWidth={12}
+                    label={dictionary.playerAchievementsPage?.completionRateLabel ?? 'Completion rate'}
+                    valueSuffix="%"
+                    ariaLabel="Badges completion rate"
+                  />
+
                   {stats.rarestBadge && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
@@ -323,7 +441,7 @@ export function AchievementsStatsClient({
                         <Crown className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                         <div>
                           <p className="text-xs font-semibold text-purple-900 dark:text-purple-300">
-                            {locale === 'ar' ? 'أول شارة مكتسبة' : 'First Badge Earned'}
+                            {dictionary.playerAchievementsPage?.firstBadgeEarnedLabel ?? 'First badge earned'}
                           </p>
                           <p className="text-sm font-bold text-purple-600 dark:text-purple-400">
                             {new Date(stats.rarestBadge.grantedAt).toLocaleDateString(locale)}
@@ -340,53 +458,45 @@ export function AchievementsStatsClient({
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Calendar className="h-5 w-5" />
-                    {locale === 'ar' ? 'النشاط الشهري' : 'Monthly Activity'}
+                    {dictionary.playerAchievementsPage?.monthlyActivityTitle ?? 'Monthly activity'}
                   </CardTitle>
                   <CardDescription>
-                    {locale === 'ar' 
-                      ? 'الشارات المكتسبة في الأشهر الأخيرة' 
-                      : 'Badges earned in recent months'}
+                    {dictionary.playerAchievementsPage?.monthlyActivitySubtitle ?? 'Badges earned in recent months'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {Object.entries(stats.badgesByMonth)
                       .sort((a, b) => b[0].localeCompare(a[0]))
                       .slice(0, 6)
                       .map(([month, count], index) => {
                         const date = new Date(month + '-01');
                         const monthName = date.toLocaleDateString(locale, { month: 'short', year: 'numeric' });
-                        const maxCount = Math.max(...Object.values(stats.badgesByMonth));
-                        const percentage = (count / maxCount) * 100;
 
                         return (
                           <motion.div
                             key={month}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="space-y-2"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.08 }}
+                            className="rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#262626] p-3"
                           >
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="font-medium">{monthName}</span>
-                              <Badge variant="secondary">{count}</Badge>
-                            </div>
-                            <div className="h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${percentage}%` }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
-                                className="h-full bg-linear-to-r from-blue-500 to-purple-500"
-                              />
-                            </div>
+                            <DnaCircularGauge
+                              value={count}
+                              max={Math.max(1, monthlyBadgeMax)}
+                              size={72}
+                              strokeWidth={10}
+                              label={monthName}
+                              ariaLabel="Monthly badges"
+                            />
                           </motion.div>
                         );
                       })}
 
                     {Object.keys(stats.badgesByMonth).length === 0 && (
-                      <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-                        {locale === 'ar' ? 'لا توجد شارات بعد' : 'No badges yet'}
-                      </p>
+                      <div className="col-span-full rounded-xl border-2 border-dashed border-[#DDDDDD] dark:border-[#000000] p-6 text-center text-sm text-gray-600 dark:text-gray-400">
+                        {dictionary.playerAchievementsPage?.noBadgesYet ?? 'No badges yet'}
+                      </div>
                     )}
                   </div>
                 </CardContent>
@@ -411,14 +521,11 @@ export function AchievementsStatsClient({
                       </motion.div>
                       <div>
                         <h3 className="text-lg font-bold text-[#262626] dark:text-white">
-                          {locale === 'ar' 
-                            ? `استمر! ${stats.remainingBadges} شارة أخرى في انتظارك!` 
-                            : `Keep going! ${stats.remainingBadges} more badges await!`}
+                          {(dictionary.playerAchievementsPage?.keepGoingTitle ?? 'Keep going! {count} more badges await!')
+                            .replace('{count}', String(stats.remainingBadges))}
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {locale === 'ar' 
-                            ? 'كل شارة تمثل إنجازاً جديداً في رحلتك' 
-                            : 'Each badge represents a new achievement in your journey'}
+                          {dictionary.playerAchievementsPage?.keepGoingSubtitle ?? 'Each badge represents a new achievement in your journey'}
                         </p>
                       </div>
                     </div>
@@ -432,15 +539,14 @@ export function AchievementsStatsClient({
           <TabsContent value="recent" className="space-y-4">
             <Card className="border-2 border-[#DDDDDD] dark:border-[#000000]">
               <CardHeader>
-                <CardTitle>{locale === 'ar' ? 'الشارات الأخيرة' : 'Recent Badges'}</CardTitle>
+                <CardTitle>{dictionary.playerAchievementsPage?.recentBadgesTitle ?? 'Recent badges'}</CardTitle>
                 <CardDescription>
-                  {locale === 'ar' ? 'آخر الإنجازات' : 'Latest achievements'}
+                  {dictionary.playerAchievementsPage?.recentBadgesSubtitle ?? 'Latest achievements'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {stats.recentBadges.map((badge, index) => {
-                    const badgeInfo = BADGES.find(b => b.id === badge.badgeId);
                     return (
                       <motion.div
                         key={badge.badgeId + badge.grantedAt}
@@ -454,8 +560,7 @@ export function AchievementsStatsClient({
                         </div>
                         <div className="flex-1">
                           <h4 className="font-semibold text-[#262626] dark:text-white">
-                            {/* Badge name from dictionary would go here */}
-                            {badge.badgeId.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                            {badgeName(badge.badgeId)}
                           </h4>
                           <p className="text-xs text-gray-600 dark:text-gray-400">
                             {new Date(badge.grantedAt).toLocaleDateString(locale, {
@@ -478,7 +583,7 @@ export function AchievementsStatsClient({
                     <div className="text-center py-12">
                       <Medal className="h-16 w-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
                       <p className="text-gray-500 dark:text-gray-400">
-                        {locale === 'ar' ? 'لا توجد شارات بعد' : 'No badges earned yet'}
+                        {dictionary.playerAchievementsPage?.noBadgesEarnedYet ?? 'No badges earned yet'}
                       </p>
                     </div>
                   )}
@@ -491,9 +596,11 @@ export function AchievementsStatsClient({
           <TabsContent value="all" className="space-y-4">
             <Card className="border-2 border-[#DDDDDD] dark:border-[#000000]">
               <CardHeader>
-                <CardTitle>{locale === 'ar' ? 'جميع الشارات' : 'All Badges'}</CardTitle>
+                <CardTitle>{dictionary.playerAchievementsPage?.allBadgesTitle ?? 'All badges'}</CardTitle>
                 <CardDescription>
-                  {stats.earnedBadges} {locale === 'ar' ? 'من' : 'of'} {stats.totalBadges} {locale === 'ar' ? 'مكتسبة' : 'earned'}
+                  {(dictionary.playerAchievementsPage?.allBadgesSubtitle ?? '{earned} of {total} earned')
+                    .replace('{earned}', String(stats.earnedBadges))
+                    .replace('{total}', String(stats.totalBadges))}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -526,7 +633,7 @@ export function AchievementsStatsClient({
                           )}
                         </div>
                         <p className="text-xs font-semibold text-[#262626] dark:text-white">
-                          {badgeInfo.id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                          {badgeName(badgeInfo.id)}
                         </p>
                         {earned && (
                           <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-1">

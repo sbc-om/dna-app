@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import {
   AtSign,
@@ -19,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { EditUserDialog } from '@/components/EditUserDialog';
+import { PlayerPreviewCard } from '@/components/PlayerPreviewCard';
 
 import type { Dictionary } from '@/lib/i18n/getDictionary';
 import type { Locale } from '@/config/i18n';
@@ -308,35 +308,12 @@ export function UserDetailsClient({ dictionary, locale, user, memberships, child
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {children!.map((player) => (
-                      <Link
+                      <PlayerPreviewCard
                         key={player.id}
-                        href={`/${locale}/dashboard/players/${player.id}`}
-                        className="block"
-                      >
-                        <div className="p-4 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="font-bold text-[#262626] dark:text-white truncate">
-                                {player.fullName || player.username}
-                              </p>
-                              <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{player.nationalId || player.id}</p>
-                            </div>
-                            <Badge
-                              variant={player.isActive ? 'default' : 'secondary'}
-                              className={
-                                player.isActive
-                                  ? 'bg-green-600/10 text-green-700 dark:text-green-400 border border-green-600/30'
-                                  : 'bg-gray-100 dark:bg-[#0a0a0a] text-gray-700 dark:text-gray-300 border border-[#DDDDDD] dark:border-[#000000]'
-                              }
-                            >
-                              {player.isActive ? dictionary.users.active : dictionary.users.inactive}
-                            </Badge>
-                          </div>
-                          <div className="mt-3 text-xs text-gray-600 dark:text-gray-400">
-                            <span className="font-semibold">{dictionary.users.createdAt}:</span> {formatDate(locale, player.createdAt)}
-                          </div>
-                        </div>
-                      </Link>
+                        locale={locale}
+                        dictionary={dictionary}
+                        child={player}
+                      />
                     ))}
                   </div>
                 )}

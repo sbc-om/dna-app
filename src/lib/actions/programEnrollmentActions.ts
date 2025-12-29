@@ -7,13 +7,14 @@ import { listAcademyMembers, getAcademyMembership } from '@/lib/db/repositories/
 import { findUserById, getUsersByIds } from '@/lib/db/repositories/userRepository';
 import { hasRolePermission } from '@/lib/db/repositories/rolePermissionRepository';
 import { findProgramById } from '@/lib/db/repositories/programRepository';
-import { findProgramLevelById } from '@/lib/db/repositories/programLevelRepository';
+import { findProgramLevelById, getProgramLevelsByProgramIdAndAcademyId } from '@/lib/db/repositories/programLevelRepository';
 import {
   upsertProgramEnrollment,
   removeProgramEnrollment,
   listProgramEnrollmentsByProgram,
   listProgramEnrollmentsByUser,
   appendProgramCoachNote,
+  updateProgramEnrollment,
   type ProgramEnrollment,
 } from '@/lib/db/repositories/programEnrollmentRepository';
 
@@ -216,6 +217,112 @@ export async function addCoachNoteToProgramPlayerAction(params: {
   } catch (error) {
     console.error('Error adding coach note:', error);
     return { success: false as const, error: 'Failed to add note' };
+  }
+}
+
+export async function getProgramLevelsForProgramAction(params: {
+  locale: string;
+  academyId?: string;
+  programId: string;
+}) {
+  noStore();
+  const me = await requireAuth(params.locale);
+
+  const academyId = params.academyId ?? (await requireAcademyContext(params.locale)).academyId;
+
+  // Admin OR academy manager only.
+  const myMembership = await getAcademyMembership(academyId, me.id);
+  const canManage = me.role === 'admin' || myMembership?.role === 'manager';
+  if (!canManage) return { success: false as const, error: 'Unauthorized' };
+
+  try {
+    const program = await findProgramById(params.programId);
+    if (!program) return { success: false as const, error: 'Program not found' };
+    if (me.role !== 'admin' && program.academyId !== academyId) {
+      return { success: false as const, error: 'Unauthorized' };
+    }
+
+    const levels = await getProgramLevelsByProgramIdAndAcademyId(params.programId, academyId);
+    return { success: true as const, levels };
+  } catch (error) {
+    console.error('Error getting program levels for program:', error);
+    return { success: false as const, error: 'Failed to get levels' };
+  }
+}
+
+export async function setPlayerProgramLevelAction(params: {
+  locale: string;
+  academyId?: string;
+  programId: string;
+  userId: string;
+  nextLevelId?: string | null;
+  pointsDelta?: number;
+  comment?: string;
+}) {
+  const me = await requireAuth(params.locale);
+  const academyId = params.academyId ?? (await requireAcademyContext(params.locale)).academyId;
+
+  // Admin OR academy manager only.
+  const myMembership = await getAcademyMembership(academyId, me.id);
+  const canManage = me.role === 'admin' || myMembership?.role === 'manager';
+  if (!canManage) return { success: false as const, error: 'Unauthorized' };
+
+  try {
+    const program = await findProgramById(params.programId);
+    if (!program) return { success: false as const, error: 'Program not found' };
+    if (me.role !== 'admin' && program.academyId !== academyId) {
+      return { success: false as const, error: 'Unauthorized' };
+    }
+
+    // Ensure target is a player in this academy.
+    const targetMembership = await getAcademyMembership(academyId, params.userId);
+    if (!targetMembership || targetMembership.role !== 'player') {
+      return { success: false as const, error: 'User is not a player in this academy' };
+    }
+
+    // Validate level (if any).
+    const nextLevelId = params.nextLevelId ?? undefined;
+    if (nextLevelId) {
+      const lvl = await findProgramLevelById(nextLevelId);
+      if (!lvl) return { success: false as const, error: 'Level not found' };
+      if (lvl.programId !== params.programId) return { success: false as const, error: 'Level does not belong to program' };
+      if (me.role !== 'admin' && lvl.academyId !== academyId) return { success: false as const, error: 'Unauthorized' };
+    }
+
+    const updated = await updateProgramEnrollment({
+      academyId,
+      programId: params.programId,
+      userId: params.userId,
+      updates: {
+        currentLevelId: nextLevelId,
+      },
+    });
+
+    if (!updated) return { success: false as const, error: 'Enrollment not found' };
+
+    const points = params.pointsDelta;
+    const userComment = (params.comment ?? '').trim();
+    const auditComment = userComment || `Manual program level set to ${nextLevelId ?? 'none'}`;
+
+    const withNote = await appendProgramCoachNote({
+      academyId,
+      programId: params.programId,
+      userId: params.userId,
+      note: {
+        coachUserId: me.id,
+        pointsDelta: points,
+        comment: auditComment,
+      },
+    });
+
+    revalidatePath(`/${params.locale}/dashboard/players/${params.userId}`, 'page');
+    revalidatePath(`/${params.locale}/dashboard/users/${params.userId}`, 'page');
+    revalidatePath(`/${params.locale}/dashboard/programs/members`, 'page');
+
+    return { success: true as const, enrollment: withNote ?? updated };
+  } catch (error) {
+    console.error('Error setting player program level:', error);
+    return { success: false as const, error: 'Failed to update program level' };
   }
 }
 

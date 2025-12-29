@@ -30,6 +30,7 @@ interface ProfileClientProps {
 
 export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) {
   const router = useRouter();
+  const accent = 'var(--dna-accent)';
   const [formData, setFormData] = useState({
     fullName: user.fullName || '',
     phoneNumber: user.phoneNumber || '',
@@ -171,7 +172,10 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
           className="relative overflow-hidden rounded-3xl border border-white/10 bg-linear-to-br from-slate-950 via-indigo-950 to-purple-950 p-6 sm:p-8 shadow-2xl"
         >
           <div className="pointer-events-none absolute inset-0">
-            <div className="absolute -top-20 -left-24 h-72 w-72 rounded-full bg-orange-500/20 blur-3xl" />
+            <div
+              className="absolute -top-20 -left-24 h-72 w-72 rounded-full blur-3xl"
+              style={{ backgroundColor: accent, opacity: 0.2 }}
+            />
             <div className="absolute -bottom-28 -right-24 h-80 w-80 rounded-full bg-fuchsia-500/20 blur-3xl" />
             <motion.div
               className="absolute left-10 top-10 h-2 w-2 rounded-full bg-white/40"
@@ -200,11 +204,12 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
                   )}
                 </div>
                 <motion.div
-                  className="absolute -bottom-2 -right-2 h-8 w-8 rounded-2xl bg-orange-500/20 border border-orange-500/20 backdrop-blur-xl flex items-center justify-center"
+                  className="absolute -bottom-2 -right-2 h-8 w-8 rounded-2xl backdrop-blur-xl flex items-center justify-center"
+                  style={{ backgroundColor: accent, opacity: 0.18, border: `1px solid ${accent}` }}
                   animate={{ rotate: [0, -6, 6, 0] }}
                   transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
                 >
-                  <UserCircle className="h-4 w-4 text-orange-200" />
+                  <UserCircle className="h-4 w-4" style={{ color: accent, opacity: 0.9 }} />
                 </motion.div>
               </motion.div>
 
@@ -287,7 +292,7 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
                   <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-50 transition-opacity" />
                   <CardHeader className="border-b border-white/10">
                     <CardTitle className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                      <UserCircle className="h-5 w-5 text-orange-500" />
+                      <UserCircle className="h-5 w-5" style={{ color: accent }} />
                       {dictionary.users?.profile || 'Profile'}
                     </CardTitle>
                   </CardHeader>
@@ -325,7 +330,7 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
                 <Card className="overflow-hidden rounded-3xl border border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur-xl shadow-2xl">
                   <CardHeader className="border-b border-white/10">
                     <CardTitle className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                      <Camera className="h-5 w-5 text-orange-500" />
+                      <Camera className="h-5 w-5" style={{ color: accent }} />
                       {dictionary.users?.profilePicture || 'Profile picture'}
                     </CardTitle>
                   </CardHeader>
@@ -353,7 +358,7 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
                 <Card className="overflow-hidden rounded-3xl border border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur-xl shadow-2xl">
                   <CardHeader className="border-b border-white/10">
                     <CardTitle className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                      <User className="h-5 w-5 text-orange-500" />
+                      <User className="h-5 w-5" style={{ color: accent }} />
                       {dictionary.users?.personalInfo || 'Personal information'}
                     </CardTitle>
                   </CardHeader>
@@ -423,9 +428,10 @@ export function ProfileClient({ dictionary, locale, user }: ProfileClientProps) 
                         <motion.div
                           animate={{ rotate: [0, -6, 6, 0] }}
                           transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-                          className="h-10 w-10 rounded-2xl bg-orange-500/10 border border-orange-500/15 flex items-center justify-center"
+                          className="h-10 w-10 rounded-2xl flex items-center justify-center"
+                          style={{ backgroundColor: accent, opacity: 0.12, border: `1px solid ${accent}` }}
                         >
-                          <Phone className="h-5 w-5 text-orange-600 dark:text-orange-300" />
+                          <Phone className="h-5 w-5" style={{ color: accent, opacity: 0.9 }} />
                         </motion.div>
                         <div className="min-w-0">
                           <p className="text-sm font-extrabold text-slate-900 dark:text-white">

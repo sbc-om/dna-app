@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/auth/auth';
 import { getDictionary } from '@/lib/i18n/getDictionary';
 import { Locale } from '@/config/i18n';
 import { ROLE_LABELS } from '@/config/roles';
-import { listUsers, getChildrenByParentId, getUsersByIds } from '@/lib/db/repositories/userRepository';
+import { listUsers, getChildrenByParentId, getUsersByIds, findUserById } from '@/lib/db/repositories/userRepository';
 import { listAcademyMembers } from '@/lib/db/repositories/academyMembershipRepository';
 import { getCoursesByCoachIdAndAcademyId, type Course, getCoursesByAcademyId, getAllCourses } from '@/lib/db/repositories/courseRepository';
 import { getPaidEnrollmentsByCourseIdAndAcademyId, getEnrollmentsByAcademyId, getAllEnrollments } from '@/lib/db/repositories/enrollmentRepository';
@@ -14,6 +14,8 @@ import { getAttendanceByCourse } from '@/lib/db/repositories/attendanceRepositor
 import { findAcademyById } from '@/lib/db/repositories/academyRepository';
 import { DashboardHomeClient } from '@/components/DashboardHomeClient';
 import { type AcademyAdminDashboardData, type AcademyAdminPlayerRow } from '@/components/AcademyAdminDashboardHomeClient';
+import { KidProfileClient } from '@/components/KidProfileClient';
+import { requireUserInAcademy } from '@/lib/academies/academyGuards';
 
 export default async function DashboardPage({
   params,
@@ -25,6 +27,39 @@ export default async function DashboardPage({
   const user = await requireAuth(locale);
   const ctx = user.role === 'admin' ? null : await requireAcademyContext(locale);
   const roleLabel = ROLE_LABELS[user.role][locale] || user.role;
+
+  // PLAYER: show a complete professional profile on the dashboard home.
+  // This reuses the same profile UI as admin/coach/parent views, but in read-only mode.
+  if (user.role === 'player') {
+    // Prevent cross-academy access via global user IDs.
+    await requireUserInAcademy({ academyId: ctx!.academyId, userId: user.id });
+
+    const player = await findUserById(user.id);
+    if (!player) {
+      // Should never happen for an authenticated user, but keep the UI safe.
+      return (
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl space-y-6 overflow-x-hidden">
+          <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-8 text-center shadow-lg dark:border-[#000000] dark:bg-[#262626]">
+            <div className="text-[#262626] dark:text-white text-lg font-semibold">
+              {dictionary.common?.errors?.notFound || 'Not found'}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl space-y-6 overflow-x-hidden">
+        <KidProfileClient
+          dictionary={dictionary}
+          locale={locale}
+          kid={player}
+          currentUser={user}
+          academyId={ctx!.academyId}
+        />
+      </div>
+    );
+  }
 
   // Fetch children for parent
   let children: any[] = [];

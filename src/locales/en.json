@@ -419,6 +419,7 @@
     "parentProfile": "Parent Profile",
     "viewParentDetails": "View and manage parent and their children",
     "children": "Children",
+    "viewChildrenHint": "Select a player to view their profile.",
     "noChildren": "No children added yet",
     "addChild": "Add Child",
     "addChildDescription": "Add a new child for this parent. Default password is 11111111.",
@@ -1110,6 +1111,7 @@
     "minDaysInLevel": "Minimum days in level",
     "minAttendanceRate": "Minimum attendance rate (%)",
     "minNaImprovementPercent": "Minimum NA improvement (%)",
+    "levelColorHint": "Used as the UI accent for this level.",
     "levelImageHint": "Upload a level image (max 5MB).",
     "confirmDeleteProgram": "Are you sure you want to delete this program?",
     "confirmDeleteLevel": "Are you sure you want to delete this level?",
@@ -1121,7 +1123,8 @@
       "image": "Program image",
       "levelNameEn": "Level name (English)",
       "levelNameAr": "Level name (Arabic)",
-      "levelImage": "Level image"
+      "levelImage": "Level image",
+      "levelColor": "Level color"
     }
   },
   "payments": {
@@ -1195,6 +1198,37 @@
     "settingsSaved": "Settings saved successfully",
     "settingsFailed": "Failed to save settings"
   },
+  "playerAchievementsPage": {
+    "title": "Achievements & Badges",
+    "subtitle": "Track {name}'s progress and success",
+    "badgesLabel": "Badges",
+    "badgesEarnedLabel": "Badges earned",
+    "completionRateLabel": "Completion rate",
+    "xpFromBadgesLabel": "XP from badges",
+    "streakLabel": "Month streak",
+    "dnaTitle": "DNA snapshot",
+    "dnaSubtitleWithDate": "Latest assessment: {date}",
+    "dnaEmpty": "No assessments yet.",
+    "tabs": {
+      "overview": "Overview",
+      "recent": "Recent",
+      "all": "All badges"
+    },
+    "overallProgressTitle": "Overall progress",
+    "overallProgressSubtitle": "{count} badges remaining to collect all",
+    "completedLabel": "Completed",
+    "firstBadgeEarnedLabel": "First badge earned",
+    "monthlyActivityTitle": "Monthly activity",
+    "monthlyActivitySubtitle": "Badges earned in recent months",
+    "noBadgesYet": "No badges yet",
+    "keepGoingTitle": "Keep going! {count} more badges await!",
+    "keepGoingSubtitle": "Each badge represents a new achievement in your journey",
+    "recentBadgesTitle": "Recent badges",
+    "recentBadgesSubtitle": "Latest achievements",
+    "noBadgesEarnedYet": "No badges earned yet",
+    "allBadgesTitle": "All badges",
+    "allBadgesSubtitle": "{earned} of {total} earned"
+  },
   "playerProfile": {
     "achievements": {
       "bilingualTitle": "Achievements",
@@ -1229,6 +1263,7 @@
       "strengths": "Strengths",
       "developmentAreas": "Development areas",
       "latestAssessment": "Latest assessment",
+      "rawTestValue": "Raw test value",
       "assessmentStatus": "Assessment status",
       "stageStart": "Stage start",
       "lastAssessment": "Last assessment",

@@ -419,6 +419,7 @@
     "parentProfile": "ملف الوالد",
     "viewParentDetails": "عرض وإدارة الوالد وأطفاله",
     "children": "الأطفال",
+    "viewChildrenHint": "اختر لاعباً لعرض ملفه الشخصي.",
     "noChildren": "لم يتم إضافة أطفال بعد",
     "addChild": "إضافة طفل",
     "addChildDescription": "إضافة طفل جديد لهذا الوالد. كلمة المرور الافتراضية هي 11111111.",
@@ -1110,6 +1111,7 @@
     "minDaysInLevel": "الحد الأدنى للأيام في المستوى",
     "minAttendanceRate": "الحد الأدنى لنسبة الحضور (%)",
     "minNaImprovementPercent": "الحد الأدنى لتحسن NA (%)",
+    "levelColorHint": "يُستخدم كلون مميز لواجهة هذا المستوى.",
     "levelImageHint": "ارفع صورة للمستوى (الحد الأقصى 5MB).",
     "confirmDeleteProgram": "هل أنت متأكد من حذف هذا البرنامج؟",
     "confirmDeleteLevel": "هل أنت متأكد من حذف هذا المستوى؟",
@@ -1121,7 +1123,8 @@
       "image": "صورة البرنامج",
       "levelNameEn": "اسم المستوى (بالإنجليزية)",
       "levelNameAr": "اسم المستوى (بالعربية)",
-      "levelImage": "صورة المستوى"
+      "levelImage": "صورة المستوى",
+      "levelColor": "لون المستوى"
     }
   },
   "payments": {
@@ -1195,6 +1198,37 @@
     "settingsSaved": "تم حفظ الإعدادات بنجاح",
     "settingsFailed": "فشل حفظ الإعدادات"
   },
+  "playerAchievementsPage": {
+    "title": "الإنجازات والشارات",
+    "subtitle": "تتبع تقدم {name} وإنجازاته",
+    "badgesLabel": "الشارات",
+    "badgesEarnedLabel": "شارات مكتسبة",
+    "completionRateLabel": "معدل الإنجاز",
+    "xpFromBadgesLabel": "نقاط خبرة من الشارات",
+    "streakLabel": "أشهر متتالية",
+    "dnaTitle": "ملخص DNA",
+    "dnaSubtitleWithDate": "آخر تقييم: {date}",
+    "dnaEmpty": "لا توجد تقييمات بعد.",
+    "tabs": {
+      "overview": "نظرة عامة",
+      "recent": "الأخيرة",
+      "all": "جميع الشارات"
+    },
+    "overallProgressTitle": "التقدم العام",
+    "overallProgressSubtitle": "{count} شارة متبقية للحصول على الجميع",
+    "completedLabel": "مكتملة",
+    "firstBadgeEarnedLabel": "أول شارة مكتسبة",
+    "monthlyActivityTitle": "النشاط الشهري",
+    "monthlyActivitySubtitle": "الشارات المكتسبة في الأشهر الأخيرة",
+    "noBadgesYet": "لا توجد شارات بعد",
+    "keepGoingTitle": "استمر! {count} شارة أخرى في انتظارك!",
+    "keepGoingSubtitle": "كل شارة تمثل إنجازاً جديداً في رحلتك",
+    "recentBadgesTitle": "الشارات الأخيرة",
+    "recentBadgesSubtitle": "آخر الإنجازات",
+    "noBadgesEarnedYet": "لا توجد شارات مكتسبة بعد",
+    "allBadgesTitle": "جميع الشارات",
+    "allBadgesSubtitle": "{earned} من {total} مكتسبة"
+  },
   "playerProfile": {
     "achievements": {
       "bilingualTitle": "الإنجازات",
@@ -1229,6 +1263,7 @@
       "strengths": "نقاط القوة",
       "developmentAreas": "فرص التطوير",
       "latestAssessment": "آخر تقييم",
+      "rawTestValue": "القيمة الخام للاختبار",
       "assessmentStatus": "حالة التقييم",
       "stageStart": "بداية المرحلة",
       "lastAssessment": "آخر تقييم",
