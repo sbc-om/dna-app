@@ -384,7 +384,7 @@ export function AchievementsStatsClient({
         transition={{ duration: 0.5, delay: 0.4 }}
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
+          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex rtl:ml-auto">
             <TabsTrigger value="overview" className="gap-2">
               <Award className="h-4 w-4" />
               {dictionary.playerAchievementsPage?.tabs?.overview ?? dictionary.playerProfile?.tabs?.overview ?? 'Overview'}

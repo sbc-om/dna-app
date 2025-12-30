@@ -41,7 +41,7 @@ export default async function DashboardPage({
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl space-y-6 overflow-x-hidden">
           <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-8 text-center shadow-lg dark:border-[#000000] dark:bg-[#262626]">
             <div className="text-[#262626] dark:text-white text-lg font-semibold">
-              {dictionary.common?.errors?.notFound || 'Not found'}
+              {dictionary.errors?.notFound || 'Not found'}
             </div>
           </div>
         </div>

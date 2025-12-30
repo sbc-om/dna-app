@@ -41,6 +41,13 @@ export function StudentMedalsDisplay({
   const [medals, setMedals] = useState<MedalDisplay[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Avoid showing English fallback strings in Arabic.
+  // Callers should provide localized labels via props.
+  const resolvedLoadingLabel = loadingLabel ?? (locale === 'ar' ? '' : 'Loading...');
+  const resolvedEmptyTitle = emptyTitle ?? (locale === 'ar' ? '' : 'No medals awarded yet');
+  const resolvedEmptyDescription =
+    emptyDescription ?? (locale === 'ar' ? '' : 'Keep progressing—new medals will appear here.');
+
   useEffect(() => {
     loadMedals();
   }, [studentId, courseId]);
@@ -160,7 +167,7 @@ export function StudentMedalsDisplay({
                   }
                 />
               </motion.div>
-              <div className="mt-3 text-sm">{loadingLabel ?? 'Loading...'}</div>
+              <div className="mt-3 text-sm">{resolvedLoadingLabel}</div>
             </div>
           </CardContent>
         </Card>
@@ -169,10 +176,6 @@ export function StudentMedalsDisplay({
   }
 
   if (medals.length === 0) {
-    const emptyTitleText = emptyTitle ?? 'No medals awarded yet';
-    const emptyDescriptionText =
-      emptyDescription ?? 'Keep progressing—new medals will appear here.';
-
     return (
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -188,14 +191,14 @@ export function StudentMedalsDisplay({
               transition={{ duration: 0.4 }}
               className={
                 isAcademy
-                  ? 'text-center py-12 rounded-2xl border-2 border-dashed border-[#DDDDDD] bg-gray-50 dark:border-[#000000] dark:bg-[#1a1a1a]'
-                  : 'text-center py-12 rounded-2xl border border-dashed border-white/15 bg-black/20'
+                  ? 'text-start py-12 rounded-2xl border-2 border-dashed border-[#DDDDDD] bg-gray-50 dark:border-[#000000] dark:bg-[#1a1a1a]'
+                  : 'text-start py-12 rounded-2xl border border-dashed border-white/15 bg-black/20'
               }
             >
               <motion.div
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-                className="mx-auto w-fit"
+                className="ms-0 me-auto w-fit"
                 aria-hidden
               >
                 <Award
@@ -211,7 +214,7 @@ export function StudentMedalsDisplay({
                     : 'mt-4 text-white/70 font-medium'
                 }
               >
-                {emptyTitleText}
+                {resolvedEmptyTitle}
               </p>
               <p
                 className={
@@ -220,7 +223,7 @@ export function StudentMedalsDisplay({
                     : 'mt-2 text-sm text-white/55'
                 }
               >
-                {emptyDescriptionText}
+                {resolvedEmptyDescription}
               </p>
             </motion.div>
           </CardContent>

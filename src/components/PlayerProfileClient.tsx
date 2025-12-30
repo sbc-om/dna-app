@@ -796,11 +796,12 @@ export function KidProfileClient({
       {/* Intentionally no fixed bottom action bar on mobile.
           A global mobile bottom navigation exists; keeping actions inside the header avoids overlap. */}
 
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs defaultValue="overview" className="w-full text-start">
         <div className="-mx-4 sm:mx-0">
           <div className="px-4 sm:px-0">
             <OverlayScrollbarsComponent
               className="w-full"
+              dir={locale === 'ar' ? 'rtl' : 'ltr'}
               options={{
                 scrollbars: {
                   theme: 'os-theme-dark',
@@ -816,31 +817,43 @@ export function KidProfileClient({
               defer
             >
               <div className="pb-1">
-                <TabsList className="inline-flex w-max min-w-full items-center justify-start gap-1 rounded-xl border-2 border-black/60 bg-[#0b0b0f] p-1 shadow-lg shadow-black/30">
+                <TabsList
+                  className={`inline-flex w-max min-w-full items-center gap-1 rounded-xl border-2 border-black/60 bg-[#0b0b0f] p-1 shadow-lg shadow-black/30 ${
+                    locale === 'ar' ? 'flex-row-reverse justify-end' : 'justify-start'
+                  }`}
+                >
                   <TabsTrigger
                     value="overview"
-                    className="gap-2 whitespace-nowrap border border-transparent text-white/80 hover:bg-[#14141a] hover:text-white data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:border-white/15"
+                    className={`gap-2 whitespace-nowrap border border-transparent text-white/80 hover:bg-[#14141a] hover:text-white data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:border-white/15 ${
+                      locale === 'ar' ? 'flex-row-reverse' : ''
+                    }`}
                   >
                     <Activity className="w-4 h-4" />
                     <span>{dictionary.playerProfile?.tabs?.overview ?? 'Overview'}</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="assessments"
-                    className="gap-2 whitespace-nowrap border border-transparent text-white/80 hover:bg-[#14141a] hover:text-white data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:border-white/15"
+                    className={`gap-2 whitespace-nowrap border border-transparent text-white/80 hover:bg-[#14141a] hover:text-white data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:border-white/15 ${
+                      locale === 'ar' ? 'flex-row-reverse' : ''
+                    }`}
                   >
                     <Calendar className="w-4 h-4" />
                     <span>{dictionary.playerProfile?.tabs?.assessments ?? 'Assessments'}</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="badges"
-                    className="gap-2 whitespace-nowrap border border-transparent text-white/80 hover:bg-[#14141a] hover:text-white data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:border-white/15"
+                    className={`gap-2 whitespace-nowrap border border-transparent text-white/80 hover:bg-[#14141a] hover:text-white data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:border-white/15 ${
+                      locale === 'ar' ? 'flex-row-reverse' : ''
+                    }`}
                   >
                     <Star className="w-4 h-4" />
                     <span>{dictionary.playerProfile?.tabs?.badges ?? 'Badges'}</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="achievements"
-                    className="gap-2 whitespace-nowrap border border-transparent text-white/80 hover:bg-[#14141a] hover:text-white data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:border-white/15"
+                    className={`gap-2 whitespace-nowrap border border-transparent text-white/80 hover:bg-[#14141a] hover:text-white data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:border-white/15 ${
+                      locale === 'ar' ? 'flex-row-reverse' : ''
+                    }`}
                   >
                     <Award className="w-4 h-4" />
                     <span>{dictionary.playerProfile?.tabs?.achievements ?? 'Achievements'}</span>
@@ -1044,11 +1057,19 @@ export function KidProfileClient({
               icon={Award}
             >
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                {dictionary.playerProfile?.achievements?.bilingualSubtitle ?? 'Unlocked medals earned through progress.'}
+                {dictionary.playerProfile?.achievements?.bilingualSubtitle ??
+                  (locale === 'ar' ? '' : 'Unlocked medals earned through progress.')}
               </p>
             </PanelCard>
 
-            <StudentMedalsDisplay studentId={currentKid.id} hideHeader locale={locale} />
+            <StudentMedalsDisplay
+              studentId={currentKid.id}
+              hideHeader
+              locale={locale}
+              loadingLabel={dictionary.common?.loading}
+              emptyTitle={dictionary.playerProfile?.empty?.noMedals}
+              emptyDescription={dictionary.playerProfile?.empty?.noMedalsSubtitle}
+            />
           </div>
         </TabsContent>
       </Tabs>

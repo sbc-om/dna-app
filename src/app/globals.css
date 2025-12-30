@@ -192,6 +192,22 @@
   outline-offset: 2px !important;
 }
 
+/*
+  RTL support note:
+  OverlayScrollbars can apply LTR direction on its internal viewport/content elements.
+  That breaks Arabic layouts even when outer containers have dir="rtl".
+  Force the scroll viewport/content to inherit RTL inside any dir="rtl" subtree.
+*/
+[dir='rtl'] .os-viewport,
+[dir='rtl'] .os-content,
+[dir='rtl'] .os-padding {
+  direction: rtl !important;
+}
+
+[dir='rtl'] .os-content {
+  text-align: start;
+}
+
 /* Smooth Transitions */
 .transition-smooth {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

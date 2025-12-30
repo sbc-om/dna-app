@@ -202,26 +202,26 @@ export function CourseDetailClient({
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 rounded-2xl bg-white/5 border border-white/10 p-1 lg:w-[720px]">
+          <TabsList className="grid w-full grid-cols-3 rounded-2xl bg-white/5 border border-white/10 p-1 backdrop-blur-xl lg:w-[720px] rtl:ml-auto">
             <TabsTrigger
               value="overview"
               className="rounded-xl data-[state=active]:bg-white/10 data-[state=active]:text-white"
             >
-              <Activity className="h-4 w-4 me-2" />
+              <Activity className="h-4 w-4" />
               {dictionary.courses?.overview || dictionary.courses?.basicInformation || 'Overview'}
             </TabsTrigger>
             <TabsTrigger
               value="schedule"
               className="rounded-xl data-[state=active]:bg-white/10 data-[state=active]:text-white"
             >
-              <CalendarDays className="h-4 w-4 me-2" />
+              <CalendarDays className="h-4 w-4" />
               {dictionary.courses?.calendar || dictionary.courses?.schedule || 'Schedule'}
             </TabsTrigger>
             <TabsTrigger
               value="achievements"
               className="rounded-xl data-[state=active]:bg-white/10 data-[state=active]:text-white"
             >
-              <Trophy className="h-4 w-4 me-2" />
+              <Trophy className="h-4 w-4" />
               {dictionary.courses?.achievements || 'Achievements'}
             </TabsTrigger>
           </TabsList>
@@ -447,6 +447,9 @@ export function CourseDetailClient({
               courseId={course.id}
               hideHeader
               locale={locale}
+              loadingLabel={dictionary.common?.loading}
+              emptyTitle={dictionary.playerProfile?.empty?.noMedals}
+              emptyDescription={dictionary.playerProfile?.empty?.noMedalsSubtitle}
               onTotalPointsChange={setTotalMedalPoints}
             />
 
