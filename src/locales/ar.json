@@ -1245,6 +1245,7 @@
       "achievements": "الإنجازات"
     },
     "sections": {
+      "stageJourney": "الرحلة",
       "insights": "ملخص",
       "status": "الحالة",
       "assessmentHistory": "سجل التقييمات",
@@ -1255,6 +1256,7 @@
     "labels": {
       "stage": "المرحلة",
       "naScore": "مؤشر القدرات (NA)",
+      "points": "إجمالي النقاط",
       "birthDate": "تاريخ الميلاد",
       "school": "المدرسة",
       "position": "المركز",
@@ -1263,6 +1265,8 @@
       "attendance": "الحضور",
       "naImprovement": "تحسن NA",
       "xp": "النقاط",
+      "badges": "الشارات",
+      "assessments": "التقييمات",
       "strengths": "نقاط القوة",
       "developmentAreas": "فرص التطوير",
       "latestAssessment": "آخر تقييم",

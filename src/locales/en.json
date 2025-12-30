@@ -1273,6 +1273,7 @@
     "labels": {
       "stage": "Stage",
       "naScore": "NA Score",
+      "points": "Total points",
       "birthDate": "Birth date",
       "school": "School",
       "position": "Position",
@@ -1281,6 +1282,8 @@
       "attendance": "Attendance",
       "naImprovement": "NA improvement",
       "xp": "XP",
+      "badges": "Badges",
+      "assessments": "Assessments",
       "strengths": "Strengths",
       "developmentAreas": "Development areas",
       "latestAssessment": "Latest assessment",
