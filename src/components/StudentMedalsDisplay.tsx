@@ -191,27 +191,32 @@ export function StudentMedalsDisplay({
               transition={{ duration: 0.4 }}
               className={
                 isAcademy
-                  ? 'text-start py-12 rounded-2xl border-2 border-dashed border-[#DDDDDD] bg-gray-50 dark:border-[#000000] dark:bg-[#1a1a1a]'
-                  : 'text-start py-12 rounded-2xl border border-dashed border-white/15 bg-black/20'
+                  ? 'relative overflow-hidden flex flex-col items-center justify-center text-center py-12 min-h-[220px] rounded-2xl border-2 border-[#DDDDDD] bg-white shadow-sm dark:border-[#000000] dark:bg-[#262626]'
+                  : 'relative overflow-hidden flex flex-col items-center justify-center text-center py-12 min-h-[220px] rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl'
               }
             >
+              {isAcademy ? (
+                <div className="absolute inset-0 bg-linear-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5" aria-hidden />
+              ) : (
+                <div className="absolute inset-0 bg-linear-to-br from-white/6 via-transparent to-white/4" aria-hidden />
+              )}
               <motion.div
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-                className="ms-0 me-auto w-fit"
+                className="relative mx-auto w-fit"
                 aria-hidden
               >
                 <Award
                   className={
-                    isAcademy ? 'w-14 h-14 text-gray-400 dark:text-white/45' : 'w-14 h-14 text-white/45'
+                    isAcademy ? 'w-14 h-14 text-gray-400 dark:text-white/55' : 'w-14 h-14 text-white/55'
                   }
                 />
               </motion.div>
               <p
                 className={
                   isAcademy
-                    ? 'mt-4 text-[#262626] dark:text-white font-semibold'
-                    : 'mt-4 text-white/70 font-medium'
+                    ? 'relative mt-4 text-[#262626] dark:text-white font-semibold'
+                    : 'relative mt-4 text-white/80 font-medium'
                 }
               >
                 {resolvedEmptyTitle}
@@ -219,8 +224,8 @@ export function StudentMedalsDisplay({
               <p
                 className={
                   isAcademy
-                    ? 'mt-2 text-sm text-gray-600 dark:text-gray-400'
-                    : 'mt-2 text-sm text-white/55'
+                    ? 'relative mt-2 text-sm text-gray-600 dark:text-gray-400'
+                    : 'relative mt-2 text-sm text-white/60'
                 }
               >
                 {resolvedEmptyDescription}

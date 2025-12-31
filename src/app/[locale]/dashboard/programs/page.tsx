@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth/auth';
 import { getDictionary } from '@/lib/i18n/getDictionary';
 import { hasRolePermission } from '@/lib/db/repositories/rolePermissionRepository';
 import ProgramsManagementClient from '@/components/ProgramsManagementClient';
+import ProgramsCoachClient from '@/components/ProgramsCoachClient';
 import type { Locale } from '@/config/i18n';
 
 interface PageProps {
@@ -18,7 +19,9 @@ export default async function ProgramsPage({ params }: PageProps) {
   }
 
   const canManagePrograms = await hasRolePermission(currentUser.role, 'canManagePrograms');
-  if (!canManagePrograms) {
+  const canCoachPrograms = await hasRolePermission(currentUser.role, 'canCoachPrograms');
+
+  if (!canManagePrograms && !canCoachPrograms) {
     redirect(`/${locale}/dashboard/forbidden`);
   }
 
@@ -26,7 +29,11 @@ export default async function ProgramsPage({ params }: PageProps) {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl">
-      <ProgramsManagementClient locale={locale as Locale} dict={dict} />
+      {canManagePrograms ? (
+        <ProgramsManagementClient locale={locale as Locale} dict={dict} />
+      ) : (
+        <ProgramsCoachClient locale={locale as Locale} dict={dict} />
+      )}
     </div>
   );
 }

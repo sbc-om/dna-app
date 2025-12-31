@@ -359,7 +359,7 @@ export function KidProfileClient({
         return;
       }
 
-      // Sync profile XP/status
+      // Sync profile points/status
       await ensurePlayerProfileAction({ locale, academyId, userId: kid.id });
       await syncPlayerProfileAfterAssessmentAction({
         locale,
@@ -540,7 +540,7 @@ export function KidProfileClient({
 
                 <div className="mt-2 flex flex-wrap gap-2">
                   <Badge variant="secondary" className="bg-white/5 border border-white/10 text-white/90">
-                    {dictionary.playerProfile?.labels?.xp ?? 'XP'}: {profile?.xpTotal ?? 0}
+                    {dictionary.playerProfile?.labels?.points ?? 'Points'}: {profile?.pointsTotal ?? 0}
                   </Badge>
                   {latestAssessment && (
                     <Badge variant="secondary" className="bg-white/5 border border-white/10 text-white/90">
@@ -674,8 +674,8 @@ export function KidProfileClient({
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <StatTile
-                  title={dictionary.playerProfile?.labels?.xp ?? 'XP'}
-                  value={profile?.xpTotal ?? 0}
+                  title={dictionary.playerProfile?.labels?.points ?? 'Points'}
+                  value={profile?.pointsTotal ?? 0}
                   icon={Calendar}
                 />
                 <StatTile

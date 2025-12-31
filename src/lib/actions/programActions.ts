@@ -28,10 +28,16 @@ async function canManageProgramsForRole(role: Parameters<typeof hasRolePermissio
   return hasRolePermission(role, 'canManagePrograms');
 }
 
+async function canAccessProgramsForRole(role: Parameters<typeof hasRolePermission>[0]): Promise<boolean> {
+  const canManage = await hasRolePermission(role, 'canManagePrograms');
+  if (canManage) return true;
+  return hasRolePermission(role, 'canCoachPrograms');
+}
+
 export async function getProgramsAction(locale: string = 'en') {
   noStore();
   const ctx = await requireAcademyContext(locale);
-  const allowed = await canManageProgramsForRole(ctx.user.role);
+  const allowed = await canAccessProgramsForRole(ctx.user.role);
   if (!allowed) return { success: false, error: 'Unauthorized' };
 
   try {
@@ -108,7 +114,7 @@ export async function deleteProgramAction(id: string, locale: string = 'en') {
 export async function getProgramLevelsAction(programId: string, locale: string = 'en') {
   noStore();
   const ctx = await requireAcademyContext(locale);
-  const allowed = await canManageProgramsForRole(ctx.user.role);
+  const allowed = await canAccessProgramsForRole(ctx.user.role);
   if (!allowed) return { success: false, error: 'Unauthorized' };
 
   try {

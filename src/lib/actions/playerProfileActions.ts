@@ -7,7 +7,7 @@ import {
   ensurePlayerProfile,
   getPlayerProfile,
   updatePlayerProfile,
-  appendXpEvent,
+  appendPointsEvent,
   grantBadge,
   type PlayerProfile,
 } from '@/lib/db/repositories/playerProfileRepository';
@@ -105,7 +105,7 @@ export async function grantPlayerBadgeAction(params: {
       notes: params.notes,
     });
 
-    profile = await appendXpEvent({
+    profile = await appendPointsEvent({
       academyId: params.academyId,
       userId: params.userId,
       event: {
@@ -197,7 +197,7 @@ export async function syncPlayerProfileAfterAssessmentAction(params: {
       lastAssessmentAt: now,
     });
 
-    profile = await appendXpEvent({
+    profile = await appendPointsEvent({
       academyId: params.academyId,
       userId: params.userId,
       event: {

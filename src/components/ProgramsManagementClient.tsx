@@ -62,9 +62,8 @@ type LevelFormState = {
   descriptionAr: string;
   image: string;
   color: string;
-  minDaysInLevel: string;
-  minAttendanceRatePercent: string;
-  minNaImprovementPercent: string;
+  minSessionsAttended: string;
+  minPointsEarned: string;
 };
 
 async function uploadCroppedImage(file: File, croppedImageUrl: string): Promise<string | null> {
@@ -105,56 +104,40 @@ function parseOptionalInteger(value: string): number | undefined {
   return n;
 }
 
-function clampPercent(n: number): number {
-  if (n < 0) return 0;
-  if (n > 100) return 100;
-  return n;
-}
-
 function validateRulesForm(form: LevelFormState): string | null {
-  const minDaysRaw = form.minDaysInLevel.trim();
-  if (minDaysRaw) {
-    const parsed = parseOptionalInteger(minDaysRaw);
-    if (typeof parsed !== 'number' || parsed < 0) return 'Minimum days must be a non-negative integer.';
-  }
-
-  const percentFields: Array<{ raw: string; label: string }> = [
-    { raw: form.minAttendanceRatePercent.trim(), label: 'Minimum attendance rate' },
-    { raw: form.minNaImprovementPercent.trim(), label: 'Minimum NA improvement' },
+  const intFields: Array<{ raw: string; label: string }> = [
+    { raw: form.minSessionsAttended.trim(), label: 'Minimum sessions attended' },
+    { raw: form.minPointsEarned.trim(), label: 'Minimum points earned' },
   ];
 
-  for (const f of percentFields) {
+  for (const f of intFields) {
     if (!f.raw) continue;
-    const n = parseOptionalNumber(f.raw);
-    if (typeof n !== 'number' || n < 0) return `${f.label} must be a number between 0 and 100.`;
+    const n = parseOptionalInteger(f.raw);
+    if (typeof n !== 'number' || n < 0) return `${f.label} must be a non-negative integer.`;
   }
 
   return null;
 }
 
-function rulesToForm(rules: ProgramLevelPassRules | undefined): Pick<LevelFormState, 'minDaysInLevel' | 'minAttendanceRatePercent' | 'minNaImprovementPercent'> {
+function rulesToForm(
+  rules: ProgramLevelPassRules | undefined
+): Pick<LevelFormState, 'minSessionsAttended' | 'minPointsEarned'> {
   return {
-    minDaysInLevel: typeof rules?.minDaysInLevel === 'number' ? String(rules.minDaysInLevel) : '',
-    minAttendanceRatePercent:
-      typeof rules?.minAttendanceRatePercent === 'number' ? String(rules.minAttendanceRatePercent) : '',
-    minNaImprovementPercent:
-      typeof rules?.minNaImprovementPercent === 'number' ? String(rules.minNaImprovementPercent) : '',
+    minSessionsAttended: typeof rules?.minSessionsAttended === 'number' ? String(rules.minSessionsAttended) : '',
+    minPointsEarned: typeof rules?.minPointsEarned === 'number' ? String(rules.minPointsEarned) : '',
   };
 }
 
 function formToRules(form: LevelFormState): ProgramLevelPassRules {
-  const minDaysRaw = form.minDaysInLevel.trim();
-  const minAttRaw = form.minAttendanceRatePercent.trim();
-  const minNaRaw = form.minNaImprovementPercent.trim();
+  const minSessionsRaw = form.minSessionsAttended.trim();
+  const minPointsRaw = form.minPointsEarned.trim();
 
-  const minDays = minDaysRaw ? parseOptionalInteger(minDaysRaw) : undefined;
-  const minAttendance = minAttRaw ? parseOptionalNumber(minAttRaw) : undefined;
-  const minNa = minNaRaw ? parseOptionalNumber(minNaRaw) : undefined;
+  const minSessionsAttended = minSessionsRaw ? parseOptionalInteger(minSessionsRaw) : undefined;
+  const minPointsEarned = minPointsRaw ? parseOptionalInteger(minPointsRaw) : undefined;
 
   return {
-    minDaysInLevel: minDays,
-    minAttendanceRatePercent: typeof minAttendance === 'number' ? clampPercent(minAttendance) : undefined,
-    minNaImprovementPercent: typeof minNa === 'number' ? clampPercent(minNa) : undefined,
+    minSessionsAttended,
+    minPointsEarned,
   };
 }
 
@@ -190,9 +173,8 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
     descriptionAr: '',
     image: '',
     color: DEFAULT_ACCENT_COLOR,
-    minDaysInLevel: '',
-    minAttendanceRatePercent: '',
-    minNaImprovementPercent: '',
+    minSessionsAttended: '',
+    minPointsEarned: '',
   });
 
   const selectedProgram = useMemo(
@@ -391,9 +373,8 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
       descriptionAr: '',
       image: '',
       color: getDefaultProgramLevelColor((levels?.length || 0) + 1),
-      minDaysInLevel: '',
-      minAttendanceRatePercent: '',
-      minNaImprovementPercent: '',
+      minSessionsAttended: '',
+      minPointsEarned: '',
     });
     setLevelDialogOpen(true);
   };
@@ -527,14 +508,11 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
 
   const rulesBadges = (rules: ProgramLevelPassRules) => {
     const items: Array<{ key: string; label: string }> = [];
-    if (typeof rules.minDaysInLevel === 'number') {
-      items.push({ key: 'days', label: `${rules.minDaysInLevel}d` });
+    if (typeof rules.minSessionsAttended === 'number') {
+      items.push({ key: 'sessions', label: `${rules.minSessionsAttended} sessions` });
     }
-    if (typeof rules.minAttendanceRatePercent === 'number') {
-      items.push({ key: 'att', label: `${rules.minAttendanceRatePercent}%` });
-    }
-    if (typeof rules.minNaImprovementPercent === 'number') {
-      items.push({ key: 'na', label: `NA +${rules.minNaImprovementPercent}%` });
+    if (typeof rules.minPointsEarned === 'number') {
+      items.push({ key: 'points', label: `${rules.minPointsEarned} ${t?.pointsLabel ?? 'Points'}` });
     }
 
     if (items.length === 0) {
@@ -1306,34 +1284,25 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
                 {t?.rulesHint || ''}
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className={fieldLabelClass}>{t?.minDaysInLevel || 'Minimum days in level'}</Label>
+                <Label className={fieldLabelClass}>{t?.minSessionsAttendedLabel || 'Minimum sessions attended'}</Label>
                 <Input
                   inputMode="numeric"
-                  value={levelForm.minDaysInLevel}
-                  onChange={(e) => setLevelForm((p) => ({ ...p, minDaysInLevel: e.target.value }))}
-                  placeholder="e.g. 90"
+                  value={levelForm.minSessionsAttended}
+                  onChange={(e) => setLevelForm((p) => ({ ...p, minSessionsAttended: e.target.value }))}
+                  placeholder="e.g. 8"
                   className={inputClass}
                 />
               </div>
+
               <div className="space-y-2">
-                <Label className={fieldLabelClass}>{t?.minAttendanceRate || 'Minimum attendance rate (%)'}</Label>
+                <Label className={fieldLabelClass}>{t?.minPointsEarnedLabel || t?.minXpEarnedLabel || 'Minimum points earned'}</Label>
                 <Input
                   inputMode="numeric"
-                  value={levelForm.minAttendanceRatePercent}
-                  onChange={(e) => setLevelForm((p) => ({ ...p, minAttendanceRatePercent: e.target.value }))}
-                  placeholder="e.g. 70"
-                  className={inputClass}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className={fieldLabelClass}>{t?.minNaImprovementPercent || 'Minimum NA improvement (%)'}</Label>
-                <Input
-                  inputMode="numeric"
-                  value={levelForm.minNaImprovementPercent}
-                  onChange={(e) => setLevelForm((p) => ({ ...p, minNaImprovementPercent: e.target.value }))}
-                  placeholder="e.g. 10"
+                  value={levelForm.minPointsEarned}
+                  onChange={(e) => setLevelForm((p) => ({ ...p, minPointsEarned: e.target.value }))}
+                  placeholder="e.g. 100"
                   className={inputClass}
                 />
               </div>

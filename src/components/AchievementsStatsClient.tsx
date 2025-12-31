@@ -110,9 +110,10 @@ export function AchievementsStatsClient({
       .sort((a, b) => new Date(b.grantedAt).getTime() - new Date(a.grantedAt).getTime())
       .slice(0, 5);
 
-    // Calculate XP stats
-    const totalXP = profile?.xpTotal || 0;
-    const xpFromBadges = profile?.xpEvents?.filter(e => e.type === 'badge_granted')
+    // Calculate points stats
+    const totalPoints = profile?.pointsTotal || 0;
+    const pointsFromBadges = profile?.pointsEvents
+      ?.filter((e) => e.type === 'badge_granted')
       .reduce((sum, e) => sum + e.points, 0) || 0;
 
     // Calculate streak (badges earned in consecutive months)
@@ -146,8 +147,8 @@ export function AchievementsStatsClient({
       remainingBadges: totalBadges - earnedBadges,
       badgesByMonth,
       recentBadges,
-      totalXP,
-      xpFromBadges,
+      totalPoints,
+      pointsFromBadges,
       streak,
       rarestBadge,
     };
@@ -322,7 +323,7 @@ export function AchievementsStatsClient({
           </Card>
         </motion.div>
 
-        {/* Total XP from Badges */}
+        {/* Total points from badges */}
         <motion.div whileHover={{ scale: 1.02, y: -5 }} transition={{ type: 'spring', stiffness: 300 }} className="h-full">
           <Card className="relative h-full overflow-hidden border-2 border-[#DDDDDD] dark:border-[#000000] bg-linear-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 flex flex-col">
             <div className="absolute top-0 right-0 w-32 h-32 bg-green-400/20 rounded-full blur-3xl" />
@@ -339,10 +340,10 @@ export function AchievementsStatsClient({
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-end">
               <div className="text-3xl font-black text-[#262626] dark:text-white">
-                {stats.xpFromBadges}
+                {stats.pointsFromBadges}
               </div>
               <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                {dictionary.playerAchievementsPage?.xpFromBadgesLabel ?? 'XP from badges'}
+                {dictionary.playerAchievementsPage?.pointsFromBadgesLabel ?? dictionary.playerAchievementsPage?.xpFromBadgesLabel ?? 'Points from badges'}
               </p>
             </CardContent>
           </Card>

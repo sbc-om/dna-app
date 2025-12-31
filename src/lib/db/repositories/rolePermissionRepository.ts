@@ -27,6 +27,8 @@ export interface RolePermission {
     canSendPushNotifications: boolean;
     canManageCourses: boolean;
     canManagePrograms: boolean;
+    /** Allows coaches to access program coaching tools (attendance, notes, points, badges) without full program CRUD. */
+    canCoachPrograms: boolean;
     canViewPayments: boolean;
     canSendWhatsApp: boolean;
   };
@@ -55,6 +57,7 @@ const DEFAULT_PERMISSIONS: Record<UserRole, RolePermission['permissions']> = {
     canSendPushNotifications: true,
     canManageCourses: true,
     canManagePrograms: true,
+    canCoachPrograms: true,
     canViewPayments: true,
     canSendWhatsApp: true,
   },
@@ -76,6 +79,7 @@ const DEFAULT_PERMISSIONS: Record<UserRole, RolePermission['permissions']> = {
     canSendPushNotifications: true,
     canManageCourses: true,
     canManagePrograms: true,
+    canCoachPrograms: true,
     canViewPayments: true,
     canSendWhatsApp: true,
   },
@@ -97,6 +101,7 @@ const DEFAULT_PERMISSIONS: Record<UserRole, RolePermission['permissions']> = {
     canSendPushNotifications: true,
     canManageCourses: false,
     canManagePrograms: false,
+    canCoachPrograms: true,
     canViewPayments: false,
     canSendWhatsApp: true,
   },
@@ -118,6 +123,7 @@ const DEFAULT_PERMISSIONS: Record<UserRole, RolePermission['permissions']> = {
     canSendPushNotifications: false,
     canManageCourses: false,
     canManagePrograms: false,
+    canCoachPrograms: false,
     canViewPayments: true,
     canSendWhatsApp: false,
   },
@@ -139,6 +145,7 @@ const DEFAULT_PERMISSIONS: Record<UserRole, RolePermission['permissions']> = {
     canSendPushNotifications: false,
     canManageCourses: false,
     canManagePrograms: false,
+    canCoachPrograms: false,
     canViewPayments: false,
     canSendWhatsApp: false,
   },

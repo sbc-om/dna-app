@@ -47,6 +47,7 @@ import {
   getProgramLevelsForPlayerProgramAction,
   setPlayerProgramLevelAction,
 } from '@/lib/actions/programEnrollmentActions';
+import { getProgramAttendanceSummaryForUserProgramsAction } from '@/lib/actions/programAttendanceActions';
 import { useEffect, useMemo, useState } from 'react';
 import type { Enrollment } from '@/lib/db/repositories/enrollmentRepository';
 import type { Course } from '@/lib/db/repositories/courseRepository';
@@ -124,6 +125,13 @@ export function KidProfileClient({
   const [loadingProgramEnrollments, setLoadingProgramEnrollments] = useState(false);
   const [programEnrollmentsError, setProgramEnrollmentsError] = useState<string | null>(null);
   const [programLevelsByProgramId, setProgramLevelsByProgramId] = useState<Record<string, ProgramLevel[]>>({});
+  const [programAttendanceByProgramId, setProgramAttendanceByProgramId] = useState<
+    Record<string, { attended: number; marked: number }>
+  >({});
+
+  const totalProgramSessionsAttended = useMemo(() => {
+    return Object.values(programAttendanceByProgramId).reduce((sum, v) => sum + (Number.isFinite(v?.attended) ? v.attended : 0), 0);
+  }, [programAttendanceByProgramId]);
 
   const totalProgramPoints = useMemo(() => {
     return programEnrollments.reduce((sum, e) => sum + (Number.isFinite(e.pointsTotal) ? e.pointsTotal : 0), 0);
@@ -188,6 +196,7 @@ export function KidProfileClient({
     grantBadge: dictionary.playerProfile?.actions?.grantBadge ?? 'Grant badge',
     adjustProgramLevel: dictionary.playerProfile?.actions?.adjustProgramLevel ?? 'Adjust program level',
     achievements: dictionary.playerProfile?.tabs?.achievements ?? 'Achievements',
+    viewCard: dictionary.playerProfile?.actions?.viewCard ?? 'View player card',
   };
 
   const scoreLabel = dictionary.playerProfile?.labels?.score ?? 'Score';
@@ -414,10 +423,28 @@ export function KidProfileClient({
         nextMap[programId] = levels;
       }
       setProgramLevelsByProgramId(nextMap);
+
+      // Load per-program session counts for this player.
+      if (uniqueProgramIds.length > 0) {
+        const attRes = await getProgramAttendanceSummaryForUserProgramsAction({
+          locale,
+          academyId,
+          userId: kid.id,
+          programIds: uniqueProgramIds,
+        });
+        if (attRes.success) {
+          setProgramAttendanceByProgramId(attRes.byProgramId);
+        } else {
+          setProgramAttendanceByProgramId({});
+        }
+      } else {
+        setProgramAttendanceByProgramId({});
+      }
     } catch (error) {
       console.error('Load program enrollments error:', error);
       setProgramEnrollments([]);
       setProgramLevelsByProgramId({});
+      setProgramAttendanceByProgramId({});
       setProgramEnrollmentsError(dictionary.common.error);
     } finally {
       setLoadingProgramEnrollments(false);
@@ -438,28 +465,29 @@ export function KidProfileClient({
     noHistory: dictionary.programs?.noLevelHistory ?? 'No level history yet.',
   };
 
-  const safeDaysBetween = (startIso: string, endIso: string) => {
-    const start = new Date(startIso);
-    const end = new Date(endIso);
-    const diffMs = end.getTime() - start.getTime();
-    if (!Number.isFinite(diffMs)) return 0;
-    return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-  };
-
   const programLevelProgressPct = (params: { enrollment: PlayerProgramEnrollment; level: ProgramLevel; isCurrent: boolean }) => {
     if (!params.isCurrent) return 100;
 
-    const history = params.enrollment.levelHistory ?? [];
-    const currentEntry = [...history].reverse().find((h) => h.levelId === params.level.id && !h.endedAt);
-    const startedAt = currentEntry?.startedAt || params.enrollment.joinedAt || new Date().toISOString();
+    const rules = params.level.passRules;
+    const requiredSessions = typeof rules?.minSessionsAttended === 'number' ? rules.minSessionsAttended : undefined;
+    const requiredPoints =
+      typeof (rules as any)?.minPointsEarned === 'number'
+        ? (rules as any).minPointsEarned
+        : (typeof (rules as any)?.minXpEarned === 'number' ? (rules as any).minXpEarned : undefined);
 
-    const minDays = typeof params.level.passRules?.minDaysInLevel === 'number' && params.level.passRules.minDaysInLevel > 0
-      ? params.level.passRules.minDaysInLevel
-      : 30;
+    const sessionsAttended = programAttendanceByProgramId[params.enrollment.programId]?.attended ?? 0;
+    const points = Number.isFinite(params.enrollment.pointsTotal) ? params.enrollment.pointsTotal : 0;
 
-    const daysInLevel = safeDaysBetween(startedAt, new Date().toISOString());
-    const pct = minDays > 0 ? Math.round((daysInLevel / minDays) * 100) : 0;
-    return Math.max(0, Math.min(100, pct));
+    const parts: number[] = [];
+    if (typeof requiredSessions === 'number' && requiredSessions > 0) {
+      parts.push(Math.max(0, Math.min(1, sessionsAttended / requiredSessions)));
+    }
+    if (typeof requiredPoints === 'number' && requiredPoints > 0) {
+      parts.push(Math.max(0, Math.min(1, points / requiredPoints)));
+    }
+
+    if (parts.length === 0) return 100;
+    return Math.round((parts.reduce((a, b) => a + b, 0) / parts.length) * 100);
   };
 
   const openProgramNoteDialog = (enrollment: PlayerProgramEnrollment) => {
@@ -674,7 +702,7 @@ export function KidProfileClient({
         return;
       }
 
-      // Sync profile XP/status
+      // Sync profile points/status
       await ensurePlayerProfileAction({ locale, academyId, userId: kid.id });
       await syncPlayerProfileAfterAssessmentAction({
         locale,
@@ -889,7 +917,7 @@ export function KidProfileClient({
                           {dictionary.playerProfile?.labels?.points ?? 'Total points'}: {totalProgramPoints}
                         </Badge>
                         <Badge className="border-2 border-[#DDDDDD] bg-white text-[#262626] font-semibold dark:border-[#000000] dark:bg-[#1a1a1a] dark:text-white">
-                          {dictionary.playerProfile?.labels?.xp ?? 'XP'}: {profile?.xpTotal ?? 0}
+                          {dictionary.playerProfile?.labels?.sessions ?? dictionary.programs?.sessionsAttendedLabel ?? 'Sessions attended'}: {totalProgramSessionsAttended}
                         </Badge>
                         {latestAssessment ? (
                           <Badge className="border-2 border-[#DDDDDD] bg-white text-[#262626] font-semibold dark:border-[#000000] dark:bg-[#1a1a1a] dark:text-white">
@@ -916,9 +944,9 @@ export function KidProfileClient({
 
                     <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]">
                       <div className="text-xs text-gray-600 dark:text-gray-400">
-                        {dictionary.playerProfile?.labels?.xp ?? 'XP'}
+                        {dictionary.playerProfile?.labels?.sessions ?? dictionary.programs?.sessionsAttendedLabel ?? 'Sessions attended'}
                       </div>
-                      <div className="mt-1 text-xl font-extrabold text-[#262626] dark:text-white">{profile?.xpTotal ?? 0}</div>
+                      <div className="mt-1 text-xl font-extrabold text-[#262626] dark:text-white">{totalProgramSessionsAttended}</div>
                     </div>
                   </div>
                 </div>
@@ -985,6 +1013,16 @@ export function KidProfileClient({
                   {actionLabel.adjustProgramLevel}
                 </Button>
               )}
+
+              <Button
+                type="button"
+                onClick={() => router.push(`/${locale}/dashboard/players/${currentKid.id}/card`)}
+                className="w-full h-11 border-2 border-[#DDDDDD] bg-white text-[#262626] hover:bg-gray-50 dark:border-[#000000] dark:bg-[#1a1a1a] dark:text-white dark:hover:bg-[#111114] justify-start ltr:text-left rtl:text-right"
+              >
+                <IdCard className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
+                {actionLabel.viewCard}
+              </Button>
+
               <Button
                 type="button"
                 onClick={() => router.push(`/${locale}/dashboard/players/${currentKid.id}/achievements`)}
@@ -1056,6 +1094,16 @@ export function KidProfileClient({
                 <Button
                   type="button"
                   size="sm"
+                  onClick={() => router.push(`/${locale}/dashboard/players/${currentKid.id}/card`)}
+                  className="shrink-0 h-11 rounded-xl border-2 border-[#DDDDDD] bg-white text-[#262626] hover:bg-gray-50 dark:border-[#000000] dark:bg-[#1a1a1a] dark:text-white dark:hover:bg-[#111114]"
+                >
+                  <IdCard className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
+                  <span className="text-xs font-semibold whitespace-nowrap">{actionLabel.viewCard}</span>
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
                   onClick={() => router.push(`/${locale}/dashboard/players/${currentKid.id}/achievements`)}
                   className="shrink-0 h-11 rounded-xl border-2 border-[#DDDDDD] bg-white text-[#262626] hover:bg-gray-50 dark:border-[#000000] dark:bg-[#1a1a1a] dark:text-white dark:hover:bg-[#111114]"
                 >
@@ -1083,9 +1131,9 @@ export function KidProfileClient({
                   icon={Trophy}
                 />
                 <StatTile
-                  title={dictionary.playerProfile?.labels?.xp ?? 'XP'}
-                  value={profile?.xpTotal ?? 0}
-                  icon={Star}
+                  title={dictionary.playerProfile?.labels?.sessions ?? dictionary.programs?.sessionsAttendedLabel ?? 'Sessions attended'}
+                  value={totalProgramSessionsAttended}
+                  icon={Calendar}
                 />
                 <StatTile
                   title={dictionary.playerProfile?.labels?.badges ?? 'Badges'}
@@ -1319,6 +1367,9 @@ export function KidProfileClient({
                               <Badge className="bg-blue-50 text-blue-700 border-0 dark:bg-blue-600/15 dark:text-blue-200 dark:border-0">
                                 {dictionary.programs?.pointsLabel ?? 'Points'}: {e.pointsTotal}
                               </Badge>
+                              <Badge className="bg-emerald-50 text-emerald-700 border-0 dark:bg-emerald-600/15 dark:text-emerald-200 dark:border-0">
+                                {dictionary.programs?.sessionsAttendedLabel ?? 'Sessions attended'}: {programAttendanceByProgramId[e.programId]?.attended ?? 0}
+                              </Badge>
                               <Badge className="bg-gray-100 text-gray-700 border-0 dark:bg-white/10 dark:text-white/70 dark:border-0">
                                 {dictionary.programs?.notesLabel ?? 'Notes'}: {e.coachNotes?.length ?? 0}
                               </Badge>
@@ -1465,23 +1516,106 @@ export function KidProfileClient({
                                             </div>
 
                                             <div className="mt-2">
-                                              <div className="flex items-center justify-between text-[11px] text-gray-600 dark:text-gray-400">
-                                                <span>{levelJourneyLabels.progress}</span>
-                                                <span className="font-semibold text-[#262626] dark:text-white">{progressPct}%</span>
-                                              </div>
-                                              <div className="mt-1 h-2 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
-                                                <motion.div
-                                                  initial={{ width: 0 }}
-                                                  animate={{ width: `${progressPct}%` }}
-                                                  transition={{ duration: 0.6, type: 'spring', stiffness: 160, damping: 20 }}
-                                                  className="h-full rounded-full"
-                                                  style={{
-                                                    background: isCompleted
-                                                      ? 'linear-gradient(90deg, #34d399, #10b981)'
-                                                      : `linear-gradient(90deg, ${lvl.color}, #ffffff55)`,
-                                                  }}
-                                                />
-                                              </div>
+                                              {isCurrent ? (() => {
+                                                const rulesAny = (lvl.passRules ?? {}) as any;
+                                                const requiredSessions = typeof rulesAny.minSessionsAttended === 'number' ? rulesAny.minSessionsAttended : undefined;
+                                                const requiredPoints =
+                                                  typeof rulesAny.minPointsEarned === 'number'
+                                                    ? rulesAny.minPointsEarned
+                                                    : (typeof rulesAny.minXpEarned === 'number' ? rulesAny.minXpEarned : undefined);
+
+                                                const sessionsAttended = programAttendanceByProgramId[e.programId]?.attended ?? 0;
+                                                const points = Number.isFinite(e.pointsTotal) ? e.pointsTotal : 0;
+
+                                                const sessionsPct =
+                                                  typeof requiredSessions === 'number' && requiredSessions > 0
+                                                    ? Math.round(Math.max(0, Math.min(1, sessionsAttended / requiredSessions)) * 100)
+                                                    : 100;
+                                                const pointsPct =
+                                                  typeof requiredPoints === 'number' && requiredPoints > 0
+                                                    ? Math.round(Math.max(0, Math.min(1, points / requiredPoints)) * 100)
+                                                    : 100;
+
+                                                const hasSessionsRule = typeof requiredSessions === 'number' && requiredSessions > 0;
+                                                const hasPointsRule = typeof requiredPoints === 'number' && requiredPoints > 0;
+
+                                                return (
+                                                  <div className="space-y-2">
+                                                    <div className="flex items-center justify-between text-[11px] text-gray-600 dark:text-gray-400">
+                                                      <span>{levelJourneyLabels.progress}</span>
+                                                      <span className="font-semibold text-[#262626] dark:text-white">{progressPct}%</span>
+                                                    </div>
+
+                                                    {hasSessionsRule ? (
+                                                      <div>
+                                                        <div className="flex items-center justify-between text-[11px] text-gray-600 dark:text-gray-400">
+                                                          <span>{dictionary.playerProfile?.labels?.sessions ?? dictionary.programs?.sessionsAttendedLabel ?? 'Sessions'}</span>
+                                                          <span className="font-semibold text-[#262626] dark:text-white">{sessionsPct}%</span>
+                                                        </div>
+                                                        <div className="mt-1 h-2 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                                                          <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${sessionsPct}%` }}
+                                                            transition={{ duration: 0.6, type: 'spring', stiffness: 160, damping: 20 }}
+                                                            className="h-full rounded-full"
+                                                            style={{ background: `linear-gradient(90deg, ${lvl.color}, #ffffff55)` }}
+                                                          />
+                                                        </div>
+                                                      </div>
+                                                    ) : null}
+
+                                                    {hasPointsRule ? (
+                                                      <div>
+                                                        <div className="flex items-center justify-between text-[11px] text-gray-600 dark:text-gray-400">
+                                                          <span>{dictionary.programs?.pointsLabel ?? 'Points'}</span>
+                                                          <span className="font-semibold text-[#262626] dark:text-white">{pointsPct}%</span>
+                                                        </div>
+                                                        <div className="mt-1 h-2 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                                                          <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${pointsPct}%` }}
+                                                            transition={{ duration: 0.6, type: 'spring', stiffness: 160, damping: 20 }}
+                                                            className="h-full rounded-full"
+                                                            style={{ background: `linear-gradient(90deg, ${lvl.color}, #ffffff55)` }}
+                                                          />
+                                                        </div>
+                                                      </div>
+                                                    ) : null}
+
+                                                    {!hasSessionsRule && !hasPointsRule ? (
+                                                      <div className="mt-1 h-2 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                                                        <motion.div
+                                                          initial={{ width: 0 }}
+                                                          animate={{ width: `${progressPct}%` }}
+                                                          transition={{ duration: 0.6, type: 'spring', stiffness: 160, damping: 20 }}
+                                                          className="h-full rounded-full"
+                                                          style={{ background: `linear-gradient(90deg, ${lvl.color}, #ffffff55)` }}
+                                                        />
+                                                      </div>
+                                                    ) : null}
+                                                  </div>
+                                                );
+                                              })() : (
+                                                <>
+                                                  <div className="flex items-center justify-between text-[11px] text-gray-600 dark:text-gray-400">
+                                                    <span>{levelJourneyLabels.progress}</span>
+                                                    <span className="font-semibold text-[#262626] dark:text-white">{progressPct}%</span>
+                                                  </div>
+                                                  <div className="mt-1 h-2 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                                                    <motion.div
+                                                      initial={{ width: 0 }}
+                                                      animate={{ width: `${progressPct}%` }}
+                                                      transition={{ duration: 0.6, type: 'spring', stiffness: 160, damping: 20 }}
+                                                      className="h-full rounded-full"
+                                                      style={{
+                                                        background: isCompleted
+                                                          ? 'linear-gradient(90deg, #34d399, #10b981)'
+                                                          : `linear-gradient(90deg, ${lvl.color}, #ffffff55)`,
+                                                      }}
+                                                    />
+                                                  </div>
+                                                </>
+                                              )}
                                             </div>
                                           </div>
                                         </div>

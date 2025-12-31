@@ -27,6 +27,7 @@
     "actions": "الإجراءات",
     "loading": "جاري التحميل...",
     "refresh": "تحديث",
+    "view": "عرض",
     "error": "خطأ",
     "success": "نجح",
     "backToDashboard": "العودة إلى لوحة التحكم",
@@ -1072,6 +1073,8 @@
     "membersTitle": "الأعضاء",
     "membersDescription": "إضافة اللاعبين إلى البرامج وإدارة العضويات.",
     "selectedProgram": "البرنامج المحدد",
+    "sessionDateLabel": "تاريخ الجلسة",
+    "sessionsAttendedLabel": "الجلسات الحاضرة",
     "membersCount": "الأعضاء",
     "addPlayer": "إضافة لاعب",
     "addPlayerHint": "ابحث وأضف لاعبين من هذه الأكاديمية.",
@@ -1110,10 +1113,15 @@
     "noLevelHistory": "لا يوجد سجل مستويات بعد.",
     "rulesTitle": "قواعد النجاح",
     "rulesHint": "حدد الشروط المطلوبة لاجتياز هذا المستوى. اترك الحقل فارغاً لتجاهل هذا الشرط.",
+    "coachToolsTitle": "أدوات المدرب",
+    "coachToolsHint": "استخدم الإجراءات على اليسار لتسجيل الحضور ومكافأة اللاعبين.",
     "imageHint": "ارفع صورة غلاف للبرنامج (الحد الأقصى 5MB).",
     "minDaysInLevel": "الحد الأدنى للأيام في المستوى",
     "minAttendanceRate": "الحد الأدنى لنسبة الحضور (%)",
     "minNaImprovementPercent": "الحد الأدنى لتحسن NA (%)",
+    "minSessionsAttendedLabel": "الحد الأدنى للجلسات",
+    "minXpEarnedLabel": "الحد الأدنى للنقاط",
+    "minPointsEarnedLabel": "الحد الأدنى للنقاط",
     "levelColorHint": "يُستخدم كلون مميز لواجهة هذا المستوى.",
     "levelImageHint": "ارفع صورة للمستوى (الحد الأقصى 5MB).",
     "confirmDeleteProgram": "هل أنت متأكد من حذف هذا البرنامج؟",
@@ -1207,7 +1215,8 @@
     "badgesLabel": "الشارات",
     "badgesEarnedLabel": "شارات مكتسبة",
     "completionRateLabel": "معدل الإنجاز",
-    "xpFromBadgesLabel": "نقاط خبرة من الشارات",
+    "xpFromBadgesLabel": "نقاط من الشارات",
+    "pointsFromBadgesLabel": "نقاط من الشارات",
     "streakLabel": "أشهر متتالية",
     "dnaTitle": "ملخص DNA",
     "dnaSubtitleWithDate": "آخر تقييم: {date}",
@@ -1249,6 +1258,7 @@
       "insights": "ملخص",
       "status": "الحالة",
       "assessmentHistory": "سجل التقييمات",
+      "viewCard": "عرض بطاقة اللاعب",
       "badges": "الشارات",
       "courses": "الدورات",
       "medals": "الميداليات"
@@ -1257,6 +1267,7 @@
       "stage": "المرحلة",
       "naScore": "مؤشر القدرات (NA)",
       "points": "إجمالي النقاط",
+      "sessions": "إجمالي الجلسات",
       "birthDate": "تاريخ الميلاد",
       "school": "المدرسة",
       "position": "المركز",
@@ -1282,11 +1293,11 @@
       "selectCourse": "اختر دورة"
     },
     "actions": {
-      "stageJourney": "رحلة البرنامج",
       "editProfile": "تعديل الملف الشخصي",
       "newAssessment": "تقييم جديد",
       "grantBadge": "منح شارة",
       "adjustProgramLevel": "تعديل مستوى البرنامج",
+      "viewCard": "عرض بطاقة اللاعب",
       "approveStageUpgrade": "اعتماد ترقية المرحلة",
       "addCourse": "إضافة دورة"
     },
@@ -1588,5 +1599,46 @@
     "emptyDescription": "جرّب تعديل عوامل التصفية.",
     "cancel": "إلغاء",
     "loading": "جاري التحميل..."
+  },
+  "playerCardPage": {
+    "title": "بطاقة اللاعب",
+    "subtitle": "بطاقات مستويات البرنامج والتصدير",
+    "hint": "إنشاء بطاقة قابلة للتحميل لكل مستوى في البرنامج.",
+    "back": "عودة",
+
+    "downloadAllPng": "تحميل الكل (PNG)",
+    "downloadAllPdf": "تحميل الكل (PDF)",
+    "downloadPng": "تحميل PNG",
+    "downloadPdf": "تحميل PDF",
+    "allDownloaded": "تم التحميل",
+
+    "generatedFor": "تم الإنشاء لـ",
+    "programs": "برامج",
+    "allPrograms": "كل البرامج",
+    "loading": "جاري التحميل...",
+    "noPrograms": "لا توجد اشتراكات في البرامج",
+    "noProgramsHint": "اطلب من المدرب/المدير إضافة اللاعب إلى برنامج.",
+
+    "latestNaScore": "آخر نتيجة NA",
+    "averageNaScore": "متوسط نتيجة NA",
+    "totalCards": "إجمالي البطاقات",
+
+    "statusCurrent": "الحالي",
+    "statusCompleted": "مكتمل",
+    "statusLocked": "مغلق",
+
+    "programLabel": "البرنامج",
+    "levelLabel": "المستوى",
+    "statusLabel": "الحالة",
+    "playerLabel": "اللاعب",
+    "generatedAt": "تم الإنشاء",
+
+    "pointsLabel": "النقاط",
+    "sessionsLabel": "الجلسات",
+    "of": "من",
+    "noRequirement": "لا يوجد شرط",
+    "sessionsProgress": "تقدم الجلسات",
+    "pointsProgress": "تقدم النقاط",
+    "programPointsTotal": "نقاط البرنامج"
   }
 }

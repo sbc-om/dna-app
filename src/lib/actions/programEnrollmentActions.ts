@@ -69,6 +69,12 @@ async function canManageProgramsForRole(role: Parameters<typeof hasRolePermissio
   return hasRolePermission(role, 'canManagePrograms');
 }
 
+async function canAccessProgramsForRole(role: Parameters<typeof hasRolePermission>[0]) {
+  const canManage = await hasRolePermission(role, 'canManagePrograms');
+  if (canManage) return true;
+  return hasRolePermission(role, 'canCoachPrograms');
+}
+
 export async function getAcademyPlayersForProgramsAction(locale: string = 'en') {
   noStore();
   const ctx = await requireAcademyContext(locale);
@@ -115,6 +121,43 @@ export async function listProgramMembersAction(programId: string, locale: string
     return { success: true as const, members: enriched };
   } catch (error) {
     console.error('Error getting program members:', error);
+    return { success: false as const, error: 'Failed to get members' };
+  }
+}
+
+export async function listProgramMembersForCoachAction(programId: string, locale: string = 'en') {
+  noStore();
+  const ctx = await requireAcademyContext(locale);
+  const allowedByRolePerm = await canAccessProgramsForRole(ctx.user.role);
+  if (!allowedByRolePerm) return { success: false as const, error: 'Unauthorized' };
+
+  // Additionally require academy membership for non-admin.
+  const myMembership = await getAcademyMembership(ctx.academyId, ctx.user.id);
+  const canCoach = ctx.user.role === 'admin' || myMembership?.role === 'coach' || myMembership?.role === 'manager';
+  if (!canCoach) return { success: false as const, error: 'Unauthorized' };
+
+  try {
+    const program = await findProgramById(programId);
+    if (!program) return { success: false as const, error: 'Program not found' };
+    if (ctx.user.role !== 'admin' && program.academyId !== ctx.academyId) {
+      return { success: false as const, error: 'Unauthorized' };
+    }
+
+    const enrollments = await listProgramEnrollmentsByProgram({ academyId: ctx.academyId, programId });
+    const userIds = enrollments.map((e) => e.userId);
+    const users = await getUsersByIds(userIds);
+
+    const enriched = await Promise.all(
+      enrollments.map(async (e) => {
+        const user = users.find((u) => u.id === e.userId) || null;
+        const level = e.currentLevelId ? await findProgramLevelById(e.currentLevelId) : null;
+        return { ...e, user, currentLevel: level };
+      })
+    );
+
+    return { success: true as const, members: enriched };
+  } catch (error) {
+    console.error('Error getting program members for coach:', error);
     return { success: false as const, error: 'Failed to get members' };
   }
 }
@@ -432,6 +475,12 @@ export async function setPlayerProgramLevelAction(params: {
 }
 
 export type ProgramMemberRow = Awaited<ReturnType<typeof listProgramMembersAction>> extends { success: true; members: infer M }
+  ? M extends Array<infer R>
+    ? R
+    : never
+  : never;
+
+export type ProgramCoachMemberRow = Awaited<ReturnType<typeof listProgramMembersForCoachAction>> extends { success: true; members: infer M }
   ? M extends Array<infer R>
     ? R
     : never

@@ -3,9 +3,10 @@ import { DEFAULT_ACADEMY_ID } from './academyRepository';
 import { getDefaultProgramLevelColor, normalizeHexColor } from '@/lib/theme/accentColors';
 
 export type ProgramLevelPassRules = {
-  minDaysInLevel?: number;
-  minAttendanceRatePercent?: number;
-  minNaImprovementPercent?: number;
+  /** Minimum number of attended program sessions required while in this level. */
+  minSessionsAttended?: number;
+  /** Minimum points required while in this level (derived from coach notes / points events). */
+  minPointsEarned?: number;
 };
 
 export interface ProgramLevel {
@@ -54,17 +55,22 @@ function normalizeLevel(level: ProgramLevel | any, key?: string): ProgramLevel {
   const order = typeof level?.order === 'number' ? level.order : 1;
   const color = normalizeHexColor(level?.color) ?? getDefaultProgramLevelColor(order);
 
+  // Normalize/strip deprecated rule fields from existing stored data.
+  const passRules = safeRules(level?.passRules);
+
   const normalized: ProgramLevel = {
     ...level,
     academyId,
     order,
     color,
+    passRules,
   };
 
   const changed =
     normalized.academyId !== level?.academyId ||
     normalized.color !== level?.color ||
-    normalized.order !== level?.order;
+    normalized.order !== level?.order ||
+    JSON.stringify(normalized.passRules) !== JSON.stringify(level?.passRules);
 
   if (changed && key) {
     const db = getDatabase();
@@ -78,14 +84,12 @@ function safeColor(input: unknown, order: number): string {
   return normalizeHexColor(input) ?? getDefaultProgramLevelColor(order);
 }
 
-function safeRules(input?: ProgramLevelPassRules): ProgramLevelPassRules {
-  const r = input || {};
+function safeRules(input?: unknown): ProgramLevelPassRules {
+  const r = (input && typeof input === 'object' ? (input as any) : {}) as any;
+  const legacyMin = typeof r.minXpEarned === 'number' ? r.minXpEarned : undefined;
   const next: ProgramLevelPassRules = {
-    minDaysInLevel: typeof r.minDaysInLevel === 'number' ? r.minDaysInLevel : undefined,
-    minAttendanceRatePercent:
-      typeof r.minAttendanceRatePercent === 'number' ? r.minAttendanceRatePercent : undefined,
-    minNaImprovementPercent:
-      typeof r.minNaImprovementPercent === 'number' ? r.minNaImprovementPercent : undefined,
+    minSessionsAttended: typeof r.minSessionsAttended === 'number' ? r.minSessionsAttended : undefined,
+    minPointsEarned: typeof r.minPointsEarned === 'number' ? r.minPointsEarned : legacyMin,
   };
 
   // Drop invalid / negative values
