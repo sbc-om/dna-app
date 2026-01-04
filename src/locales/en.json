@@ -626,135 +626,203 @@
   "pages": {
     "home": {
       "hero": {
-        "title": "LET'S CREATE A HERO",
-        "subtitle": "Transform your potential into excellence",
-        "cta": "Book Appointment",
+        "badge": "Smart System",
+        "title": "A Smart System for Measuring and Building the Athletic Development Journey",
+        "subtitle": "Discover Natural Ability is an integrated system that works with schools and academies to measure athletes' natural abilities and organize their progress within a clear development journey—measured on the field, documented digitally, and reinforced through lasting achievements.",
+        "cta": "Request Partnership Overview",
         "loginCta": "Sign In"
       },
-      "partners": {
-        "title": "OUR PARTNERS"
+      "intro": {
+        "title": "The Challenge",
+        "description": "Today, many athletes participate in sports without a clear view of their development path or what they are truly achieving over time. Discover does not change the training methods used within institutions. Instead, it adds a layer of structure and clarity that makes progress understandable for the athlete, visible to parents, and genuinely valuable for the institution."
       },
-      "programs": {
-        "title": "OUR PROGRAMS",
-        "subtitle": "Choose your path to greatness",
-        "viewAll": "View All Programs",
-        "learnMore": "Learn More"
-      },
-      "philosophy": {
-        "badge": "1% PHILOSOPHY",
-        "title": "THE MOMENT",
-        "subtitle": "What is the program?",
-        "description": "NOT JUST REWARDS",
-        "goal": "To the highest athletic performance"
-      },
-      "recognition": {
-        "title": "NOT JUST REWARDS",
-        "subtitle": "REAL RECOGNITION",
-        "point1": "Appendicit",
-        "point2": "Appendicit",
-        "point3": "Dramatically",
-        "point4": "Indoloi"
-      },
-      "testimonials": {
-        "title": "WORDS FROM",
-        "subtitle": "OUR COMMUNITY"
-      },
-      "faq": {
-        "title": "Frequently Asked Questions",
-        "q1": "What sports programs does the academy offer?",
-        "a1": "We offer comprehensive training programs in football, basketball, and various other sports disciplines.",
-        "q2": "What age groups can join?",
-        "a2": "We welcome athletes of all ages, from young beginners to advanced players.",
-        "q3": "Do I need prior experience to join?",
-        "a3": "No prior experience needed! We have programs for all skill levels.",
-        "q4": "Where are practices and games held?",
-        "a4": "Our training facilities are located across multiple venues. Details will be provided upon registration."
-      },
-      "newsletter": {
-        "badge": "NEWSLETTER",
-        "title": "STAY UP TO DATE",
-        "placeholder": "Enter your email address",
-        "button": "Subscribe",
-        "privacy": "By submitting this form, you agree to our Privacy Policy"
-      },
-      "discover": {
-        "title": "DISCOVER NOW",
-        "sports": ["FOOTBALL", "BASKETBALL", "CLUB"]
-      },
-      "features": {
-        "title": "Discover The Moment",
-        "subtitle": "An innovative educational system that combines fitness training with engaging gamification",
-        "gamification": {
-          "title": "Interactive Challenges & Rewards",
-          "description": "Keep the energy alive with fun challenges, daily competitions, and live demonstrations that turn every training moment into an unforgettable experience"
+      "whatSetsApart": {
+        "title": "What Sets Discover Apart",
+        "point1": {
+          "title": "Real Field Assessments",
+          "description": "Based on measurement, not assumption"
         },
-        "athleticProfile": {
-          "title": "Personalized Athletic Profiles",
-          "description": "Generate beautiful, printable profiles that showcase your journey, achievements, and growth—designed to inspire and celebrate every milestone"
+        "point2": {
+          "title": "Clear Development Stages",
+          "description": "Easy-to-understand stage system for all stakeholders"
         },
-        "progressTracking": {
-          "title": "Smart Progress Dashboard",
-          "description": "Track your training stages in real-time, see how many sessions remain, and watch your journey unfold with automatic updates synchronized to your training calendar"
+        "point3": {
+          "title": "Smart Motivation",
+          "description": "Combines digital achievement with real-world symbolism"
         },
-        "rewardSystem": {
-          "title": "Earn & Collect Rewards",
-          "description": "Collect coins and points after each training session—pre-programmed rewards that motivate consistent effort and celebrate dedication"
+        "point4": {
+          "title": "Works Alongside Your Programs",
+          "description": "Designed to work alongside existing programs without interference"
         }
+      },
+      "howItWorks": {
+        "title": "How Does Discover Work Without Changing Your Approach?",
+        "subtitle": "Discover was designed to function as an organizational layer on top of what already exists—without modifying curricula, imposing training methods, or increasing operational load.",
+        "stage1": {
+          "number": "01",
+          "title": "Assessment",
+          "description": "The system begins with a scientific assessment conducted on-site, within the institution's environment, to measure the athlete's natural abilities in a realistic and clear manner."
+        },
+        "stage2": {
+          "number": "02",
+          "title": "Analysis and Digital Profile Creation",
+          "description": "Assessment results are analyzed digitally, and a development profile is created to reflect the athlete's current level."
+        },
+        "stage3": {
+          "number": "03",
+          "title": "Development Stage Assignment",
+          "description": "The athlete is placed into a development stage that aligns with their actual abilities, without unfair comparisons or unrealistic expectations."
+        },
+        "stage4": {
+          "number": "04",
+          "title": "Reassessment",
+          "description": "After defined training periods, the athlete is reassessed to measure real and tangible progress."
+        },
+        "stage5": {
+          "number": "05",
+          "title": "Achievement and Motivation",
+          "description": "Each stage concludes with a documented digital achievement and a physical medal bearing the child's name and the academy's name. These medals are not short-term rewards—they represent milestones in a journey, often displayed at home and retained as part of long-term memory."
+        },
+        "assurance": {
+          "title": "Operational Assurance",
+          "point1": "No changes to training delivery",
+          "point2": "No interference with curricula",
+          "point3": "No conflict with coaches"
+        }
+      },
+      "valueForInstitutions": {
+        "title": "Value for Institutions",
+        "continuity": {
+          "title": "Continuity",
+          "description": "When an athlete understands where they stand, sees their progress stage by stage, and recognizes their achievements, their connection to sport—and to the institution—naturally deepens.",
+          "results": ["Increased subscription duration", "Reduced early dropout", "Stronger athlete retention"]
+        },
+        "progressClarity": {
+          "title": "Progress Clarity",
+          "description": "Documented progress that can be reviewed and understood. Clear development stages that define where the athlete stands. A development path that can be explained and shared.",
+          "results": ["Higher trust", "Fewer objections", "More stable relationship with parents"]
+        },
+        "storytelling": {
+          "title": "Real Storytelling and Content",
+          "description": "Achievements, stages, and medals create content rooted in real experience, not promotional messages or broad promises.",
+          "results": ["Clear differentiation based on story, not ads"]
+        },
+        "brandinglegacy": {
+          "title": "Academy Name Reinforcement",
+          "description": "When medals are displayed in the athlete's room, the academy's name remains present in the memory of the child and the family."
+        }
+      },
+      "partnershipModel": {
+        "title": "A Partnership That Organizes—Not Replaces",
+        "subtitle": "The institution retains full control over training methods and curricula.",
+        "howWeWork": {
+          "title": "How We Work",
+          "description": "Discover operates as an independent system layer within the institution, supporting what already exists without interfering with daily operations."
+        },
+        "structure": {
+          "title": "Partnership Structure",
+          "point1": "Annual partnership model",
+          "point2": "Clearly defined scope of implementation"
+        },
+        "whoFor": {
+          "title": "Who This System Is For",
+          "type1": "Institutions seeking long-term continuity, not seasonal enrollment",
+          "type2": "Organizations aiming for a structured and transparent sports experience",
+          "type3": "Leadership teams focused on long-term value"
+        },
+        "cta": "Request Partnership Overview"
       }
     },
     "about": {
-      "title": "About The Moment",
-      "subtitle": "An Innovative Sports Concept by Mini Dacri Studio",
+      "title": "About Discover Natural Ability",
+      "subtitle": "Building the Future of Youth Sports Development",
+      "origin": {
+        "title": "Our Origin Story",
+        "description": "Through direct field experience with professional athletes, sports institutions, and parents of developing athletes, we discovered a critical gap: Many athletes train consistently, yet lack real clarity about their level or how they are progressing over time. Parents support their children, but often struggle to see tangible results that can be understood or followed. At the same time, institutions invest significant effort, without a unified system that clearly demonstrates long-term value. Discover Natural Ability was created to address this gap."
+      },
       "mission": {
-        "title": "Our Vision",
-        "description": "We believe that fitness should be exciting, engaging, and accessible to everyone. The Moment transforms traditional training into an interactive journey where every session brings new challenges, achievements, and growth."
+        "title": "Our Mission",
+        "description": "Discover does not add a new program—it creates a real development journey, measured on the field, documented digitally, with achievements that are displayed on walls and carry the institution's name in the child's memory for years."
+      },
+      "team": {
+        "title": "Discover Team",
+        "location": "Kingdom of Saudi Arabia"
       },
       "system": {
-        "title": "The Educational System",
+        "title": "The System",
         "gamification": {
-          "title": "Gamified Learning Experience",
-          "description": "We've revolutionized fitness education by integrating game mechanics into every aspect of training. Through interactive challenges, daily competitions, and live demonstrations, participants stay motivated and engaged throughout their journey."
+          "title": "Structured Assessment Framework",
+          "description": "Scientific, field-based assessments that measure natural athletic abilities in realistic environments"
         },
         "athleticProfile": {
-          "title": "Athletic Profile Generation",
-          "description": "Every participant receives a personalized athletic profile—a beautifully designed visual representation of their journey. Simply input basic information, and our system generates a professional, printable profile that celebrates achievements and tracks growth milestones."
+          "title": "Digital Development Profiles",
+          "description": "Comprehensive athlete profiles that track progress, stages, and achievements over time"
         },
         "progressTracking": {
-          "title": "Intelligent Progress Tracking",
-          "description": "Parents and participants can log in anytime to see exactly where they are in their training journey. Our smart dashboard shows current training stages, upcoming sessions, and remaining milestones—all automatically synchronized with the structured training calendar."
+          "title": "Clear Stage Progression",
+          "description": "Transparent development stages that show exactly where athletes stand and where they're heading"
         },
         "rewardSystem": {
-          "title": "Automated Reward System",
-          "description": "After each training session, participants earn coins and points that appear instantly in the parent dashboard. These rewards are pre-programmed based on the training calendar, ensuring consistent recognition of effort and dedication without manual intervention."
+          "title": "Meaningful Recognition",
+          "description": "Physical medals and digital achievements that represent real milestones, not just participation"
         }
       },
       "approach": {
         "title": "Our Approach",
-        "description": "The Moment reaches up to 60 participants per session from Discover Academy, divided into three teams. We've designed the system to suit all ages and abilities—from young children to adults seeking excitement. Every course and activity is crafted to challenge and engage, making fitness an adventure rather than a routine."
+        "description": "We work exclusively with institutional partners—academies, schools, sports clubs, and government entities—to provide a layer of organization and clarity that enhances what already exists, without changing training methods or interfering with operations."
       }
     },
     "contact": {
-      "title": "Contact Us",
-      "subtitle": "Get in touch with our team",
+      "title": "Start the Partnership Conversation",
+      "subtitle": "Let's discuss how Discover can support your institution",
+      "clarification": {
+        "title": "Partnership Scope",
+        "description": "Discover Natural Ability works exclusively with institutional partners, including:",
+        "types": ["Academies", "Schools", "Sports Clubs", "Government Institutions"]
+      },
       "form": {
-        "name": "Name",
-        "email": "Email",
-        "message": "Message",
-        "namePlaceholder": "Your name",
+        "title": "Partnership Inquiry",
+        "description": "Please provide the following information to help us better understand your needs",
+        "institutionName": "Institution Name",
+        "institutionNamePlaceholder": "Enter your institution name",
+        "institutionType": "Institution Type",
+        "institutionTypePlaceholder": "Select institution type",
+        "typeAcademy": "Academy",
+        "typeSchool": "School",
+        "typeSportsClub": "Sports Club",
+        "typeGovernment": "Government Entity",
+        "numberOfAthletes": "Approximate Number of Athletes",
+        "numberOfAthletesPlaceholder": "e.g., 100-200",
+        "contactMethod": "Preferred Contact Method",
+        "contactMethodPlaceholder": "Select preferred method",
+        "methodEmail": "Email",
+        "methodPhone": "Phone",
+        "methodWhatsApp": "WhatsApp",
+        "name": "Contact Person Name",
+        "namePlaceholder": "Your full name",
+        "email": "Email Address",
         "emailPlaceholder": "your.email@example.com",
-        "messagePlaceholder": "Your message...",
-        "submit": "Send Message",
-        "success": "Thank you! Your message has been sent.",
-        "error": "Sorry, there was an error sending your message."
+        "phone": "Phone Number",
+        "phonePlaceholder": "+968 XXXX XXXX",
+        "message": "Additional Information",
+        "messagePlaceholder": "Tell us about your institution and what you're looking for...",
+        "submit": "Submit Partnership Inquiry",
+        "success": "Thank you! We'll be in touch soon to discuss partnership opportunities.",
+        "error": "Sorry, there was an error submitting your inquiry. Please try again or contact us directly."
+      },
+      "locations": {
+        "title": "Our Locations",
+        "muscat": "Muscat, Sultanate of Oman",
+        "riyadh": "Riyadh, Kingdom of Saudi Arabia"
       },
       "info": {
         "title": "Contact Information",
         "emailLabel": "Email",
         "phoneLabel": "Phone",
-        "addressLabel": "Address",
+        "addressLabel": "Locations",
         "email": "info@discovernaturalability.com",
         "phone": "+968 7772 2112",
-        "address": "Oman - Muscat"
+        "address": "Muscat, Oman • Riyadh, Saudi Arabia"
       }
     }
   },

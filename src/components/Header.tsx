@@ -85,7 +85,7 @@ export function Header({ dictionary, locale, user }: HeaderProps) {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-      className="sticky top-0 z-50 backdrop-blur-2xl bg-linear-to-r from-black/95 via-gray-900/95 to-black/95 border-b-2 border-white/10"
+      className="relative z-50 backdrop-blur-2xl bg-linear-to-r from-black/95 via-gray-900/95 to-black/95 border-b-2 border-white/10"
     >
       {/* Animated gradient overlay */}
       <motion.div 

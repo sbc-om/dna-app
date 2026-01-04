@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import type { Dictionary } from '@/lib/i18n/getDictionary';
 import type { Locale } from '@/config/i18n';
 import type { User } from '@/lib/db/repositories/userRepository';
@@ -44,6 +45,7 @@ type ProgramLevelCardModel = {
   id: string;
   programId: string;
   programName: string;
+  programImage?: string | null;
   levelId: string;
   levelOrder: number;
   levelName: string;
@@ -164,6 +166,18 @@ export function PlayerCardPageClient(props: {
   const [activeProgramId, setActiveProgramId] = useState<string | null>(null);
   const [exportBusy, setExportBusy] = useState(false);
 
+  const [levelQuery, setLevelQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<CardStatus | 'all'>('all');
+
+  const cardShell =
+    'rounded-3xl border-2 border-[#DDDDDD] bg-white shadow-lg dark:border-[#000000] dark:bg-[#262626] overflow-hidden';
+  const inputClass =
+    'h-12 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#111114] text-[#262626] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500';
+  const outlineButtonClass =
+    'h-11 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white/80 dark:bg-[#111114] text-[#262626] dark:text-white hover:bg-gray-50 dark:hover:bg-[#1a1a1d]';
+  const ctaButtonClass =
+    'h-11 rounded-xl bg-[#0b0b0f] text-white hover:bg-[#14141a] disabled:opacity-60 disabled:hover:bg-[#0b0b0f]';
+
   // Store refs by card id so we can export each card.
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -242,6 +256,8 @@ export function PlayerCardPageClient(props: {
                 : enrollment.program.name
               : 'Program';
 
+            const programImage = enrollment.program ? ((enrollment.program as any).image as string | undefined) : undefined;
+
             const models: ProgramLevelCardModel[] = sortedLevels.map((lvl) => {
               const levelName = props.locale === 'ar' ? lvl.nameAr || lvl.name : lvl.name;
 
@@ -264,6 +280,7 @@ export function PlayerCardPageClient(props: {
                 id: `${enrollment.programId}:${lvl.id}`,
                 programId: enrollment.programId,
                 programName,
+                programImage: programImage ?? null,
                 levelId: lvl.id,
                 levelOrder: lvl.order,
                 levelName,
@@ -309,9 +326,22 @@ export function PlayerCardPageClient(props: {
   }, [cards]);
 
   const visibleCards = useMemo(() => {
-    if (!activeProgramId) return cards;
-    return cards.filter((c) => c.programId === activeProgramId);
-  }, [cards, activeProgramId]);
+    const q = levelQuery.trim().toLowerCase();
+    let list = !activeProgramId ? cards : cards.filter((c) => c.programId === activeProgramId);
+
+    if (statusFilter !== 'all') {
+      list = list.filter((c) => c.status === statusFilter);
+    }
+
+    if (q) {
+      list = list.filter((c) => {
+        const hay = `${c.programName} ${c.levelName} ${c.levelOrder}`.toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    return list;
+  }, [activeProgramId, cards, levelQuery, statusFilter]);
 
   const exportCardToPng = useCallback(
     async (cardId: string, filename: string) => {
@@ -319,7 +349,7 @@ export function PlayerCardPageClient(props: {
       if (!el) throw new Error('Card not found');
       const canvas = await html2canvas(el, {
         scale: 3,
-        backgroundColor: null,
+        backgroundColor: '#ffffff',
         logging: false,
         useCORS: true,
       });
@@ -335,7 +365,7 @@ export function PlayerCardPageClient(props: {
 
       const canvas = await html2canvas(el, {
         scale: 3,
-        backgroundColor: '#000000',
+        backgroundColor: '#ffffff',
         logging: false,
         useCORS: true,
       });
@@ -365,7 +395,7 @@ export function PlayerCardPageClient(props: {
     if (!firstEl) throw new Error('Card not found');
     const firstCanvas = await html2canvas(firstEl, {
       scale: 3,
-      backgroundColor: '#000000',
+      backgroundColor: '#ffffff',
       logging: false,
       useCORS: true,
     });
@@ -385,7 +415,7 @@ export function PlayerCardPageClient(props: {
       if (!el) continue;
       const canvas = await html2canvas(el, {
         scale: 3,
-        backgroundColor: '#000000',
+        backgroundColor: '#ffffff',
         logging: false,
         useCORS: true,
       });
@@ -438,143 +468,121 @@ export function PlayerCardPageClient(props: {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 18 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, type: 'spring', stiffness: 260, damping: 22 }}
       className="space-y-6"
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <Button asChild variant="outline" size="icon" className="rounded-xl">
-            <Link href={`/${props.locale}/dashboard/players/${props.kid.id}`} aria-label="Back">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <IdCard className="h-5 w-5 text-[#FF5F02]" />
-              <h1 className="text-xl sm:text-2xl font-extrabold text-[#262626] dark:text-white truncate">
-                {title}
-              </h1>
-            </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-              {subtitle}
-            </p>
-          </div>
-        </div>
-
-        <div className="hidden sm:flex items-center gap-2">
-          <motion.div whileHover={{ rotate: [-2, 2, -1, 0] }} transition={{ duration: 0.35 }}>
-            <Button
-              onClick={handleExportAllPng}
-              disabled={exportBusy || loading || visibleCards.length === 0}
-              className="rounded-xl bg-linear-to-r from-[#FF5F02] via-[#FF7A2E] to-[#FF3D00] text-white shadow-lg shadow-orange-500/20 hover:shadow-orange-500/35"
-            >
-              {exportBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
-              {t.downloadAllPng || 'Download all (PNG)'}
-            </Button>
-          </motion.div>
-          <Button
-            onClick={handleExportAllPdf}
-            disabled={exportBusy || loading || visibleCards.length === 0}
-            variant="outline"
-            className="rounded-xl"
-          >
-            {exportBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
-            {t.downloadAllPdf || 'Download all (PDF)'}
-          </Button>
-        </div>
-      </div>
-
-
-      <Card className="rounded-2xl border-2 border-[#DDDDDD] bg-white shadow-lg dark:border-[#000000] dark:bg-[#262626] overflow-hidden">
-        <CardHeader className="border-b-2 border-[#DDDDDD] dark:border-[#000000] bg-gray-50 dark:bg-[#1a1a1a]">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <CardTitle className="text-[#262626] dark:text-white truncate">
-                {props.kid.fullName || props.kid.username}
-              </CardTitle>
-              <CardDescription className="text-gray-600 dark:text-gray-400">
-                {t.hint || ''}
-              </CardDescription>
-            </div>
-            <div className="hidden sm:flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-              <ShieldCheck className="h-4 w-4 text-[#FF5F02]" />
-              <span>
-                {t.generatedFor || 'Generated for'}{' '}
-                <span className="font-semibold text-gray-800 dark:text-gray-200">{programsCount}</span>{' '}
-                {t.programs || 'programs'}
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <motion.div
-              whileHover={{ scale: 1.02, rotate: -0.25 }}
-              className="rounded-2xl border border-white/10 bg-linear-to-br from-[#FF5F02]/12 via-white/5 to-transparent p-4 dark:from-[#FF5F02]/18"
-            >
-              <div className="text-xs text-gray-600 dark:text-gray-400">{t.latestNaScore || 'Latest NA Score'}</div>
-              <div className="mt-1 text-2xl font-extrabold text-[#262626] dark:text-white">
-                {naStats.latestNaScore === null ? '—' : Math.round(naStats.latestNaScore)}
+      <Card className={cardShell}>
+        <CardHeader className="border-b border-black/10 dark:border-white/10 bg-gray-50/80 dark:bg-[#0f0f12]">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <Button asChild variant="outline" size="icon" className="rounded-xl">
+                <Link href={`/${props.locale}/dashboard/players/${props.kid.id}`} aria-label={tCommon.back || 'Back'}>
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
+              </Button>
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-extrabold text-[#262626] dark:text-white truncate">{title}</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{subtitle}</p>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div
-              whileHover={{ scale: 1.02, rotate: 0.25 }}
-              className="rounded-2xl border border-white/10 bg-linear-to-br from-blue-500/10 via-white/5 to-transparent p-4 dark:from-blue-500/15"
-            >
-              <div className="text-xs text-gray-600 dark:text-gray-400">{t.averageNaScore || 'Average NA Score'}</div>
-              <div className="mt-1 text-2xl font-extrabold text-[#262626] dark:text-white">
-                {naStats.averageNaScore === null ? '—' : Math.round(naStats.averageNaScore)}
-              </div>
-            </motion.div>
-
-            <motion.div
-              whileHover={{ scale: 1.02, rotate: -0.1 }}
-              className="rounded-2xl border border-white/10 bg-linear-to-br from-emerald-500/10 via-white/5 to-transparent p-4 dark:from-emerald-500/15"
-            >
-              <div className="text-xs text-gray-600 dark:text-gray-400">{t.totalCards || 'Total cards'}</div>
-              <div className="mt-1 text-2xl font-extrabold text-[#262626] dark:text-white">{cards.length}</div>
-            </motion.div>
+            <div className="hidden sm:flex items-center gap-2">
+              <motion.div whileHover={{ rotate: [-2, 2, -1, 0] }} transition={{ duration: 0.35 }}>
+                <Button
+                  onClick={handleExportAllPng}
+                  disabled={exportBusy || loading || visibleCards.length === 0}
+                  className="rounded-xl bg-linear-to-r from-[#FF5F02] via-[#FF7A2E] to-[#FF3D00] text-white shadow-lg shadow-orange-500/20 hover:shadow-orange-500/35"
+                >
+                  {exportBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                  {t.downloadAllPng || 'Download all (PNG)'}
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ rotate: [2, -2, 1, 0] }} transition={{ duration: 0.35 }}>
+                <Button
+                  onClick={handleExportAllPdf}
+                  disabled={exportBusy || loading || visibleCards.length === 0}
+                  variant="outline"
+                  className={outlineButtonClass}
+                >
+                  {exportBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                  {t.downloadAllPdf || 'Download all (PDF)'}
+                </Button>
+              </motion.div>
+            </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            {programs.map((p, idx) => (
-              <motion.button
-                key={p.programId}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.06 }}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => setActiveProgramId(p.programId)}
-                className={
-                  'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm border transition-all ' +
-                  (activeProgramId === p.programId
-                    ? 'border-[#FF5F02]/60 bg-linear-to-r from-[#FF5F02]/20 to-transparent text-[#262626] dark:text-white shadow-lg shadow-orange-500/10'
-                    : 'border-white/10 bg-black/5 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-black/10 dark:hover:bg-white/10')
-                }
-              >
-                <Layers className="h-4 w-4" />
-                <span className="truncate max-w-56">{p.programName}</span>
-              </motion.button>
-            ))}
+          <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-3">
+            <div className="lg:col-span-5">
+              <Input
+                value={levelQuery}
+                onChange={(e) => setLevelQuery(e.target.value)}
+                placeholder={t.searchPlaceholder || tCommon.search || 'Search'}
+                className={inputClass}
+              />
+            </div>
 
-            {programs.length > 1 && (
-              <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => setActiveProgramId(null)}
-                className={
-                  'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm border transition-all ' +
-                  (!activeProgramId
-                    ? 'border-[#FF5F02]/60 bg-linear-to-r from-[#FF5F02]/20 to-transparent text-[#262626] dark:text-white shadow-lg shadow-orange-500/10'
-                    : 'border-white/10 bg-black/5 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-black/10 dark:hover:bg-white/10')
-                }
+            <div className="lg:col-span-7 flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant={statusFilter === 'all' ? 'default' : 'outline'}
+                onClick={() => setStatusFilter('all')}
+                className={statusFilter === 'all' ? ctaButtonClass : outlineButtonClass}
               >
-                {t.allPrograms || 'All programs'}
-              </motion.button>
-            )}
+                {t.allStatuses || 'All'}
+              </Button>
+              <Button
+                type="button"
+                variant={statusFilter === 'current' ? 'default' : 'outline'}
+                onClick={() => setStatusFilter('current')}
+                className={statusFilter === 'current' ? ctaButtonClass : outlineButtonClass}
+              >
+                {t.statusCurrent || 'Current'}
+              </Button>
+              <Button
+                type="button"
+                variant={statusFilter === 'completed' ? 'default' : 'outline'}
+                onClick={() => setStatusFilter('completed')}
+                className={statusFilter === 'completed' ? ctaButtonClass : outlineButtonClass}
+              >
+                {t.statusCompleted || 'Completed'}
+              </Button>
+              <Button
+                type="button"
+                variant={statusFilter === 'locked' ? 'default' : 'outline'}
+                onClick={() => setStatusFilter('locked')}
+                className={statusFilter === 'locked' ? ctaButtonClass : outlineButtonClass}
+              >
+                {t.statusLocked || 'Locked'}
+              </Button>
+
+              <div className="w-full h-px bg-black/10 dark:bg-white/10 my-1" />
+
+              {programs.map((p) => (
+                <Button
+                  key={p.programId}
+                  type="button"
+                  variant={activeProgramId === p.programId ? 'default' : 'outline'}
+                  onClick={() => setActiveProgramId(p.programId)}
+                  className={activeProgramId === p.programId ? ctaButtonClass : outlineButtonClass}
+                >
+                  <Layers className="h-4 w-4 mr-2" />
+                  <span className="truncate max-w-56">{p.programName}</span>
+                </Button>
+              ))}
+
+              {programs.length > 1 && (
+                <Button
+                  type="button"
+                  variant={!activeProgramId ? 'default' : 'outline'}
+                  onClick={() => setActiveProgramId(null)}
+                  className={!activeProgramId ? ctaButtonClass : outlineButtonClass}
+                >
+                  {t.allPrograms || 'All programs'}
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
 
@@ -627,9 +635,7 @@ export function PlayerCardPageClient(props: {
                 <div className="text-base font-semibold text-[#262626] dark:text-white">
                   {t.noPrograms || 'No program enrollments found'}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {t.noProgramsHint || ''}
-                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t.noProgramsHint || ''}</div>
               </motion.div>
             ) : (
               <motion.div
@@ -660,7 +666,7 @@ export function PlayerCardPageClient(props: {
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
-                        className="flex-1 rounded-xl"
+                        className={`flex-1 ${outlineButtonClass}`}
                         disabled={exportBusy}
                         onClick={async () => {
                           setExportBusy(true);
@@ -679,11 +685,15 @@ export function PlayerCardPageClient(props: {
                           }
                         }}
                       >
-                        {exportBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                        {exportBusy ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4 mr-2" />
+                        )}
                         {t.downloadPng || 'Download PNG'}
                       </Button>
                       <Button
-                        className="flex-1 rounded-xl bg-linear-to-r from-[#FF5F02] via-[#FF7A2E] to-[#FF3D00] text-white shadow-lg shadow-orange-500/15 hover:shadow-orange-500/25"
+                        className={`flex-1 ${ctaButtonClass}`}
                         disabled={exportBusy}
                         onClick={async () => {
                           setExportBusy(true);
@@ -702,7 +712,11 @@ export function PlayerCardPageClient(props: {
                           }
                         }}
                       >
-                        {exportBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                        {exportBusy ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4 mr-2" />
+                        )}
                         {t.downloadPdf || 'Download PDF'}
                       </Button>
                     </div>
@@ -717,201 +731,175 @@ export function PlayerCardPageClient(props: {
   );
 }
 
-const ProgramLevelCard = motion(
-  forwardRef<
-    HTMLDivElement,
-    {
-      player: User;
-      model: ProgramLevelCardModel;
-      locale: Locale;
-      dictionary: Dictionary;
-      latestNaScore: number | null;
-      averageNaScore: number | null;
-    }
-  >(function ProgramLevelCardInner(props, ref) {
-    const { player, model } = props;
+const ProgramLevelCard = forwardRef<
+  HTMLDivElement,
+  {
+    player: User;
+    model: ProgramLevelCardModel;
+    locale: Locale;
+    dictionary: Dictionary;
+    latestNaScore: number | null;
+    averageNaScore: number | null;
+  }
+>(function ProgramLevelCardInner(props, ref) {
+  const { player, model } = props;
+  const t = (props.dictionary as any).playerCardPage ?? {};
 
-    const t = (props.dictionary as any).playerCardPage ?? {};
+  const sessionsProgress = model.requiredSessions > 0 ? clamp01(model.attendedSessions / model.requiredSessions) : 0;
+  const pointsProgress = model.requiredPoints > 0 ? clamp01(model.earnedPoints / model.requiredPoints) : 0;
 
-    const sessionsProgress = model.requiredSessions > 0 ? clamp01(model.attendedSessions / model.requiredSessions) : 0;
-    const pointsProgress = model.requiredPoints > 0 ? clamp01(model.earnedPoints / model.requiredPoints) : 0;
+  const statusLabel =
+    model.status === 'current'
+      ? t.statusCurrent || 'Current'
+      : model.status === 'completed'
+        ? t.statusCompleted || 'Completed'
+        : t.statusLocked || 'Locked';
 
-    const statusLabel =
-      model.status === 'current'
-        ? t.statusCurrent || 'Current'
-        : model.status === 'completed'
-          ? t.statusCompleted || 'Completed'
-          : t.statusLocked || 'Locked';
+  const statusClass =
+    model.status === 'current'
+      ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20'
+      : model.status === 'completed'
+        ? 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20'
+        : 'bg-gray-500/10 text-gray-700 dark:text-gray-300 border-gray-500/20';
 
-    const statusTone =
-      model.status === 'current'
-        ? 'from-emerald-500/25 to-transparent border-emerald-500/25'
-        : model.status === 'completed'
-          ? 'from-blue-500/20 to-transparent border-blue-500/20'
-          : 'from-white/10 to-transparent border-white/10';
+  const accent = model.levelColor || '#FF5F02';
+  const safeAccent = /^#[0-9a-f]{6}$/i.test(accent) ? accent : '#FF5F02';
 
-    const accent = model.levelColor || '#FF5F02';
-    const safeAccent = /^#[0-9a-f]{6}$/i.test(accent) ? accent : '#FF5F02';
+  const imageSrc = model.programImage || player.profilePicture || '';
+  const imageAlt = model.programName || (player.fullName || player.username) || 'Program';
 
-    return (
-      <motion.div
-        ref={ref}
-        whileHover={{ scale: 1.02, rotateY: 3, rotateX: 2 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-        style={{ transformStyle: 'preserve-3d' }}
-        className="relative rounded-[28px] overflow-hidden border-2 border-white/10 bg-[#0b0b0f] shadow-2xl"
-      >
-        {/* Animated glow */}
-        <motion.div
-          className="absolute inset-0 opacity-70"
+  return (
+    <div
+      ref={ref}
+      className="rounded-3xl border-2 border-[#DDDDDD] bg-white shadow-lg dark:border-[#000000] dark:bg-[#262626] overflow-hidden"
+    >
+      <div className="relative h-36 w-full overflow-hidden bg-gray-100 dark:bg-[#111114]">
+        {imageSrc ? (
+          // Using <img> instead of next/image improves html2canvas reliability for exports.
+          <img
+            src={imageSrc}
+            alt={imageAlt}
+            crossOrigin="anonymous"
+            className="h-full w-full object-cover"
+            onError={(e) => {
+              // Hide broken images without throwing.
+              (e.currentTarget as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        ) : null}
+        <div
+          className="absolute inset-0"
           style={{
             background:
-              `radial-gradient(1100px 380px at 20% 15%, ${safeAccent}33, transparent 60%),` +
-              `radial-gradient(900px 300px at 80% 30%, #3b82f633, transparent 55%),` +
-              `radial-gradient(800px 260px at 50% 90%, #10b98122, transparent 60%)`,
+              'linear-gradient(180deg, rgba(0,0,0,0.0) 30%, rgba(0,0,0,0.55) 100%)',
           }}
-          animate={{ opacity: [0.55, 0.75, 0.6] }}
-          transition={{ duration: 3.6, repeat: Infinity }}
         />
 
-        {/* Card body with fixed export-friendly size */}
-        <div className="relative p-5 sm:p-6">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <div
-                  className="h-3.5 w-3.5 rounded-full"
-                  style={{ backgroundColor: safeAccent, boxShadow: `0 0 18px ${safeAccent}66` }}
-                />
-                <div className="text-xs uppercase tracking-wider text-white/70">
-                  {t.programLabel || 'Program'}
-                </div>
-              </div>
-              <div className="mt-1 text-lg font-extrabold text-white truncate">{model.programName}</div>
-              <div className="mt-1 flex items-center gap-2 text-sm text-white/80">
-                <span className="inline-flex items-center gap-2">
-                  <Layers className="h-4 w-4" />
-                  <span className="font-semibold">
-                    {t.levelLabel || 'Level'} {model.levelOrder}
-                  </span>
-                </span>
-                <span className="text-white/50">•</span>
-                <span className="truncate">{model.levelName}</span>
-              </div>
+        <div className="absolute left-4 right-4 bottom-3 flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-xs text-white/80">{t.programLabel || 'Program'}</div>
+            <div className="mt-0.5 text-base font-extrabold text-white truncate">{model.programName}</div>
+          </div>
+          <div
+            className="shrink-0 h-9 w-9 rounded-xl border border-white/20"
+            style={{ backgroundColor: safeAccent }}
+            aria-hidden
+          />
+        </div>
+      </div>
+
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+              <Layers className="h-4 w-4" />
+              <span className="font-semibold text-[#262626] dark:text-white">
+                {t.levelLabel || 'Level'} {model.levelOrder}
+              </span>
+              <span className="text-gray-400 dark:text-gray-500">•</span>
+              <span className="truncate">{model.levelName}</span>
             </div>
 
-            <div className={`shrink-0 rounded-2xl border px-3 py-2 bg-linear-to-br ${statusTone}`}>
-              <div className="text-[10px] uppercase tracking-wider text-white/70">{t.statusLabel || 'Status'}</div>
-              <div className="mt-0.5 text-sm font-bold text-white">{statusLabel}</div>
+            <div className="mt-2 text-xs text-gray-600 dark:text-gray-400 truncate">
+              {t.playerLabel || 'Player'}: <span className="font-semibold">{player.fullName || player.username}</span>
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <StatPill
-              label={t.pointsLabel || 'Points'}
-              value={`${Math.max(0, Math.round(model.earnedPoints))}`}
-              hint={
-                model.requiredPoints > 0
-                  ? `${t.of || 'of'} ${Math.round(model.requiredPoints)}`
-                  : t.noRequirement || 'No requirement'
-              }
-              accent={safeAccent}
-            />
-            <StatPill
-              label={t.sessionsLabel || 'Sessions'}
-              value={`${Math.max(0, Math.round(model.attendedSessions))}`}
-              hint={
-                model.requiredSessions > 0
-                  ? `${t.of || 'of'} ${Math.round(model.requiredSessions)}`
-                  : t.noRequirement || 'No requirement'
-              }
-              accent="#22c55e"
-            />
-          </div>
-
-          <div className="mt-4 space-y-3">
-            <ProgressRow
-              label={t.sessionsProgress || 'Sessions progress'}
-              progress={sessionsProgress}
-              left={`${Math.round(model.attendedSessions)}`}
-              right={model.requiredSessions > 0 ? `${Math.round(model.requiredSessions)}` : '—'}
-              color="#22c55e"
-            />
-            <ProgressRow
-              label={t.pointsProgress || 'Points progress'}
-              progress={pointsProgress}
-              left={`${Math.round(model.earnedPoints)}`}
-              right={model.requiredPoints > 0 ? `${Math.round(model.requiredPoints)}` : '—'}
-              color={safeAccent}
-            />
-          </div>
-
-          <div className="mt-5 grid grid-cols-3 gap-3">
-            <MiniKpi label={t.programPointsTotal || 'Program points'} value={`${Math.round(model.programPointsTotal)}`} />
-            <MiniKpi
-              label={t.latestNaScore || 'Latest NA'}
-              value={props.latestNaScore === null ? '—' : `${Math.round(props.latestNaScore)}`}
-            />
-            <MiniKpi
-              label={t.averageNaScore || 'Avg NA'}
-              value={props.averageNaScore === null ? '—' : `${Math.round(props.averageNaScore)}`}
-            />
-          </div>
-
-          <div className="mt-5 flex items-end justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-wider text-white/50">{t.playerLabel || 'Player'}</div>
-              <div className="mt-1 text-sm font-semibold text-white truncate">{player.fullName || player.username}</div>
-            </div>
-
-            <div className="text-right">
-              <div className="text-[10px] uppercase tracking-wider text-white/50">{t.generatedAt || 'Generated'}</div>
-              <div className="mt-1 text-xs font-semibold text-white/80">{new Date().toISOString().slice(0, 10)}</div>
-            </div>
-          </div>
+          <div className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold ${statusClass}`}>{statusLabel}</div>
         </div>
 
-        {/* Subtle border highlight */}
-        <div className="absolute inset-0 rounded-[28px] pointer-events-none" style={{ boxShadow: `inset 0 0 0 1px ${safeAccent}22` }} />
-      </motion.div>
-    );
-  })
-);
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <KpiBlock
+            label={t.pointsLabel || 'Points'}
+            value={`${Math.max(0, Math.round(model.earnedPoints))}`}
+            hint={
+              model.requiredPoints > 0
+                ? `${t.of || 'of'} ${Math.round(model.requiredPoints)}`
+                : t.noRequirement || 'No requirement'
+            }
+          />
+          <KpiBlock
+            label={t.sessionsLabel || 'Sessions'}
+            value={`${Math.max(0, Math.round(model.attendedSessions))}`}
+            hint={
+              model.requiredSessions > 0
+                ? `${t.of || 'of'} ${Math.round(model.requiredSessions)}`
+                : t.noRequirement || 'No requirement'
+            }
+          />
+        </div>
 
-function StatPill(props: { label: string; value: string; hint: string; accent: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="text-xs text-white/70">{props.label}</div>
-        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: props.accent, boxShadow: `0 0 14px ${props.accent}55` }} />
+        <div className="mt-4 space-y-3">
+          <ProgressRow
+            label={t.sessionsProgress || 'Sessions progress'}
+            progress={sessionsProgress}
+            left={`${Math.round(model.attendedSessions)}`}
+            right={model.requiredSessions > 0 ? `${Math.round(model.requiredSessions)}` : '—'}
+            color="#22c55e"
+          />
+          <ProgressRow
+            label={t.pointsProgress || 'Points progress'}
+            progress={pointsProgress}
+            left={`${Math.round(model.earnedPoints)}`}
+            right={model.requiredPoints > 0 ? `${Math.round(model.requiredPoints)}` : '—'}
+            color={safeAccent}
+          />
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          <MiniKpi label={t.programPointsTotal || 'Program points'} value={`${Math.round(model.programPointsTotal)}`} />
+          <MiniKpi label={t.latestNaScore || 'Latest NA'} value={props.latestNaScore === null ? '—' : `${Math.round(props.latestNaScore)}`} />
+          <MiniKpi label={t.averageNaScore || 'Avg NA'} value={props.averageNaScore === null ? '—' : `${Math.round(props.averageNaScore)}`} />
+        </div>
       </div>
-      <div className="mt-1 text-2xl font-extrabold text-white">{props.value}</div>
-      <div className="mt-0.5 text-xs text-white/55">{props.hint}</div>
+    </div>
+  );
+});
+
+function KpiBlock(props: { label: string; value: string; hint: string }) {
+  return (
+    <div className="rounded-2xl border border-black/10 bg-gray-50/60 p-4 dark:border-white/10 dark:bg-white/5">
+      <div className="text-xs text-gray-600 dark:text-gray-400">{props.label}</div>
+      <div className="mt-1 text-2xl font-extrabold text-[#262626] dark:text-white">{props.value}</div>
+      <div className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">{props.hint}</div>
     </div>
   );
 }
 
-function ProgressRow(props: {
-  label: string;
-  progress: number;
-  left: string;
-  right: string;
-  color: string;
-}) {
+function ProgressRow(props: { label: string; progress: number; left: string; right: string; color: string }) {
   const pct = Math.round(clamp01(props.progress) * 100);
   return (
     <div>
-      <div className="flex items-center justify-between text-xs text-white/65">
+      <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
         <span className="truncate">{props.label}</span>
-        <span className="shrink-0">{props.left} / {props.right} · {pct}%</span>
+        <span className="shrink-0">
+          {props.left} / {props.right} · {pct}%
+        </span>
       </div>
-      <div className="mt-2 h-2.5 rounded-full bg-white/10 overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ type: 'spring', stiffness: 220, damping: 24 }}
-          className="h-full rounded-full"
-          style={{ background: `linear-gradient(90deg, ${props.color}, ${props.color}66)` }}
+      <div className="mt-2 h-2.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${props.color}, ${props.color}66)` }}
         />
       </div>
     </div>
@@ -920,9 +908,9 @@ function ProgressRow(props: {
 
 function MiniKpi(props: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-3">
-      <div className="text-[10px] uppercase tracking-wider text-white/55">{props.label}</div>
-      <div className="mt-1 text-base font-extrabold text-white">{props.value}</div>
+    <div className="rounded-2xl border border-black/10 bg-gray-50/60 p-3 dark:border-white/10 dark:bg-white/5">
+      <div className="text-[10px] uppercase tracking-wider text-gray-600 dark:text-gray-400">{props.label}</div>
+      <div className="mt-1 text-base font-extrabold text-[#262626] dark:text-white">{props.value}</div>
     </div>
   );
 }
