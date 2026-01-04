@@ -907,34 +907,18 @@ export function KidProfileClient({
                 </div>
 
                 <div className="relative bg-gray-50 dark:bg-[#0b0b0f] backdrop-blur-xl border-t-2 border-[#DDDDDD] dark:border-[#000000] p-4 sm:p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="text-xl sm:text-2xl font-extrabold text-[#262626] dark:text-white truncate">
-                        {currentKid.fullName || currentKid.username}
-                      </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <Badge className="border-2 border-[#DDDDDD] bg-white text-[#262626] font-semibold dark:border-[#000000] dark:bg-[#1a1a1a] dark:text-white">
-                          {dictionary.playerProfile?.labels?.points ?? 'Total points'}: {totalProgramPoints}
-                        </Badge>
-                        <Badge className="border-2 border-[#DDDDDD] bg-white text-[#262626] font-semibold dark:border-[#000000] dark:bg-[#1a1a1a] dark:text-white">
-                          {dictionary.playerProfile?.labels?.sessions ?? dictionary.programs?.sessionsAttendedLabel ?? 'Sessions attended'}: {totalProgramSessionsAttended}
-                        </Badge>
-                        {latestAssessment ? (
-                          <Badge className="border-2 border-[#DDDDDD] bg-white text-[#262626] font-semibold dark:border-[#000000] dark:bg-[#1a1a1a] dark:text-white">
-                            {dictionary.playerProfile?.labels?.naScore ?? 'NA Score'}: {latestAssessment.naScore}
-                          </Badge>
-                        ) : null}
-                      </div>
-                    </div>
-
+                  <div className="relative flex flex-col items-center text-center gap-2">
                     <div
-                      className="h-10 w-10 rounded-2xl border-2 border-[#DDDDDD] shadow-lg shrink-0 dark:border-[#000000]"
+                      className="absolute right-0 top-0 h-10 w-10 rounded-2xl border-2 border-[#DDDDDD] shadow-lg dark:border-[#000000]"
                       style={{ backgroundColor: accentColor }}
                       aria-hidden
                     />
+                    <div className="text-2xl sm:text-3xl font-black text-[#262626] dark:text-white leading-tight px-10">
+                      {currentKid.fullName || currentKid.username}
+                    </div>
                   </div>
 
-                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="mt-4 grid grid-cols-2 gap-3">
                     <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]">
                       <div className="text-xs text-gray-600 dark:text-gray-400">
                         {dictionary.playerProfile?.labels?.points ?? 'Total points'}
