@@ -12,6 +12,9 @@ import {
   type CreateProgramInput,
   type UpdateProgramInput,
 } from '../db/repositories/programRepository';
+import { deleteProgramAttendanceForProgram } from '../db/repositories/programAttendanceRepository';
+import { deleteDnaAssessmentSessionsForProgram } from '../db/repositories/dnaAssessmentRepository';
+import { deleteProgramEnrollmentsByProgram } from '../db/repositories/programEnrollmentRepository';
 import {
   createProgramLevel,
   deleteProgramLevel,
@@ -99,11 +102,27 @@ export async function deleteProgramAction(id: string, locale: string = 'en') {
       return { success: false, error: 'Unauthorized' };
     }
 
+    // Important: when an admin deletes a program, the selected academy context cookie may not
+    // match the program's academyId. Always cascade-delete using the program's academyId.
+    const programAcademyId = existing.academyId;
+
+    // Cascade delete:
+    // - program enrollments (contains level history, points, coach notes)
+    // - program attendance records
+    // - program-scoped DNA assessments
+    // - program levels
+    // - program itself
+    await deleteProgramAttendanceForProgram({ academyId: programAcademyId, programId: id });
+    await deleteDnaAssessmentSessionsForProgram({ academyId: programAcademyId, programId: id });
+    await deleteProgramEnrollmentsByProgram({ academyId: programAcademyId, programId: id });
     await deleteProgramLevelsByProgramId(id);
+
     const deleted = await deleteProgram(id);
     if (!deleted) return { success: false, error: 'Program not found' };
 
     revalidatePath(`/${locale}/dashboard/programs`, 'page');
+    revalidatePath(`/${locale}/dashboard/programs/members`, 'page');
+    revalidatePath(`/${locale}/dashboard/players`, 'page');
     return { success: true };
   } catch (error) {
     console.error('Error deleting program:', error);

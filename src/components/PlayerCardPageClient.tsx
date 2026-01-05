@@ -838,20 +838,20 @@ const ProgramLevelCard = forwardRef<
 
       <div className="relative rounded-[28px] overflow-hidden">
         {/* Portrait area */}
-        <div className="relative h-56 w-full flex items-end justify-center">
+        <div className="relative h-64 sm:h-72 w-full flex items-end justify-center">
           <div className="absolute inset-0 bg-black/15" />
           {imageSrc ? (
             <img
               src={imageSrc}
               alt={imageAlt}
               crossOrigin="anonymous"
-              className="relative z-10 h-48 w-48 rounded-3xl object-cover shadow-2xl shadow-black/40 ring-1 ring-white/10"
+              className="relative z-10 h-56 w-56 sm:h-64 sm:w-64 rounded-3xl object-cover shadow-2xl shadow-black/40 ring-1 ring-white/10"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).style.display = 'none';
               }}
             />
           ) : (
-            <div className="relative z-10 h-48 w-48 rounded-3xl bg-black/25 ring-1 ring-white/10" />
+            <div className="relative z-10 h-56 w-56 sm:h-64 sm:w-64 rounded-3xl bg-black/25 ring-1 ring-white/10" />
           )}
 
           {/* Subtle top vignette */}

@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Activity,
   Award,
@@ -23,7 +24,6 @@ import {
   BookOpen,
   Calendar,
   Cake,
-  CheckCircle2,
   Edit,
   Flag,
   IdCard,
@@ -41,6 +41,7 @@ import { getEnrollmentsByStudentIdAction, updateEnrollmentCourseAction, createEn
 import { getActiveCoursesAction } from '@/lib/actions/courseActions';
 import {
   getPlayerProgramEnrollmentsAction,
+  cleanupOrphanProgramEnrollmentsForUserAction,
   addCoachNoteToProgramPlayerAction,
   getProgramLevelsForProgramAction,
   getProgramLevelsForPlayerProgramAction,
@@ -64,6 +65,7 @@ import {
   createDnaAssessmentAction,
   deleteDnaAssessmentAction,
   getDnaAssessmentsForPlayerAction,
+  updateDnaAssessmentNotesAction,
   type DnaAssessmentSession,
 } from '@/lib/actions/dnaAssessmentActions';
 import { BADGES } from '@/lib/player/badges';
@@ -90,7 +92,7 @@ export function KidProfileClient({
   const NO_LEVEL_VALUE = '__none__';
   type EnrichedEnrollment = Enrollment & { course?: Course | null };
   type AssessmentFieldKey = 'speed' | 'agility' | 'balance' | 'power' | 'reaction' | 'coordination' | 'flexibility';
-  type AssessmentFormState = { sessionDate: string; notes: string } & Record<AssessmentFieldKey, string>;
+  type AssessmentFormState = { programId: string; sessionDate: string; notes: string } & Record<AssessmentFieldKey, string>;
   type PlayerProgramEnrollment = {
     id: string;
     academyId: string;
@@ -123,6 +125,8 @@ export function KidProfileClient({
   const [programEnrollments, setProgramEnrollments] = useState<PlayerProgramEnrollment[]>([]);
   const [loadingProgramEnrollments, setLoadingProgramEnrollments] = useState(false);
   const [programEnrollmentsError, setProgramEnrollmentsError] = useState<string | null>(null);
+
+  const orphanProgramCleanupAttemptedRef = useRef<Set<string>>(new Set());
   const [programLevelsByProgramId, setProgramLevelsByProgramId] = useState<Record<string, ProgramLevel[]>>({});
   const [programAttendanceByProgramId, setProgramAttendanceByProgramId] = useState<
     Record<string, { attended: number; marked: number }>
@@ -166,6 +170,7 @@ export function KidProfileClient({
   const [assessmentDialogOpen, setAssessmentDialogOpen] = useState(false);
   const [assessmentSubmitting, setAssessmentSubmitting] = useState(false);
   const [assessmentForm, setAssessmentForm] = useState<AssessmentFormState>({
+    programId: '',
     sessionDate: new Date().toISOString().split('T')[0],
     // New assessment UI uses 1–10 points for each category.
     // Keep strings for controlled inputs.
@@ -178,6 +183,14 @@ export function KidProfileClient({
     flexibility: '5',
     notes: '',
   });
+
+  const [assessmentDetailsOpen, setAssessmentDetailsOpen] = useState(false);
+  const [selectedAssessment, setSelectedAssessment] = useState<DnaAssessmentSession | null>(null);
+  const [assessmentNotesDraft, setAssessmentNotesDraft] = useState('');
+  const [assessmentTestNotesDraft, setAssessmentTestNotesDraft] = useState<
+    Partial<Record<AssessmentFieldKey, string>>
+  >({});
+  const [assessmentNotesSaving, setAssessmentNotesSaving] = useState(false);
 
   const [badgeDialogOpen, setBadgeDialogOpen] = useState(false);
   const [selectedBadgeId, setSelectedBadgeId] = useState<string>('');
@@ -194,7 +207,6 @@ export function KidProfileClient({
     newAssessment: dictionary.playerProfile?.actions?.newAssessment ?? 'New assessment',
     grantBadge: dictionary.playerProfile?.actions?.grantBadge ?? 'Grant badge',
     adjustProgramLevel: dictionary.playerProfile?.actions?.adjustProgramLevel ?? 'Adjust program level',
-    achievements: dictionary.playerProfile?.tabs?.achievements ?? 'Achievements',
     viewCard: dictionary.playerProfile?.actions?.viewCard ?? 'View player card',
   };
 
@@ -428,10 +440,34 @@ export function KidProfileClient({
       }
 
       const enrollments = res.enrollments as PlayerProgramEnrollment[];
-      setProgramEnrollments(enrollments);
+
+      // Defensive UI guard: never render enrollments whose program record is missing.
+      const orphanProgramIds = Array.from(
+        new Set(enrollments.filter((e) => !e.program).map((e) => e.programId).filter(Boolean))
+      );
+      const filteredEnrollments = enrollments.filter((e) => Boolean(e.program));
+      setProgramEnrollments(filteredEnrollments);
+
+      // Proactively cleanup orphan enrollments (and related data) one-time per programId.
+      if (canManage && orphanProgramIds.length > 0) {
+        const toCleanup = orphanProgramIds.filter((id) => !orphanProgramCleanupAttemptedRef.current.has(id));
+        if (toCleanup.length > 0) {
+          toCleanup.forEach((id) => orphanProgramCleanupAttemptedRef.current.add(id));
+          try {
+            await cleanupOrphanProgramEnrollmentsForUserAction({
+              locale,
+              academyId,
+              userId: kid.id,
+              programIds: toCleanup,
+            });
+          } catch (cleanupError) {
+            console.warn('Failed to cleanup orphan program enrollments from profile:', cleanupError);
+          }
+        }
+      }
 
       // Load levels for each program so we can render a full journey track.
-      const uniqueProgramIds = Array.from(new Set(enrollments.map((e) => e.programId).filter(Boolean)));
+      const uniqueProgramIds = Array.from(new Set(filteredEnrollments.map((e) => e.programId).filter(Boolean)));
       const pairs = await Promise.all(
         uniqueProgramIds.map(async (programId) => {
           const levelsRes = await getProgramLevelsForPlayerProgramAction({
@@ -696,6 +732,11 @@ export function KidProfileClient({
   const handleCreateAssessment = async () => {
     setAssessmentSubmitting(true);
     try {
+      if (programEnrollments.length > 0 && !assessmentForm.programId.trim()) {
+        alert(dictionary.programs?.noPlayerPrograms ?? dictionary.common.error);
+        return;
+      }
+
       const tests = {
         speed: Number(assessmentForm.speed),
         agility: Number(assessmentForm.agility),
@@ -717,6 +758,7 @@ export function KidProfileClient({
         locale,
         academyId,
         playerId: kid.id,
+        programId: assessmentForm.programId.trim() || undefined,
         sessionDate: assessmentForm.sessionDate,
         enteredBy: currentUser.id,
         tests,
@@ -738,6 +780,7 @@ export function KidProfileClient({
 
       setAssessmentDialogOpen(false);
       setAssessmentForm({
+        programId: programEnrollments[0]?.programId ?? '',
         sessionDate: new Date().toISOString().split('T')[0],
         speed: '5',
         agility: '5',
@@ -755,6 +798,42 @@ export function KidProfileClient({
       alert(dictionary.common.error);
     } finally {
       setAssessmentSubmitting(false);
+    }
+  };
+
+  const openAssessmentDetails = (a: DnaAssessmentSession) => {
+    setSelectedAssessment(a);
+    setAssessmentNotesDraft(a.notes ?? '');
+    setAssessmentTestNotesDraft((a.testNotes ?? {}) as Partial<Record<AssessmentFieldKey, string>>);
+    setAssessmentDetailsOpen(true);
+  };
+
+  const saveAssessmentNotes = async () => {
+    if (!selectedAssessment) return;
+
+    setAssessmentNotesSaving(true);
+    try {
+      const res = await updateDnaAssessmentNotesAction({
+        locale,
+        academyId,
+        playerId: kid.id,
+        assessmentId: selectedAssessment.id,
+        notes: assessmentNotesDraft.trim() ? assessmentNotesDraft.trim() : undefined,
+        testNotes: assessmentTestNotesDraft,
+      });
+
+      if (!res.success) {
+        alert(res.error || dictionary.common.error);
+        return;
+      }
+
+      setAssessments((prev) => prev.map((s) => (s.id === res.session.id ? res.session : s)));
+      setSelectedAssessment(res.session);
+    } catch (error) {
+      console.error('Save assessment notes error:', error);
+      alert(dictionary.common.error);
+    } finally {
+      setAssessmentNotesSaving(false);
     }
   };
 
@@ -844,28 +923,6 @@ export function KidProfileClient({
     </div>
   );
 
-  const StatTile = ({
-    icon: Icon,
-    title,
-    value,
-  }: {
-    icon: React.ComponentType<{ className?: string }>;
-    title: string;
-    value: React.ReactNode;
-  }) => (
-    <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-5 shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-xs text-gray-600 dark:text-gray-400 truncate">{title}</div>
-          <div className="mt-1 text-2xl font-bold text-[#262626] dark:text-white truncate">{value}</div>
-        </div>
-        <div className="h-11 w-11 rounded-2xl border-2 border-[#DDDDDD] bg-gray-50 flex items-center justify-center shrink-0 dark:border-[#000000] dark:bg-[#0a0a0a]">
-          <Icon className="h-5 w-5 text-[#262626] dark:text-white" />
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 18 }}
@@ -902,7 +959,7 @@ export function KidProfileClient({
                 style={{ borderColor: accentColor, backgroundColor: accentColor }}
               >
                 <div
-                  className="relative h-44 sm:h-52 flex items-end justify-center"
+                  className="relative h-52 sm:h-64 flex items-end justify-center"
                   style={{ backgroundColor: accentColor }}
                 >
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.25),transparent_55%)]" />
@@ -921,14 +978,14 @@ export function KidProfileClient({
                         <button
                           type="button"
                           onClick={() => avatarFileInputRef.current?.click()}
-                          className="relative h-28 w-28 sm:h-32 sm:w-32 rounded-3xl bg-transparent focus:outline-none"
+                          className="relative h-36 w-36 sm:h-44 sm:w-44 rounded-3xl bg-transparent focus:outline-none"
                           aria-label="Change profile picture"
                         >
                           {currentKid.profilePicture ? (
                             <img
                               src={currentKid.profilePicture}
                               alt={currentKid.fullName || currentKid.username}
-                              className="h-full w-full rounded-3xl object-contain bg-transparent drop-shadow-[0_24px_55px_rgba(0,0,0,0.45)]"
+                              className="h-full w-full rounded-3xl object-cover bg-transparent drop-shadow-[0_24px_55px_rgba(0,0,0,0.45)]"
                             />
                           ) : (
                             <div className="h-full w-full rounded-3xl bg-black/20 border border-black/25 flex items-center justify-center shadow-2xl">
@@ -947,10 +1004,10 @@ export function KidProfileClient({
                       <img
                         src={currentKid.profilePicture}
                         alt={currentKid.fullName || currentKid.username}
-                        className="h-28 w-28 sm:h-32 sm:w-32 rounded-3xl object-contain bg-transparent drop-shadow-[0_24px_55px_rgba(0,0,0,0.45)]"
+                        className="h-36 w-36 sm:h-44 sm:w-44 rounded-3xl object-cover bg-transparent drop-shadow-[0_24px_55px_rgba(0,0,0,0.45)]"
                       />
                     ) : (
-                      <div className="h-28 w-28 sm:h-32 sm:w-32 rounded-3xl bg-black/25 border border-black/25 flex items-center justify-center shadow-2xl">
+                      <div className="h-36 w-36 sm:h-44 sm:w-44 rounded-3xl bg-black/25 border border-black/25 flex items-center justify-center shadow-2xl">
                         <UserCircle className="h-14 w-14 text-white/90" />
                       </div>
                     )}
@@ -971,17 +1028,25 @@ export function KidProfileClient({
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]">
-                      <div className="text-xs text-gray-600 dark:text-gray-400">
-                        {dictionary.playerProfile?.labels?.points ?? 'Total points'}
+                      <div className={`flex items-center justify-between gap-3 ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+                        <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 truncate">
+                          {dictionary.playerProfile?.labels?.points ?? 'Total points'}
+                        </div>
+                        <div className="text-2xl sm:text-3xl font-black text-[#262626] dark:text-white leading-none">
+                          {totalProgramPoints}
+                        </div>
                       </div>
-                      <div className="mt-1 text-xl font-extrabold text-[#262626] dark:text-white">{totalProgramPoints}</div>
                     </div>
 
                     <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]">
-                      <div className="text-xs text-gray-600 dark:text-gray-400">
-                        {dictionary.playerProfile?.labels?.sessions ?? dictionary.programs?.sessionsAttendedLabel ?? 'Sessions attended'}
+                      <div className={`flex items-center justify-between gap-3 ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+                        <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 truncate">
+                          {dictionary.playerProfile?.labels?.sessions ?? dictionary.programs?.sessionsAttendedLabel ?? 'Sessions attended'}
+                        </div>
+                        <div className="text-2xl sm:text-3xl font-black text-[#262626] dark:text-white leading-none">
+                          {totalProgramSessionsAttended}
+                        </div>
                       </div>
-                      <div className="mt-1 text-xl font-extrabold text-[#262626] dark:text-white">{totalProgramSessionsAttended}</div>
                     </div>
                   </div>
                 </div>
@@ -1013,7 +1078,13 @@ export function KidProfileClient({
               {canManage && (
                 <Button
                   type="button"
-                  onClick={() => setAssessmentDialogOpen(true)}
+                  onClick={() => {
+                    setAssessmentForm((prev) => ({
+                      ...prev,
+                      programId: prev.programId || programEnrollments[0]?.programId || '',
+                    }));
+                    setAssessmentDialogOpen(true);
+                  }}
                   className="w-full h-11 border-2 border-[#DDDDDD] bg-white text-[#262626] hover:bg-gray-50 dark:border-[#000000] dark:bg-[#1a1a1a] dark:text-white dark:hover:bg-[#111114] justify-start ltr:text-left rtl:text-right"
                 >
                   <Plus className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
@@ -1050,15 +1121,6 @@ export function KidProfileClient({
                 <IdCard className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
                 {actionLabel.viewCard}
               </Button>
-
-              <Button
-                type="button"
-                onClick={() => router.push(`/${locale}/dashboard/players/${currentKid.id}/achievements`)}
-                className="w-full h-11 border-2 border-[#DDDDDD] bg-white text-[#262626] hover:bg-gray-50 dark:border-[#000000] dark:bg-[#1a1a1a] dark:text-white dark:hover:bg-[#111114] justify-start ltr:text-left rtl:text-right"
-              >
-                <Trophy className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
-                {actionLabel.achievements}
-              </Button>
             </div>
           </div>
 
@@ -1087,7 +1149,13 @@ export function KidProfileClient({
                   <Button
                     type="button"
                     size="sm"
-                    onClick={() => setAssessmentDialogOpen(true)}
+                    onClick={() => {
+                      setAssessmentForm((prev) => ({
+                        ...prev,
+                        programId: prev.programId || programEnrollments[0]?.programId || '',
+                      }));
+                      setAssessmentDialogOpen(true);
+                    }}
                     className="shrink-0 h-11 rounded-xl border-2 border-[#DDDDDD] bg-white text-[#262626] hover:bg-gray-50 dark:border-[#000000] dark:bg-[#1a1a1a] dark:text-white dark:hover:bg-[#111114]"
                   >
                     <Plus className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
@@ -1128,60 +1196,9 @@ export function KidProfileClient({
                   <IdCard className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
                   <span className="text-xs font-semibold whitespace-nowrap">{actionLabel.viewCard}</span>
                 </Button>
-
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => router.push(`/${locale}/dashboard/players/${currentKid.id}/achievements`)}
-                  className="shrink-0 h-11 rounded-xl border-2 border-[#DDDDDD] bg-white text-[#262626] hover:bg-gray-50 dark:border-[#000000] dark:bg-[#1a1a1a] dark:text-white dark:hover:bg-[#111114]"
-                >
-                  <Trophy className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
-                  <span className="text-xs font-semibold whitespace-nowrap">{actionLabel.achievements}</span>
-                </Button>
               </div>
 
             </motion.div>
-          </div>
-
-          <div className="mt-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Trophy className="w-4 h-4 text-gray-700 dark:text-gray-200" />
-              <div className="font-semibold text-[#262626] dark:text-white">
-                {dictionary.playerProfile?.labels?.progress ?? 'Progress'}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <StatTile
-                  title={dictionary.playerProfile?.labels?.points ?? 'Total points'}
-                  value={totalProgramPoints}
-                  icon={Trophy}
-                />
-                <StatTile
-                  title={dictionary.playerProfile?.labels?.sessions ?? dictionary.programs?.sessionsAttendedLabel ?? 'Sessions attended'}
-                  value={totalProgramSessionsAttended}
-                  icon={Calendar}
-                />
-                <StatTile
-                  title={dictionary.playerProfile?.labels?.badges ?? 'Badges'}
-                  value={`${profile?.badges?.length ?? 0}/${BADGES.length}`}
-                  icon={Award}
-                />
-                <StatTile
-                  title={dictionary.playerProfile?.labels?.lastAssessment ?? 'Last assessment'}
-                  value={latestAssessment ? latestAssessment.sessionDate : '-'}
-                  icon={Calendar}
-                />
-              </div>
-
-              {loadingProfile && (
-                <div className="text-sm text-white/70">{dictionary.common.loading}</div>
-              )}
-              {profileError && (
-                <div className="text-sm text-red-600">{profileError}</div>
-              )}
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -1238,15 +1255,6 @@ export function KidProfileClient({
                     <span>{dictionary.playerProfile?.tabs?.assessments ?? 'Assessments'}</span>
                   </TabsTrigger>
                   <TabsTrigger
-                    value="badges"
-                    className={`gap-2 whitespace-nowrap border border-transparent text-white/80 hover:bg-[#14141a] hover:text-white data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:border-white/15 ${
-                      locale === 'ar' ? 'flex-row-reverse' : ''
-                    }`}
-                  >
-                    <Star className="w-4 h-4" />
-                    <span>{dictionary.playerProfile?.tabs?.badges ?? 'Badges'}</span>
-                  </TabsTrigger>
-                  <TabsTrigger
                     value="achievements"
                     className={`gap-2 whitespace-nowrap border border-transparent text-white/80 hover:bg-[#14141a] hover:text-white data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:border-white/15 ${
                       locale === 'ar' ? 'flex-row-reverse' : ''
@@ -1270,93 +1278,37 @@ export function KidProfileClient({
                     {dictionary.playerProfile?.empty?.noAssessments ?? 'No assessments yet.'}
                   </div>
                 ) : (
-                  <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="p-4 rounded-2xl border-2 border-[#DDDDDD] bg-white shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]">
-                        <div className="text-sm font-semibold text-[#262626] dark:text-white">
-                          {dictionary.playerProfile?.labels?.strengths ?? 'Strengths'}
-                        </div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {insights?.strengths?.map((k) => (
-                            <Badge key={String(k)} className="bg-green-600 text-white border-0">
-                              {categoryLabel(String(k))}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="p-4 rounded-2xl border-2 border-[#DDDDDD] bg-white shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]">
-                        <div className="text-sm font-semibold text-[#262626] dark:text-white">
-                          {dictionary.playerProfile?.labels?.developmentAreas ?? 'Development areas'}
-                        </div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {insights?.development?.map((k) => (
-                            <Badge key={String(k)} variant="secondary" className="bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200">
-                              {categoryLabel(String(k))}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-sm font-semibold text-[#262626] dark:text-white mb-3">
-                        {dictionary.playerProfile?.labels?.latestAssessment ?? 'Latest assessment'}: {latestAssessment.sessionDate}
-                      </div>
-                      <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3">
-                        {Object.entries(latestAssessment.tests).map(([k, v]) => (
-                          <div
-                            key={k}
-                            className="p-3 sm:p-4 rounded-2xl border-2 border-[#DDDDDD] bg-white shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]"
-                          >
-                            <div className="text-xs text-gray-600 dark:text-gray-400">{categoryLabel(k)}</div>
-
-                            <div className="mt-3 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                              <DnaCircularGauge
-                                value={Math.round(insights?.scores?.[k] ?? 0)}
-                                max={100}
-                                size={64}
-                                strokeWidth={6}
-                                className="shrink-0"
-                                ariaLabel={`${categoryLabel(k)} score`}
-                              />
-
-                              <div className="text-start">
-                                <div className="text-sm font-extrabold text-[#262626] dark:text-white">{v}</div>
-                                <div className="mt-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-400">
-                                  {dictionary.playerProfile?.labels?.rawTestValue ?? 'Raw test value'}
-                                </div>
-                              </div>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {Object.keys(latestAssessment.tests).map((k, idx) => (
+                        <motion.div
+                          key={k}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.04, duration: 0.35 }}
+                          whileHover={{ scale: 1.02, rotateY: locale === 'ar' ? -4 : 4, rotateX: 2 }}
+                          style={{ transformStyle: 'preserve-3d' }}
+                          className="p-3 sm:p-4 rounded-2xl border-2 border-[#DDDDDD] bg-white shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]"
+                        >
+                          <div className="flex flex-col items-center justify-center gap-3">
+                            <div className="text-sm font-semibold text-[#262626] dark:text-white text-center">
+                              {categoryLabel(k)}
                             </div>
+                            <DnaCircularGauge
+                              value={Math.round(insights?.scores?.[k] ?? 0)}
+                              max={100}
+                              size={86}
+                              strokeWidth={7}
+                              valueSuffix="%"
+                              showMaxValue={false}
+                              className="justify-center"
+                              ariaLabel={`${categoryLabel(k)} score`}
+                            />
                           </div>
-                        ))}
-                      </div>
+                        </motion.div>
+                      ))}
                     </div>
-                  </>
-                )}
-              </div>
-            </PanelCard>
-
-            <PanelCard title={dictionary.playerProfile?.sections?.status ?? 'Status'} icon={CheckCircle2}>
-              <div className="space-y-4">
-                <div className="p-4 rounded-2xl border-2 border-[#DDDDDD] bg-white shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]">
-                  <div className="text-xs text-gray-600 dark:text-gray-400">{dictionary.playerProfile?.labels?.assessmentStatus ?? 'Assessment status'}</div>
-                  <div className="mt-1 text-base font-bold text-[#262626] dark:text-white">
-                    {assessmentStatusLabel(profile?.assessmentStatus)}
                   </div>
-                </div>
-
-                <div className="p-4 rounded-2xl border-2 border-[#DDDDDD] bg-white shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]">
-                  <div className="text-xs text-gray-600 dark:text-gray-400">{dictionary.playerProfile?.labels?.lastAssessment ?? 'Last assessment'}</div>
-                  <div className="mt-1 text-base font-bold text-[#262626] dark:text-white">
-                    {latestAssessment ? latestAssessment.sessionDate : '-'}
-                  </div>
-                </div>
-
-                {loadingProfile && (
-                  <div className="text-sm text-gray-600 dark:text-gray-400">{dictionary.common.loading}</div>
-                )}
-                {profileError && (
-                  <div className="text-sm text-red-600">{profileError}</div>
                 )}
               </div>
             </PanelCard>
@@ -1736,7 +1688,15 @@ export function KidProfileClient({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.35 }}
-                    className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]"
+                    whileHover={{ scale: 1.01, rotateY: locale === 'ar' ? -2 : 2 }}
+                    style={{ transformStyle: 'preserve-3d' }}
+                    className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a] cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openAssessmentDetails(a)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') openAssessmentDetails(a);
+                    }}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="min-w-0">
@@ -1746,6 +1706,17 @@ export function KidProfileClient({
                         <div className="text-sm text-gray-600 dark:text-gray-400">
                           {dictionary.playerProfile?.labels?.naScore ?? 'NA Score'}: <span className="font-semibold text-[#262626] dark:text-white">{a.naScore}</span>
                         </div>
+                        {a.programId ? (
+                          <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                            {dictionary.programs?.title ?? 'Program'}:{' '}
+                            <span className="font-semibold text-[#262626] dark:text-white">
+                              {(() => {
+                                const p = programEnrollments.find((e) => e.programId === a.programId)?.program;
+                                return p ? (locale === 'ar' ? p.nameAr : p.name) : a.programId;
+                              })()}
+                            </span>
+                          </div>
+                        ) : null}
                       </div>
 
                       {canAdmin && (
@@ -1767,47 +1738,148 @@ export function KidProfileClient({
           </PanelCard>
         </TabsContent>
 
-        <TabsContent value="badges" className={`mt-4 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
-          <PanelCard title={dictionary.playerProfile?.sections?.badges ?? 'Badges'} icon={Star}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {BADGES.map((b) => {
-                const unlocked = grantedBadgeIds.has(b.id);
-                return (
-                  <div
-                    key={b.id}
-                    className={
-                      unlocked
-                        ? 'rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-4 shadow-sm dark:border-emerald-800 dark:bg-emerald-900/10'
-                        : 'rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]'
-                    }
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="font-bold text-[#262626] dark:text-white truncate">
-                          {t(b.nameKey)}
-                        </div>
-                        <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                          {unlocked ? t(b.descriptionKey) : t(b.lockedHintKey)}
-                        </div>
+        {/* Assessment details */}
+        <Dialog
+          open={assessmentDetailsOpen}
+          onOpenChange={(open) => {
+            setAssessmentDetailsOpen(open);
+            if (!open) {
+              setSelectedAssessment(null);
+              setAssessmentNotesDraft('');
+              setAssessmentTestNotesDraft({});
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-[920px] w-[calc(100vw-1.5rem)] max-h-[calc(100vh-2rem)] overflow-hidden p-0">
+            <div className="flex max-h-[calc(100vh-2rem)] flex-col">
+              <div className="px-6 pt-6">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>{dictionary.playerProfile?.sections?.assessmentHistory ?? 'Assessment'} </span>
+                  </DialogTitle>
+                  <DialogDescription>
+                    {selectedAssessment?.sessionDate}
+                    {selectedAssessment?.programId ? ` • ${(dictionary.programs?.title ?? 'Program')}` : ''}
+                  </DialogDescription>
+                </DialogHeader>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4">
+                {selectedAssessment ? (
+                  <div className="space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 dark:border-[#000000] dark:bg-[#1a1a1a]">
+                        <div className="text-xs text-gray-600 dark:text-gray-400">{dictionary.playerProfile?.labels?.naScore ?? 'NA Score'}</div>
+                        <div className="mt-1 text-2xl font-black text-[#262626] dark:text-white">{selectedAssessment.naScore}</div>
                       </div>
-                      <div>
-                        {unlocked ? (
-                          <Badge className="bg-emerald-600 text-white border-0">
-                            {dictionary.playerProfile?.labels?.unlocked ?? 'Unlocked'}
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="bg-gray-100 text-gray-800 border-0 dark:bg-white/10 dark:text-white/80">
-                            {dictionary.playerProfile?.labels?.locked ?? 'Locked'}
-                          </Badge>
-                        )}
-                      </div>
+
+                      {selectedAssessment.programId ? (
+                        <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 dark:border-[#000000] dark:bg-[#1a1a1a] sm:col-span-2">
+                          <div className="text-xs text-gray-600 dark:text-gray-400">{dictionary.programs?.title ?? 'Program'}</div>
+                          <div className="mt-1 text-base font-bold text-[#262626] dark:text-white truncate">
+                            {(() => {
+                              const p = programEnrollments.find((e) => e.programId === selectedAssessment.programId)?.program;
+                              return p ? (locale === 'ar' ? p.nameAr : p.name) : selectedAssessment.programId;
+                            })()}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 dark:border-[#000000] dark:bg-[#1a1a1a] sm:col-span-2">
+                          <div className="text-xs text-gray-600 dark:text-gray-400">{dictionary.playerProfile?.labels?.latestAssessment ?? 'Session'}</div>
+                          <div className="mt-1 text-base font-bold text-[#262626] dark:text-white">{selectedAssessment.sessionDate}</div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {(Object.keys(selectedAssessment.tests) as AssessmentFieldKey[]).map((k, idx) => {
+                        const scores = calculateCategoryScores(selectedAssessment.tests);
+                        return (
+                          <motion.div
+                            key={k}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.03, duration: 0.25 }}
+                            className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]"
+                          >
+                            <div className={`flex items-start gap-4 ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+                              <DnaCircularGauge
+                                value={Math.round(scores[k] ?? 0)}
+                                max={100}
+                                size={70}
+                                strokeWidth={7}
+                                valueSuffix="%"
+                                showMaxValue={false}
+                                className="shrink-0"
+                                ariaLabel={`${categoryLabel(k)} score`}
+                              />
+                              <div className="min-w-0 flex-1">
+                                <div className="font-bold text-[#262626] dark:text-white">{categoryLabel(k)}</div>
+                                <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                  {dictionary.playerProfile?.labels?.rawTestValue ?? 'Value'}:{' '}
+                                  <span className="font-semibold text-[#262626] dark:text-white">{selectedAssessment.tests[k]}</span>
+                                </div>
+
+                                <div className="mt-3 space-y-2">
+                                  <Label className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                    {dictionary.programs?.commentLabel ?? 'Note'}
+                                  </Label>
+                                  <Textarea
+                                    value={assessmentTestNotesDraft[k] ?? ''}
+                                    onChange={(e) =>
+                                      setAssessmentTestNotesDraft((prev) => ({
+                                        ...prev,
+                                        [k]: e.target.value,
+                                      }))
+                                    }
+                                    className="min-h-[88px] border-2"
+                                    placeholder={dictionary.programs?.commentHint ?? 'Write a short note'}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-[#262626] dark:text-white">
+                        {dictionary.programs?.notesLabel ?? 'Notes'}
+                      </Label>
+                      <Textarea
+                        value={assessmentNotesDraft}
+                        onChange={(e) => setAssessmentNotesDraft(e.target.value)}
+                        className="min-h-[110px] border-2"
+                        placeholder={dictionary.programs?.commentHint ?? 'General notes for this session'}
+                      />
                     </div>
                   </div>
-                );
-              })}
+                ) : null}
+              </div>
+
+              <div className="px-6 pb-6">
+                <DialogFooter className="gap-2">
+                  <Button
+                    variant="outline"
+                    className="h-12 border-2"
+                    onClick={() => setAssessmentDetailsOpen(false)}
+                  >
+                    {dictionary.common.cancel}
+                  </Button>
+                  <Button
+                    className="h-12"
+                    onClick={() => void saveAssessmentNotes()}
+                    disabled={!selectedAssessment || assessmentNotesSaving}
+                  >
+                    {assessmentNotesSaving ? (dictionary.common.loading ?? 'Saving...') : dictionary.common.save}
+                  </Button>
+                </DialogFooter>
+              </div>
             </div>
-          </PanelCard>
-        </TabsContent>
+          </DialogContent>
+        </Dialog>
 
         <TabsContent value="achievements" className={`mt-4 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
           <div className="space-y-4">
@@ -1815,20 +1887,76 @@ export function KidProfileClient({
               title={dictionary.playerProfile?.achievements?.bilingualTitle ?? (dictionary.playerProfile?.tabs?.achievements ?? 'Achievements')}
               icon={Award}
             >
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {dictionary.playerProfile?.achievements?.bilingualSubtitle ??
-                  (locale === 'ar' ? '' : 'Unlocked medals earned through progress.')}
-              </p>
-            </PanelCard>
+              <div className="space-y-5">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {dictionary.playerProfile?.achievements?.bilingualSubtitle ?? 'Unlocked achievements earned through progress.'}
+                </p>
 
-            <StudentMedalsDisplay
-              studentId={currentKid.id}
-              hideHeader
-              locale={locale}
-              loadingLabel={dictionary.common?.loading}
-              emptyTitle={dictionary.playerProfile?.empty?.noMedals}
-              emptyDescription={dictionary.playerProfile?.empty?.noMedalsSubtitle}
-            />
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Star className="w-4 h-4 text-gray-700 dark:text-gray-200" />
+                    <div className="font-semibold text-[#262626] dark:text-white">
+                      {dictionary.playerProfile?.sections?.badges ?? 'Badges'}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {BADGES.map((b, idx) => {
+                      const unlocked = grantedBadgeIds.has(b.id);
+                      return (
+                        <motion.div
+                          key={b.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.03, duration: 0.3 }}
+                          whileHover={{ scale: 1.02, rotateY: locale === 'ar' ? -3 : 3, rotateX: 2 }}
+                          style={{ transformStyle: 'preserve-3d' }}
+                          className={
+                            unlocked
+                              ? 'rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-4 shadow-sm dark:border-emerald-800 dark:bg-emerald-900/10'
+                              : 'rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]'
+                          }
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="font-bold text-[#262626] dark:text-white truncate">{t(b.nameKey)}</div>
+                              <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                {unlocked ? t(b.descriptionKey) : t(b.lockedHintKey)}
+                              </div>
+                            </div>
+                            <div>
+                              {unlocked ? (
+                                <Badge className="bg-emerald-600 text-white border-0">
+                                  {dictionary.playerProfile?.labels?.unlocked ?? 'Unlocked'}
+                                </Badge>
+                              ) : (
+                                <Badge
+                                  variant="secondary"
+                                  className="bg-gray-100 text-gray-800 border-0 dark:bg-white/10 dark:text-white/80"
+                                >
+                                  {dictionary.playerProfile?.labels?.locked ?? 'Locked'}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <StudentMedalsDisplay
+                    studentId={currentKid.id}
+                    hideHeader
+                    locale={locale}
+                    loadingLabel={dictionary.common?.loading}
+                    emptyTitle={dictionary.playerProfile?.empty?.noMedals}
+                    emptyDescription={dictionary.playerProfile?.empty?.noMedalsSubtitle}
+                  />
+                </div>
+              </div>
+            </PanelCard>
           </div>
         </TabsContent>
       </Tabs>
@@ -2039,6 +2167,32 @@ export function KidProfileClient({
             <DialogTitle>{dictionary.playerProfile?.actions?.newAssessment ?? 'New Assessment'}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-5">
+            {programEnrollments.length > 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35 }}
+                className="grid gap-2"
+              >
+                <Label>{dictionary.programs?.title ?? 'Program'}</Label>
+                <Select
+                  value={assessmentForm.programId}
+                  onValueChange={(value) => setAssessmentForm((p) => ({ ...p, programId: value }))}
+                >
+                  <SelectTrigger className="h-12 bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
+                    <SelectValue placeholder={dictionary.programs?.title ?? 'Select program'} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-[#262626] border-2 border-[#DDDDDD] dark:border-[#000000]">
+                    {programEnrollments.map((e) => (
+                      <SelectItem key={e.programId} value={e.programId} className="cursor-pointer">
+                        {e.program ? (locale === 'ar' ? e.program.nameAr : e.program.name) : e.programId}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </motion.div>
+            ) : null}
+
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -2143,11 +2297,12 @@ export function KidProfileClient({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="notes">{dictionary.common.optional}</Label>
-              <Input
+              <Label htmlFor="notes">{dictionary.programs?.notesLabel ?? dictionary.common.optional}</Label>
+              <Textarea
                 id="notes"
                 value={assessmentForm.notes}
                 onChange={(e) => setAssessmentForm((p) => ({ ...p, notes: e.target.value }))}
+                className="min-h-24 border-2"
               />
             </div>
           </div>

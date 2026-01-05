@@ -326,3 +326,37 @@ export async function deleteMessage(id: string): Promise<boolean> {
   await db.put(`${MESSAGES_PREFIX}${id}`, message);
   return true;
 }
+
+/**
+ * Soft-delete all messages related to a user.
+ *
+ * This is used when a user account is deleted to ensure that:
+ * - No direct messages involving that user are shown anymore.
+ * - No group messages authored by that user are shown anymore.
+ *
+ * We intentionally use a soft-delete (`isDeleted`) to keep historical records
+ * while preventing any UI/API from displaying them.
+ */
+export async function softDeleteMessagesForUser(userId: string): Promise<number> {
+  const db = getDatabase();
+  let deletedCount = 0;
+
+  for await (const { key, value } of db.getRange({
+    start: MESSAGES_PREFIX,
+    end: MESSAGES_PREFIX + '\uffff',
+  })) {
+    if (!value) continue;
+    const message = value as Message;
+
+    if (message.isDeleted) continue;
+
+    const isRelated = message.senderId === userId || message.recipientId === userId;
+    if (!isRelated) continue;
+
+    const updated: Message = { ...message, isDeleted: true };
+    await db.put(String(key), updated);
+    deletedCount += 1;
+  }
+
+  return deletedCount;
+}

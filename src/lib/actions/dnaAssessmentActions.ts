@@ -7,7 +7,9 @@ import {
   createDnaAssessmentSession,
   deleteDnaAssessmentSession,
   getDnaAssessmentSessionsByPlayerId,
+  getDnaAssessmentSessionsByPlayerInProgram,
   getLatestDnaAssessmentSession,
+  updateDnaAssessmentSessionNotes,
   type CreateDnaAssessmentInput,
   type DnaAssessmentSession,
 } from '@/lib/db/repositories/dnaAssessmentRepository';
@@ -68,6 +70,7 @@ export async function getDnaAssessmentsForPlayerAction(params: {
   locale: string;
   academyId: string;
   playerId: string;
+  programId?: string;
 }) {
   try {
     await assertAcademyAccess({
@@ -76,10 +79,16 @@ export async function getDnaAssessmentsForPlayerAction(params: {
       targetUserId: params.playerId,
     });
 
-    const sessions = await getDnaAssessmentSessionsByPlayerId({
-      academyId: params.academyId,
-      playerId: params.playerId,
-    });
+    const sessions = params.programId
+      ? await getDnaAssessmentSessionsByPlayerInProgram({
+          academyId: params.academyId,
+          programId: params.programId,
+          playerId: params.playerId,
+        })
+      : await getDnaAssessmentSessionsByPlayerId({
+          academyId: params.academyId,
+          playerId: params.playerId,
+        });
 
     return { success: true as const, sessions };
   } catch (error) {
@@ -87,6 +96,46 @@ export async function getDnaAssessmentsForPlayerAction(params: {
     return {
       success: false as const,
       error: error instanceof Error ? error.message : 'Failed to get assessments',
+    };
+  }
+}
+
+export async function updateDnaAssessmentNotesAction(params: {
+  locale: string;
+  academyId: string;
+  playerId: string;
+  assessmentId: string;
+  notes?: string;
+  testNotes?: DnaAssessmentSession['testNotes'];
+}) {
+  try {
+    const { user } = await assertAcademyAccess({
+      locale: params.locale,
+      academyId: params.academyId,
+      targetUserId: params.playerId,
+    });
+
+    // Allow admin/coach to write assessment notes.
+    if (user.role !== 'admin' && user.role !== 'coach') {
+      throw new Error('Not authorized to update assessment notes');
+    }
+
+    const updated = await updateDnaAssessmentSessionNotes(params.assessmentId, {
+      notes: params.notes,
+      testNotes: params.testNotes,
+    });
+
+    if (!updated) return { success: false as const, error: 'Assessment not found' };
+
+    revalidatePath(`/${params.locale}/dashboard/players/${params.playerId}`);
+    revalidatePath(`/${params.locale}/dashboard/users/${params.playerId}`);
+
+    return { success: true as const, session: updated };
+  } catch (error) {
+    console.error('Error updating DNA assessment notes:', error);
+    return {
+      success: false as const,
+      error: error instanceof Error ? error.message : 'Failed to update assessment notes',
     };
   }
 }

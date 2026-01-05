@@ -156,6 +156,61 @@ export async function getProgramAttendanceByProgram(params: {
   return records;
 }
 
+/**
+ * Delete all attendance records for an entire program.
+ *
+ * Used when deleting a program to ensure no orphan attendance appears in player views.
+ */
+export async function deleteProgramAttendanceForProgram(params: {
+  academyId: string;
+  programId: string;
+}): Promise<number> {
+  const db = getDatabase();
+  const keyPrefix = `${PROGRAM_ATTENDANCE_PREFIX}${params.academyId}:${params.programId}:`;
+  let deleted = 0;
+
+  for await (const { key } of db.getRange({ start: keyPrefix, end: `${keyPrefix}\xFF` })) {
+    const keyStr = String(key);
+    if (!keyStr.startsWith(keyPrefix)) continue;
+    await db.remove(keyStr);
+    deleted += 1;
+  }
+
+  return deleted;
+}
+
+/**
+ * Delete all attendance records for a user within a specific program.
+ *
+ * Used when removing a player from a program to ensure no program sessions
+ * or progress data remains visible.
+ */
+export async function deleteProgramAttendanceForUserInProgram(params: {
+  academyId: string;
+  programId: string;
+  userId: string;
+}): Promise<number> {
+  const db = getDatabase();
+  const keyPrefix = `${PROGRAM_ATTENDANCE_PREFIX}${params.academyId}:${params.programId}:`;
+  let deleted = 0;
+
+  // Iterate the program's records and remove the ones for the user.
+  for await (const { key } of db.getRange({ start: keyPrefix, end: `${keyPrefix}\xFF` })) {
+    const keyStr = String(key);
+    if (!keyStr.startsWith(keyPrefix)) continue;
+
+    // key = program_attendance:{academyId}:{programId}:{date}:{userId}
+    const parts = keyStr.slice(PROGRAM_ATTENDANCE_PREFIX.length).split(':');
+    const userIdFromKey = parts[3];
+    if (userIdFromKey !== params.userId) continue;
+
+    await db.remove(keyStr);
+    deleted += 1;
+  }
+
+  return deleted;
+}
+
 export function getProgramAttendancePrefix() {
   return PROGRAM_ATTENDANCE_PREFIX;
 }

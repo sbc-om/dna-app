@@ -20,6 +20,7 @@ import {
   type AcademyMemberRole,
 } from '@/lib/db/repositories/academyMembershipRepository';
 import { findAcademyById } from '@/lib/db/repositories/academyRepository';
+import { softDeleteMessagesForUser } from '@/lib/db/repositories/messageRepository';
 
 function mapUserRoleToAcademyMemberRole(role: UserRole): AcademyMemberRole {
   switch (role) {
@@ -208,6 +209,10 @@ export async function deleteUserAction(id: string, options?: { locale?: string }
         return { success: false as const, error: 'Not authorized' };
       }
     }
+
+    // Ensure no messages from/to the deleted user remain visible anywhere.
+    // This covers direct conversations (including admin <-> user) and group messages authored by the user.
+    await softDeleteMessagesForUser(id);
 
     const success = await deleteUser(id);
     if (!success) {

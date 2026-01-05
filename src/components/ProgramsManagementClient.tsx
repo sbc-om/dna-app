@@ -342,7 +342,7 @@ export default function ProgramsManagementClient({ locale, dict }: ProgramsManag
     const programName = locale === 'ar' ? program.nameAr : program.name;
     const ok = await confirm({
       title: t?.confirmDeleteProgram || dict.common?.confirmDelete || 'Delete program',
-      description: `This will permanently delete the program "${programName || program.id}".\n\nThis action cannot be undone.`,
+      description: `This will permanently delete the program "${programName || program.id}".\n\nAll related data will be removed as well (enrollments, attendance records, and program-linked assessments). It will no longer appear in players pages.\n\nThis action cannot be undone.`,
       confirmText: dict.common?.delete || 'Delete',
       cancelText: dict.common?.cancel || 'Cancel',
       variant: 'destructive',

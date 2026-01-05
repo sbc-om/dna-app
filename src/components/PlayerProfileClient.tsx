@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Activity,
   Award,
@@ -50,6 +51,7 @@ import {
   createDnaAssessmentAction,
   deleteDnaAssessmentAction,
   getDnaAssessmentsForPlayerAction,
+  updateDnaAssessmentNotesAction,
   type DnaAssessmentSession,
 } from '@/lib/actions/dnaAssessmentActions';
 import { BADGES } from '@/lib/player/badges';
@@ -89,6 +91,14 @@ export function KidProfileClient({
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [assessments, setAssessments] = useState<DnaAssessmentSession[]>([]);
+
+  const [assessmentDetailsOpen, setAssessmentDetailsOpen] = useState(false);
+  const [selectedAssessment, setSelectedAssessment] = useState<DnaAssessmentSession | null>(null);
+  const [assessmentNotesDraft, setAssessmentNotesDraft] = useState('');
+  const [assessmentTestNotesDraft, setAssessmentTestNotesDraft] = useState<
+    Partial<Record<AssessmentFieldKey, string>>
+  >({});
+  const [assessmentNotesSaving, setAssessmentNotesSaving] = useState(false);
 
   const [assessmentDialogOpen, setAssessmentDialogOpen] = useState(false);
   const [assessmentSubmitting, setAssessmentSubmitting] = useState(false);
@@ -190,6 +200,42 @@ export function KidProfileClient({
       setLoadingProfile(false);
     }
   }
+
+  const openAssessmentDetails = (a: DnaAssessmentSession) => {
+    setSelectedAssessment(a);
+    setAssessmentNotesDraft(a.notes ?? '');
+    setAssessmentTestNotesDraft((a.testNotes ?? {}) as Partial<Record<AssessmentFieldKey, string>>);
+    setAssessmentDetailsOpen(true);
+  };
+
+  const saveAssessmentNotes = async () => {
+    if (!selectedAssessment) return;
+    setAssessmentNotesSaving(true);
+
+    try {
+      const res = await updateDnaAssessmentNotesAction({
+        locale,
+        academyId,
+        playerId: kid.id,
+        assessmentId: selectedAssessment.id,
+        notes: assessmentNotesDraft.trim() ? assessmentNotesDraft.trim() : undefined,
+        testNotes: assessmentTestNotesDraft,
+      });
+
+      if (!res.success) {
+        alert(res.error || dictionary.common.error);
+        return;
+      }
+
+      setAssessments((prev) => prev.map((s) => (s.id === res.session.id ? res.session : s)));
+      setSelectedAssessment(res.session);
+    } catch (error) {
+      console.error('Save assessment notes error:', error);
+      alert(dictionary.common.error);
+    } finally {
+      setAssessmentNotesSaving(false);
+    }
+  };
 
   const handleSaveCourse = async () => {
     if (!selectedCourseId) return;
@@ -898,7 +944,15 @@ export function KidProfileClient({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.35 }}
-                    className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]"
+                    whileHover={{ scale: 1.01, rotateY: 2 }}
+                    style={{ transformStyle: 'preserve-3d' }}
+                    className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a] cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openAssessmentDetails(a)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') openAssessmentDetails(a);
+                    }}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="min-w-0">
@@ -927,6 +981,128 @@ export function KidProfileClient({
             )}
           </PanelCard>
         </TabsContent>
+
+        {/* Assessment details */}
+        <Dialog
+          open={assessmentDetailsOpen}
+          onOpenChange={(open) => {
+            setAssessmentDetailsOpen(open);
+            if (!open) {
+              setSelectedAssessment(null);
+              setAssessmentNotesDraft('');
+              setAssessmentTestNotesDraft({});
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-[920px] w-[calc(100vw-1.5rem)] max-h-[calc(100vh-2rem)] overflow-hidden p-0">
+            <div className="flex max-h-[calc(100vh-2rem)] flex-col">
+              <div className="px-6 pt-6">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>{dictionary.playerProfile?.sections?.assessmentHistory ?? 'Assessment'} </span>
+                  </DialogTitle>
+                </DialogHeader>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4">
+                {selectedAssessment ? (
+                  <div className="space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 dark:border-[#000000] dark:bg-[#1a1a1a]">
+                        <div className="text-xs text-gray-600 dark:text-gray-400">{dictionary.playerProfile?.labels?.naScore ?? 'NA Score'}</div>
+                        <div className="mt-1 text-2xl font-black text-[#262626] dark:text-white">{selectedAssessment.naScore}</div>
+                      </div>
+                      <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 dark:border-[#000000] dark:bg-[#1a1a1a] sm:col-span-2">
+                        <div className="text-xs text-gray-600 dark:text-gray-400">{dictionary.playerProfile?.labels?.latestAssessment ?? 'Session'}</div>
+                        <div className="mt-1 text-base font-bold text-[#262626] dark:text-white">{selectedAssessment.sessionDate}</div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {(Object.keys(selectedAssessment.tests) as AssessmentFieldKey[]).map((k, idx) => {
+                        const scores = calculateCategoryScores(selectedAssessment.tests);
+                        return (
+                          <motion.div
+                            key={k}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.03, duration: 0.25 }}
+                            className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]"
+                          >
+                            <div className="flex items-start gap-4">
+                              <DnaCircularGauge
+                                value={Math.round(scores[k] ?? 0)}
+                                max={100}
+                                size={70}
+                                strokeWidth={7}
+                                valueSuffix="%"
+                                showMaxValue={false}
+                                className="shrink-0"
+                                ariaLabel={`${categoryLabel(k)} score`}
+                              />
+                              <div className="min-w-0 flex-1">
+                                <div className="font-bold text-[#262626] dark:text-white">{categoryLabel(k)}</div>
+                                <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                  {dictionary.playerProfile?.labels?.rawTestValue ?? 'Value'}:{' '}
+                                  <span className="font-semibold text-[#262626] dark:text-white">{selectedAssessment.tests[k]}</span>
+                                </div>
+
+                                <div className="mt-3 space-y-2">
+                                  <Label className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                    {dictionary.programs?.commentLabel ?? 'Note'}
+                                  </Label>
+                                  <Textarea
+                                    value={assessmentTestNotesDraft[k] ?? ''}
+                                    onChange={(e) =>
+                                      setAssessmentTestNotesDraft((prev) => ({
+                                        ...prev,
+                                        [k]: e.target.value,
+                                      }))
+                                    }
+                                    className="min-h-[88px] border-2"
+                                    placeholder={dictionary.programs?.commentHint ?? 'Write a short note'}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold text-[#262626] dark:text-white">
+                        {dictionary.programs?.notesLabel ?? 'Notes'}
+                      </Label>
+                      <Textarea
+                        value={assessmentNotesDraft}
+                        onChange={(e) => setAssessmentNotesDraft(e.target.value)}
+                        className="min-h-[110px] border-2"
+                        placeholder={dictionary.programs?.commentHint ?? 'General notes for this session'}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="px-6 pb-6">
+                <DialogFooter className="gap-2">
+                  <Button variant="outline" className="h-12 border-2" onClick={() => setAssessmentDetailsOpen(false)}>
+                    {dictionary.common.cancel}
+                  </Button>
+                  <Button
+                    className="h-12"
+                    onClick={() => void saveAssessmentNotes()}
+                    disabled={!selectedAssessment || assessmentNotesSaving}
+                  >
+                    {assessmentNotesSaving ? (dictionary.common.loading ?? 'Saving...') : dictionary.common.save}
+                  </Button>
+                </DialogFooter>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <TabsContent value="badges" className="mt-4">
           <PanelCard title={dictionary.playerProfile?.sections?.badges ?? 'Badges'} icon={Star}>

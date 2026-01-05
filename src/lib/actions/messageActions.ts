@@ -128,14 +128,14 @@ export async function getUserConversationsAction() {
     const conversationsWithUsers = await Promise.all(
       conversations.map(async (conv) => {
         const user = await findUserById(conv.userId);
-        return {
-          ...conv,
-          user,
-        };
+        return { ...conv, user };
       })
     );
 
-    return { success: true, conversations: conversationsWithUsers };
+    // If the other user was deleted, do not expose the conversation.
+    const filtered = conversationsWithUsers.filter((c) => Boolean(c.user));
+
+    return { success: true, conversations: filtered };
   } catch (error) {
     console.error('Get conversations error:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to get conversations' };

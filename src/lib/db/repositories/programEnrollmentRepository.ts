@@ -227,6 +227,29 @@ export async function listProgramEnrollmentsByProgram(params: {
   return items.sort((a, b) => a.userId.localeCompare(b.userId));
 }
 
+/**
+ * Delete all program enrollments for a given program.
+ *
+ * Used when deleting a program to ensure no orphan enrollment entries appear in player views.
+ */
+export async function deleteProgramEnrollmentsByProgram(params: {
+  academyId: string;
+  programId: string;
+}): Promise<number> {
+  const db = getDatabase();
+  const start = `${ENROLL_PREFIX}${params.academyId}:${params.programId}:`;
+  let deleted = 0;
+
+  for await (const { key } of db.getRange({ start, end: `${start}\xFF` })) {
+    const keyStr = String(key);
+    if (!keyStr.startsWith(start)) continue;
+    await db.remove(keyStr);
+    deleted += 1;
+  }
+
+  return deleted;
+}
+
 export async function listProgramEnrollmentsByUser(params: {
   academyId: string;
   userId: string;

@@ -8,6 +8,8 @@ import { findUserById, getUsersByIds } from '@/lib/db/repositories/userRepositor
 import { hasRolePermission } from '@/lib/db/repositories/rolePermissionRepository';
 import { findProgramById } from '@/lib/db/repositories/programRepository';
 import { findProgramLevelById, getProgramLevelsByProgramIdAndAcademyId } from '@/lib/db/repositories/programLevelRepository';
+import { deleteProgramAttendanceForUserInProgram } from '@/lib/db/repositories/programAttendanceRepository';
+import { deleteDnaAssessmentSessionsForPlayerInProgram } from '@/lib/db/repositories/dnaAssessmentRepository';
 import {
   upsertProgramEnrollment,
   removeProgramEnrollment,
@@ -214,8 +216,31 @@ export async function removePlayerFromProgramAction(params: {
   if (!allowed) return { success: false as const, error: 'Unauthorized' };
 
   try {
-    const ok = await removeProgramEnrollment({ academyId: ctx.academyId, programId: params.programId, userId: params.userId });
-    if (!ok) return { success: false as const, error: 'Not found' };
+    // Clean up any program-specific history for this player.
+    // - Enrollment record stores level history + points.
+    // - Attendance records store session-by-session participation.
+    // - DNA assessment sessions may be program-scoped.
+    const attendanceDeleted = await deleteProgramAttendanceForUserInProgram({
+      academyId: ctx.academyId,
+      programId: params.programId,
+      userId: params.userId,
+    });
+
+    const assessmentsDeleted = await deleteDnaAssessmentSessionsForPlayerInProgram({
+      academyId: ctx.academyId,
+      programId: params.programId,
+      playerId: params.userId,
+    });
+
+    const enrollmentDeleted = await removeProgramEnrollment({
+      academyId: ctx.academyId,
+      programId: params.programId,
+      userId: params.userId,
+    });
+
+    if (!enrollmentDeleted && attendanceDeleted === 0 && assessmentsDeleted === 0) {
+      return { success: false as const, error: 'Not found' };
+    }
 
     revalidatePath(`/${locale}/dashboard/programs/members`, 'page');
     revalidatePath(`/${locale}/dashboard/players/${params.userId}`, 'page');
@@ -256,18 +281,115 @@ export async function getPlayerProgramEnrollmentsAction(params: {
 
     const enrollments = await listProgramEnrollmentsByUser({ academyId: params.academyId, userId: params.userId });
 
+    // Self-heal: if an enrollment references a deleted program, do not return it.
+    // For privileged users (admin/manager/coach), also clean up orphan data so it disappears everywhere.
+    const canCleanupOrphans = isPrivileged;
+
     const enriched = await Promise.all(
       enrollments.map(async (e) => {
         const program = await findProgramById(e.programId);
+        if (!program) {
+          if (canCleanupOrphans) {
+            try {
+              await deleteProgramAttendanceForUserInProgram({
+                academyId: params.academyId,
+                programId: e.programId,
+                userId: e.userId,
+              });
+
+              await deleteDnaAssessmentSessionsForPlayerInProgram({
+                academyId: params.academyId,
+                programId: e.programId,
+                playerId: e.userId,
+              });
+
+              await removeProgramEnrollment({
+                academyId: params.academyId,
+                programId: e.programId,
+                userId: e.userId,
+              });
+            } catch (cleanupError) {
+              console.warn('Failed to cleanup orphan program enrollment:', cleanupError);
+            }
+          }
+
+          return null;
+        }
+
         const currentLevel = e.currentLevelId ? await findProgramLevelById(e.currentLevelId) : null;
         return { ...e, program, currentLevel };
       })
     );
 
-    return { success: true as const, enrollments: enriched };
+    const visible = enriched.filter(Boolean);
+    return { success: true as const, enrollments: visible };
   } catch (error) {
     console.error('Error getting player program enrollments:', error);
     return { success: false as const, error: 'Failed to get programs' };
+  }
+}
+
+export async function cleanupOrphanProgramEnrollmentsForUserAction(params: {
+  locale: string;
+  academyId: string;
+  userId: string;
+  programIds?: string[];
+}) {
+  noStore();
+  try {
+    const me = await requireAuth(params.locale);
+
+    // Must be in academy (or admin)
+    const myMembership = await getAcademyMembership(params.academyId, me.id);
+    if (!myMembership && me.role !== 'admin') {
+      return { success: false as const, error: 'Unauthorized' };
+    }
+
+    // Only privileged users can cleanup.
+    const isPrivileged = me.role === 'admin' || myMembership?.role === 'manager' || myMembership?.role === 'coach';
+    if (!isPrivileged) {
+      return { success: false as const, error: 'Unauthorized' };
+    }
+
+    const target = await findUserById(params.userId);
+    if (!target) return { success: false as const, error: 'User not found' };
+
+    const enrollments = await listProgramEnrollmentsByUser({ academyId: params.academyId, userId: params.userId });
+    const allowedProgramIds = Array.isArray(params.programIds) && params.programIds.length > 0 ? new Set(params.programIds) : null;
+
+    let cleaned = 0;
+    for (const e of enrollments) {
+      if (allowedProgramIds && !allowedProgramIds.has(e.programId)) continue;
+
+      const program = await findProgramById(e.programId);
+      if (program) continue; // Only remove enrollments for truly-missing programs.
+
+      const attendanceDeleted = await deleteProgramAttendanceForUserInProgram({
+        academyId: params.academyId,
+        programId: e.programId,
+        userId: e.userId,
+      });
+
+      const assessmentsDeleted = await deleteDnaAssessmentSessionsForPlayerInProgram({
+        academyId: params.academyId,
+        programId: e.programId,
+        playerId: e.userId,
+      });
+
+      const enrollmentDeleted = await removeProgramEnrollment({
+        academyId: params.academyId,
+        programId: e.programId,
+        userId: e.userId,
+      });
+
+      if (enrollmentDeleted || attendanceDeleted > 0 || assessmentsDeleted > 0) cleaned++;
+    }
+
+    revalidatePath(`/${params.locale}/dashboard/players/${params.userId}`, 'page');
+    return { success: true as const, cleaned };
+  } catch (error) {
+    console.error('Error cleaning orphan program enrollments:', error);
+    return { success: false as const, error: 'Failed to cleanup orphans' };
   }
 }
 
