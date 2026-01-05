@@ -36,7 +36,7 @@ import {
   UserCircle,
 } from 'lucide-react';
 import { StudentMedalsDisplay } from '@/components/StudentMedalsDisplay';
-import { updateUserProfilePictureAction } from '@/lib/actions/userActions';
+import { updateUserProfilePictureAction, getUsersByIdsAction } from '@/lib/actions/userActions';
 import { getEnrollmentsByStudentIdAction, updateEnrollmentCourseAction, createEnrollmentAction, deleteEnrollmentAction } from '@/lib/actions/enrollmentActions';
 import { getActiveCoursesAction } from '@/lib/actions/courseActions';
 import {
@@ -108,6 +108,29 @@ export function KidProfileClient({
     currentLevel: ProgramLevel | null;
   };
 
+  type ProgramJourneyDetails =
+    | {
+        kind: 'level';
+        enrollment: PlayerProgramEnrollment;
+        level: ProgramLevel;
+        status: 'locked' | 'completed' | 'in_progress';
+        progressPct: number;
+        startedAt?: string;
+        endedAt?: string;
+      }
+    | {
+        kind: 'history';
+        enrollment: PlayerProgramEnrollment;
+        entry: ProgramLevelHistoryEntry;
+        level: ProgramLevel | null;
+        isCurrent: boolean;
+      }
+    | {
+        kind: 'note';
+        enrollment: PlayerProgramEnrollment;
+        note: ProgramCoachNote;
+      };
+
   const [currentKid, setCurrentKid] = useState<User>(kid);
   const [enrollments, setEnrollments] = useState<EnrichedEnrollment[]>([]);
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
@@ -127,10 +150,12 @@ export function KidProfileClient({
   const [programEnrollmentsError, setProgramEnrollmentsError] = useState<string | null>(null);
 
   const orphanProgramCleanupAttemptedRef = useRef<Set<string>>(new Set());
+  const programJourneyDialogScrollRef = useRef<{ top: number; left: number } | null>(null);
   const [programLevelsByProgramId, setProgramLevelsByProgramId] = useState<Record<string, ProgramLevel[]>>({});
   const [programAttendanceByProgramId, setProgramAttendanceByProgramId] = useState<
     Record<string, { attended: number; marked: number }>
   >({});
+  const [userNamesMap, setUserNamesMap] = useState<Record<string, string>>({});
 
   const totalProgramSessionsAttended = useMemo(() => {
     return Object.values(programAttendanceByProgramId).reduce((sum, v) => sum + (Number.isFinite(v?.attended) ? v.attended : 0), 0);
@@ -166,6 +191,30 @@ export function KidProfileClient({
   const [programLevelPointsDelta, setProgramLevelPointsDelta] = useState<string>('');
   const [programLevelComment, setProgramLevelComment] = useState<string>('');
   const [programLevelSubmitting, setProgramLevelSubmitting] = useState(false);
+
+  const [programJourneyDetailsOpen, setProgramJourneyDetailsOpen] = useState(false);
+  const [programJourneyDetails, setProgramJourneyDetails] = useState<ProgramJourneyDetails | null>(null);
+
+  useEffect(() => {
+    if (!programJourneyDetailsOpen) return;
+    const saved = programJourneyDialogScrollRef.current;
+    if (!saved) return;
+
+    const scrollingEl = document.scrollingElement || document.documentElement;
+    const restore = () => {
+      try {
+        scrollingEl.scrollTop = saved.top;
+        scrollingEl.scrollLeft = saved.left;
+      } catch {
+        // No-op: best-effort only.
+      }
+    };
+
+    // Some scroll-lock/focus behaviors run after open; restore a few times to be safe.
+    requestAnimationFrame(restore);
+    setTimeout(restore, 0);
+    setTimeout(restore, 50);
+  }, [programJourneyDetailsOpen]);
 
   const [assessmentDialogOpen, setAssessmentDialogOpen] = useState(false);
   const [assessmentSubmitting, setAssessmentSubmitting] = useState(false);
@@ -502,6 +551,35 @@ export function KidProfileClient({
       } else {
         setProgramAttendanceByProgramId({});
       }
+
+      // Collect all unique user IDs from level history entries and fetch their names
+      const allUserIds = new Set<string>();
+      filteredEnrollments.forEach((enrollment) => {
+        (enrollment.levelHistory || []).forEach((entry) => {
+          if (entry.setBy) allUserIds.add(entry.setBy);
+        });
+        (enrollment.coachNotes || []).forEach((note) => {
+          if (note.coachUserId) allUserIds.add(note.coachUserId);
+        });
+      });
+
+      if (allUserIds.size > 0) {
+        try {
+          const usersResult = await getUsersByIdsAction({
+            locale,
+            userIds: Array.from(allUserIds),
+          });
+          if (usersResult.success && usersResult.users) {
+            const namesMap: Record<string, string> = {};
+            usersResult.users.forEach((user) => {
+              namesMap[user.id] = user.fullName || user.username || user.email;
+            });
+            setUserNamesMap(namesMap);
+          }
+        } catch (error) {
+          console.warn('Failed to fetch user names:', error);
+        }
+      }
     } catch (error) {
       console.error('Load program enrollments error:', error);
       setProgramEnrollments([]);
@@ -514,6 +592,22 @@ export function KidProfileClient({
   }
 
   const getProgramLevelLabel = (level: ProgramLevel) => (locale === 'ar' ? level.nameAr : level.name);
+
+  const formatCommentWithLevelNames = (comment: string | undefined, programId: string) => {
+    if (!comment) return comment;
+    let formatted = comment;
+    const levels = programLevelsByProgramId[programId] || [];
+    levels.forEach((level) => {
+      // Replace level ID with level name in the comment
+      formatted = formatted.replace(level.id, getProgramLevelLabel(level));
+    });
+    return formatted;
+  };
+
+  const getActorName = (actorId: string | undefined) => {
+    if (!actorId) return '—';
+    return userNamesMap[actorId] || actorId;
+  };
 
   const levelJourneyLabels = {
     title: dictionary.playerProfile?.journey?.programTitle ?? (dictionary.programs?.journeyTitle ?? 'Program journey'),
@@ -1232,36 +1326,36 @@ export function KidProfileClient({
             >
               <div className="pb-1">
                 <TabsList
-                  className={`inline-flex w-max min-w-full items-center gap-1 rounded-xl border-2 border-black/60 bg-[#0b0b0f] p-1 shadow-lg shadow-black/30 ${
+                  className={`relative inline-flex w-max min-w-full items-center gap-2 rounded-2xl border-2 border-white/15 bg-white/5 p-2 shadow-xl shadow-black/30 backdrop-blur-xl dark:border-white/10 dark:bg-[#0b0b0f]/70 ${
                     locale === 'ar' ? 'flex-row-reverse justify-end' : 'justify-start'
                   }`}
                 >
                   <TabsTrigger
                     value="overview"
-                    className={`gap-2 whitespace-nowrap border border-transparent text-white/80 hover:bg-[#14141a] hover:text-white data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:border-white/15 ${
+                    className={`relative gap-2 whitespace-nowrap rounded-xl border border-transparent px-4 py-3 text-sm sm:text-base font-semibold text-white/80 transition-all duration-200 hover:bg-white/10 hover:text-white hover:shadow-lg hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.99] data-[state=active]:border-white/15 data-[state=active]:bg-linear-to-r data-[state=active]:from-blue-500/20 data-[state=active]:via-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-blue-500/10 ${
                       locale === 'ar' ? 'flex-row-reverse' : ''
                     }`}
                   >
-                    <Activity className="w-4 h-4" />
-                    <span>{dictionary.playerProfile?.tabs?.overview ?? 'Overview'}</span>
+                    <Activity className="w-5 h-5" />
+                    <span className="leading-none">{dictionary.playerProfile?.tabs?.overview ?? 'Overview'}</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="assessments"
-                    className={`gap-2 whitespace-nowrap border border-transparent text-white/80 hover:bg-[#14141a] hover:text-white data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:border-white/15 ${
+                    className={`relative gap-2 whitespace-nowrap rounded-xl border border-transparent px-4 py-3 text-sm sm:text-base font-semibold text-white/80 transition-all duration-200 hover:bg-white/10 hover:text-white hover:shadow-lg hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.99] data-[state=active]:border-white/15 data-[state=active]:bg-linear-to-r data-[state=active]:from-blue-500/20 data-[state=active]:via-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-blue-500/10 ${
                       locale === 'ar' ? 'flex-row-reverse' : ''
                     }`}
                   >
-                    <Calendar className="w-4 h-4" />
-                    <span>{dictionary.playerProfile?.tabs?.assessments ?? 'Assessments'}</span>
+                    <Calendar className="w-5 h-5" />
+                    <span className="leading-none">{dictionary.playerProfile?.tabs?.assessments ?? 'Assessments'}</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="achievements"
-                    className={`gap-2 whitespace-nowrap border border-transparent text-white/80 hover:bg-[#14141a] hover:text-white data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:border-white/15 ${
+                    className={`relative gap-2 whitespace-nowrap rounded-xl border border-transparent px-4 py-3 text-sm sm:text-base font-semibold text-white/80 transition-all duration-200 hover:bg-white/10 hover:text-white hover:shadow-lg hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.99] data-[state=active]:border-white/15 data-[state=active]:bg-linear-to-r data-[state=active]:from-blue-500/20 data-[state=active]:via-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-blue-500/10 ${
                       locale === 'ar' ? 'flex-row-reverse' : ''
                     }`}
                   >
-                    <Award className="w-4 h-4" />
-                    <span>{dictionary.playerProfile?.tabs?.achievements ?? 'Achievements'}</span>
+                    <Award className="w-5 h-5" />
+                    <span className="leading-none">{dictionary.playerProfile?.tabs?.achievements ?? 'Achievements'}</span>
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -1291,7 +1385,7 @@ export function KidProfileClient({
                           className="p-3 sm:p-4 rounded-2xl border-2 border-[#DDDDDD] bg-white shadow-sm dark:border-[#000000] dark:bg-[#1a1a1a]"
                         >
                           <div className="flex flex-col items-center justify-center gap-3">
-                            <div className="text-sm font-semibold text-[#262626] dark:text-white text-center">
+                            <div className="text-base sm:text-lg font-bold text-[#262626] dark:text-white text-center leading-tight">
                               {categoryLabel(k)}
                             </div>
                             <DnaCircularGauge
@@ -1439,7 +1533,8 @@ export function KidProfileClient({
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.05, duration: 0.35 }}
-                                        whileHover={{ scale: 1.02, rotateY: locale === 'ar' ? -4 : 4, rotateX: 2 }}
+                                        // Important: do not zoom the level card on hover.
+                                        whileHover={{ rotateY: locale === 'ar' ? -3 : 3, rotateX: 2 }}
                                         style={{ transformStyle: 'preserve-3d' }}
                                         className={
                                           isCurrent
@@ -1448,6 +1543,45 @@ export function KidProfileClient({
                                               ? 'relative w-[300px] shrink-0 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4'
                                               : 'relative w-[300px] shrink-0 rounded-2xl border border-white/10 bg-white/5 p-4 opacity-80'
                                         }
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={() => {
+                                          const entries = [...(e.levelHistory ?? [])]
+                                            .filter((h) => h.levelId === lvl.id)
+                                            .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime());
+                                          const last = entries.length ? entries[entries.length - 1] : null;
+
+                                          setProgramJourneyDetails({
+                                            kind: 'level',
+                                            enrollment: e,
+                                            level: lvl,
+                                            status,
+                                            progressPct,
+                                            startedAt: last?.startedAt,
+                                            endedAt: last?.endedAt,
+                                          });
+                                          setProgramJourneyDetailsOpen(true);
+                                        }}
+                                        onKeyDown={(ev) => {
+                                          if (ev.key === 'Enter' || ev.key === ' ') {
+                                            ev.preventDefault();
+                                            const entries = [...(e.levelHistory ?? [])]
+                                              .filter((h) => h.levelId === lvl.id)
+                                              .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime());
+                                            const last = entries.length ? entries[entries.length - 1] : null;
+
+                                            setProgramJourneyDetails({
+                                              kind: 'level',
+                                              enrollment: e,
+                                              level: lvl,
+                                              status,
+                                              progressPct,
+                                              startedAt: last?.startedAt,
+                                              endedAt: last?.endedAt,
+                                            });
+                                            setProgramJourneyDetailsOpen(true);
+                                          }
+                                        }}
                                       >
                                         {isCurrent ? (
                                           <motion.div
@@ -1470,7 +1604,7 @@ export function KidProfileClient({
                                                 alt="Program level artwork"
                                                 fill
                                                 sizes="128px"
-                                                className="object-cover transition-transform group-hover/img:scale-105 duration-300"
+                                                className="object-cover"
                                               />
                                             ) : (
                                               <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.18),transparent_60%)]" />
@@ -1607,56 +1741,167 @@ export function KidProfileClient({
 
                                 {/* Visited history */}
                                 <div className="mt-3">
-                                  {(e.levelHistory ?? []).length === 0 ? (
-                                    <div className="text-sm text-gray-600 dark:text-gray-400">{levelJourneyLabels.noHistory}</div>
-                                  ) : (
-                                    <div className="grid grid-cols-1 gap-2">
-                                      {[...(e.levelHistory ?? [])]
-                                        .slice()
-                                        .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
-                                        .map((h, idx) => {
-                                          const lvl = levels.find((x) => x.id === h.levelId);
-                                          const label = lvl ? getProgramLevelLabel(lvl) : h.levelId;
-                                          const isCurrent = !h.endedAt && e.currentLevelId === h.levelId;
+                                  {(() => {
+                                    const levels = programLevelsByProgramId[e.programId] ?? [];
+                                    const levelHistory = e.levelHistory ?? [];
+                                    const coachNotes = e.coachNotes ?? [];
+
+                                    type TimelineItem =
+                                      | { type: 'level'; at: string; levelEntry: ProgramLevelHistoryEntry }
+                                      | { type: 'note'; at: string; note: ProgramCoachNote };
+
+                                    const timeline: TimelineItem[] = [];
+                                    for (const h of levelHistory) {
+                                      if (h?.startedAt) timeline.push({ type: 'level', at: h.startedAt, levelEntry: h });
+                                    }
+                                    for (const n of coachNotes) {
+                                      if (n?.createdAt) timeline.push({ type: 'note', at: n.createdAt, note: n });
+                                    }
+
+                                    const sorted = timeline
+                                      .slice()
+                                      .sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+
+                                    if (sorted.length === 0) {
+                                      return (
+                                        <div className="text-sm text-gray-600 dark:text-gray-400">{levelJourneyLabels.noHistory}</div>
+                                      );
+                                    }
+
+                                    return (
+                                      <div className="grid grid-cols-1 gap-2">
+                                        {sorted.map((item, idx) => {
+                                          if (item.type === 'level') {
+                                            const h = item.levelEntry;
+                                            const lvl = levels.find((x) => x.id === h.levelId);
+                                            const label = lvl ? getProgramLevelLabel(lvl) : h.levelId;
+                                            const isCurrent = !h.endedAt && e.currentLevelId === h.levelId;
+
+                                            return (
+                                              <motion.div
+                                                key={`level:${h.levelId}:${h.startedAt}`}
+                                                initial={{ opacity: 0, y: 8 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.03, duration: 0.3 }}
+                                                className={
+                                                  isCurrent
+                                                    ? 'rounded-xl border border-white/15 bg-white/10 p-3'
+                                                    : 'rounded-xl border border-white/10 bg-white/5 p-3'
+                                                }
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => {
+                                                  setProgramJourneyDetails({
+                                                    kind: 'history',
+                                                    enrollment: e,
+                                                    entry: h,
+                                                    level: lvl || null,
+                                                    isCurrent,
+                                                  });
+                                                  setProgramJourneyDetailsOpen(true);
+                                                }}
+                                                onKeyDown={(ev) => {
+                                                  if (ev.key === 'Enter' || ev.key === ' ') {
+                                                    ev.preventDefault();
+                                                    setProgramJourneyDetails({
+                                                      kind: 'history',
+                                                      enrollment: e,
+                                                      entry: h,
+                                                      level: lvl || null,
+                                                      isCurrent,
+                                                    });
+                                                    setProgramJourneyDetailsOpen(true);
+                                                  }
+                                                }}
+                                              >
+                                                <div className={`flex items-start justify-between gap-3 ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+                                                  <div className="min-w-0">
+                                                    <div className="font-semibold text-[#262626] dark:text-white truncate">{label}</div>
+                                                    <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                                      <span className="font-semibold text-[#262626] dark:text-white">{levelJourneyLabels.started}:</span>{' '}
+                                                      {new Date(h.startedAt).toLocaleDateString(locale)}
+                                                      <span className="mx-2">•</span>
+                                                      <span className="font-semibold text-[#262626] dark:text-white">{levelJourneyLabels.ended}:</span>{' '}
+                                                      {h.endedAt ? new Date(h.endedAt).toLocaleDateString(locale) : '—'}
+                                                    </div>
+                                                  </div>
+
+                                                  <Badge
+                                                    className={
+                                                      isCurrent
+                                                        ? 'bg-white/10 text-white border border-white/15'
+                                                        : 'bg-emerald-600/15 text-emerald-200 border-0'
+                                                    }
+                                                  >
+                                                    {isCurrent ? levelJourneyLabels.statusInProgress : levelJourneyLabels.statusCompleted}
+                                                  </Badge>
+                                                </div>
+                                              </motion.div>
+                                            );
+                                          }
+
+                                          // Coach note
+                                          const n = item.note;
+                                          const points = typeof n.pointsDelta === 'number' ? n.pointsDelta : null;
+                                          const pointsLabel =
+                                            points === null
+                                              ? (dictionary.programs?.commentLabel ?? 'Note')
+                                              : `${dictionary.programs?.pointsDeltaLabel ?? 'Points change'}: ${points > 0 ? `+${points}` : `${points}`}`;
+
                                           return (
                                             <motion.div
-                                              key={`${h.levelId}-${h.startedAt}`}
+                                              key={`note:${n.id}`}
                                               initial={{ opacity: 0, y: 8 }}
                                               animate={{ opacity: 1, y: 0 }}
                                               transition={{ delay: idx * 0.03, duration: 0.3 }}
-                                              className={
-                                                isCurrent
-                                                  ? 'rounded-xl border border-white/15 bg-white/10 p-3'
-                                                  : 'rounded-xl border border-white/10 bg-white/5 p-3'
-                                              }
+                                              className="rounded-xl border border-white/10 bg-white/5 p-3"
+                                              role="button"
+                                              tabIndex={0}
+                                              onClick={() => {
+                                                setProgramJourneyDetails({
+                                                  kind: 'note',
+                                                  enrollment: e,
+                                                  note: n,
+                                                });
+                                                setProgramJourneyDetailsOpen(true);
+                                              }}
+                                              onKeyDown={(ev) => {
+                                                if (ev.key === 'Enter' || ev.key === ' ') {
+                                                  ev.preventDefault();
+                                                  setProgramJourneyDetails({
+                                                    kind: 'note',
+                                                    enrollment: e,
+                                                    note: n,
+                                                  });
+                                                  setProgramJourneyDetailsOpen(true);
+                                                }
+                                              }}
                                             >
                                               <div className={`flex items-start justify-between gap-3 ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
                                                 <div className="min-w-0">
-                                                  <div className="font-semibold text-[#262626] dark:text-white truncate">{label}</div>
+                                                  <div className="font-semibold text-[#262626] dark:text-white truncate">
+                                                    {dictionary.programs?.addNoteTitle ?? 'Coach note'}
+                                                  </div>
                                                   <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                                                    <span className="font-semibold text-[#262626] dark:text-white">{levelJourneyLabels.started}:</span>{' '}
-                                                    {new Date(h.startedAt).toLocaleDateString(locale)}
-                                                    <span className="mx-2">•</span>
-                                                    <span className="font-semibold text-[#262626] dark:text-white">{levelJourneyLabels.ended}:</span>{' '}
-                                                    {h.endedAt ? new Date(h.endedAt).toLocaleDateString(locale) : '—'}
+                                                    <span className="font-semibold text-[#262626] dark:text-white">{dictionary.programs?.commentLabel ?? 'Comment'}:</span>{' '}
+                                                    <span className="line-clamp-1">{n.comment ? formatCommentWithLevelNames(n.comment, e.programId) : '—'}</span>
+                                                  </div>
+                                                  <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                                    <span className="font-semibold text-[#262626] dark:text-white">Date:</span>{' '}
+                                                    {n.createdAt ? new Date(n.createdAt).toLocaleDateString(locale) : '—'}
                                                   </div>
                                                 </div>
 
-                                                <Badge
-                                                  className={
-                                                    isCurrent
-                                                      ? 'bg-white/10 text-white border border-white/15'
-                                                      : 'bg-emerald-600/15 text-emerald-200 border-0'
-                                                  }
-                                                >
-                                                  {isCurrent ? levelJourneyLabels.statusInProgress : levelJourneyLabels.statusCompleted}
+                                                <Badge className="bg-purple-600/15 text-purple-200 border-0">
+                                                  {pointsLabel}
                                                 </Badge>
                                               </div>
                                             </motion.div>
                                           );
                                         })}
-                                    </div>
-                                  )}
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             );
@@ -2160,6 +2405,220 @@ export function KidProfileClient({
         </DialogContent>
       </Dialog>
 
+      {/* Program journey details dialog */}
+      <Dialog
+        open={programJourneyDetailsOpen}
+        onOpenChange={(open) => {
+          if (open) {
+            const scrollingEl = document.scrollingElement || document.documentElement;
+            programJourneyDialogScrollRef.current = {
+              top: scrollingEl.scrollTop,
+              left: scrollingEl.scrollLeft,
+            };
+          }
+          setProgramJourneyDetailsOpen(open);
+          if (!open) setProgramJourneyDetails(null);
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-[820px] max-h-[90vh] overflow-y-auto"
+          onOpenAutoFocus={(event) => {
+            // Prevent focus from scrolling the underlying page to the top.
+            event.preventDefault();
+          }}
+          onCloseAutoFocus={(event) => {
+            // Prevent restoring focus from shifting the page scroll position.
+            event.preventDefault();
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>
+              {programJourneyDetails?.kind === 'history'
+                ? 'Level history'
+                : programJourneyDetails?.kind === 'note'
+                  ? (dictionary.programs?.addNoteTitle ?? 'Coach note')
+                  : 'Level details'}
+            </DialogTitle>
+            <DialogDescription>
+              {programJourneyDetails?.enrollment?.program
+                ? (locale === 'ar'
+                    ? programJourneyDetails.enrollment.program.nameAr
+                    : programJourneyDetails.enrollment.program.name)
+                : programJourneyDetails?.enrollment?.programId}
+            </DialogDescription>
+          </DialogHeader>
+
+          {programJourneyDetails ? (
+            <div className="space-y-4">
+              {programJourneyDetails.kind === 'level' ? (
+                <>
+                  <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 dark:border-[#000000] dark:bg-[#1a1a1a]">
+                    <div className={`flex items-start justify-between gap-3 ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+                      <div className="min-w-0">
+                        <div className="text-lg font-black text-[#262626] dark:text-white truncate">
+                          {getProgramLevelLabel(programJourneyDetails.level)}
+                        </div>
+                        <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-semibold text-[#262626] dark:text-white">{levelJourneyLabels.progress}:</span>{' '}
+                          {programJourneyDetails.progressPct}%
+                        </div>
+                      </div>
+
+                      <Badge className="bg-white/10 text-white border border-white/15">
+                        {programJourneyDetails.status === 'completed'
+                          ? levelJourneyLabels.statusCompleted
+                          : programJourneyDetails.status === 'in_progress'
+                            ? levelJourneyLabels.statusInProgress
+                            : levelJourneyLabels.statusLocked}
+                      </Badge>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div className="rounded-xl border border-white/10 bg-black/5 p-3 dark:bg-white/5">
+                        <div className="text-xs text-gray-600 dark:text-gray-400">{levelJourneyLabels.started}</div>
+                        <div className="mt-1 font-semibold text-[#262626] dark:text-white">
+                          {programJourneyDetails.startedAt ? new Date(programJourneyDetails.startedAt).toLocaleString(locale) : '—'}
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-black/5 p-3 dark:bg-white/5">
+                        <div className="text-xs text-gray-600 dark:text-gray-400">{levelJourneyLabels.ended}</div>
+                        <div className="mt-1 font-semibold text-[#262626] dark:text-white">
+                          {programJourneyDetails.endedAt ? new Date(programJourneyDetails.endedAt).toLocaleString(locale) : '—'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 dark:border-[#000000] dark:bg-[#1a1a1a]">
+                    <div className="font-semibold text-[#262626] dark:text-white">
+                      {dictionary.programs?.rulesTitle ?? 'Requirements'}
+                    </div>
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {(() => {
+                        const rules = (programJourneyDetails.level.passRules ?? {}) as Record<string, unknown>;
+                        const entries = Object.entries(rules);
+                        if (entries.length === 0) {
+                          return (
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              No requirements defined for this level.
+                            </div>
+                          );
+                        }
+
+                        return entries.map(([k, v]) => (
+                          <div key={k} className="rounded-xl border border-white/10 bg-black/5 p-3 dark:bg-white/5">
+                            <div className="text-xs text-gray-600 dark:text-gray-400 truncate">{k}</div>
+                            <div className="mt-1 font-semibold text-[#262626] dark:text-white wrap-break-word">
+                              {typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean' ? String(v) : JSON.stringify(v)}
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  </div>
+                </>
+              ) : programJourneyDetails.kind === 'note' ? (
+                <>
+                  <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 dark:border-[#000000] dark:bg-[#1a1a1a]">
+                    <div className={`flex items-start justify-between gap-3 ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+                      <div className="min-w-0">
+                        <div className="text-lg font-black text-[#262626] dark:text-white truncate">
+                          {dictionary.programs?.addNoteTitle ?? 'Coach note'}
+                        </div>
+                        <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-semibold text-[#262626] dark:text-white">Date:</span>{' '}
+                          {programJourneyDetails.note.createdAt
+                            ? new Date(programJourneyDetails.note.createdAt).toLocaleString(locale)
+                            : '—'}
+                        </div>
+                      </div>
+
+                      <Badge className="bg-purple-600/15 text-purple-200 border-0">
+                        {typeof programJourneyDetails.note.pointsDelta === 'number'
+                          ? `${dictionary.programs?.pointsDeltaLabel ?? 'Points change'}: ${programJourneyDetails.note.pointsDelta > 0 ? '+' : ''}${programJourneyDetails.note.pointsDelta}`
+                          : (dictionary.programs?.commentLabel ?? 'Note')}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 dark:border-[#000000] dark:bg-[#1a1a1a]">
+                      <div className="text-xs text-gray-600 dark:text-gray-400">Actor</div>
+                      <div className="mt-1 font-semibold text-[#262626] dark:text-white wrap-break-word">
+                        {getActorName(programJourneyDetails.note.coachUserId)}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 dark:border-[#000000] dark:bg-[#1a1a1a]">
+                      <div className="text-xs text-gray-600 dark:text-gray-400">Points change</div>
+                      <div className="mt-1 font-semibold text-[#262626] dark:text-white">
+                        {typeof programJourneyDetails.note.pointsDelta === 'number' ? programJourneyDetails.note.pointsDelta : '—'}
+                      </div>
+                    </div>
+                    <div className="sm:col-span-2 rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 dark:border-[#000000] dark:bg-[#1a1a1a]">
+                      <div className="text-xs text-gray-600 dark:text-gray-400">Comment</div>
+                      <div className="mt-1 text-sm text-[#262626] dark:text-white whitespace-pre-wrap">
+                        {formatCommentWithLevelNames(programJourneyDetails.note.comment, programJourneyDetails.enrollment.programId) || '—'}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 dark:border-[#000000] dark:bg-[#1a1a1a]">
+                    <div className={`flex items-start justify-between gap-3 ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+                      <div className="min-w-0">
+                        <div className="text-lg font-black text-[#262626] dark:text-white truncate">
+                          {programJourneyDetails.level ? getProgramLevelLabel(programJourneyDetails.level) : programJourneyDetails.entry.levelId}
+                        </div>
+                        <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-semibold text-[#262626] dark:text-white">{levelJourneyLabels.started}:</span>{' '}
+                          {new Date(programJourneyDetails.entry.startedAt).toLocaleString(locale)}
+                        </div>
+                        <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-semibold text-[#262626] dark:text-white">{levelJourneyLabels.ended}:</span>{' '}
+                          {programJourneyDetails.entry.endedAt ? new Date(programJourneyDetails.entry.endedAt).toLocaleString(locale) : '—'}
+                        </div>
+                      </div>
+
+                      <Badge className={programJourneyDetails.isCurrent ? 'bg-white/10 text-white border border-white/15' : 'bg-emerald-600/15 text-emerald-200 border-0'}>
+                        {programJourneyDetails.isCurrent ? levelJourneyLabels.statusInProgress : levelJourneyLabels.statusCompleted}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 dark:border-[#000000] dark:bg-[#1a1a1a]">
+                      <div className="text-xs text-gray-600 dark:text-gray-400">Actor</div>
+                      <div className="mt-1 font-semibold text-[#262626] dark:text-white wrap-break-word">
+                        {getActorName(programJourneyDetails.entry.setBy)}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 dark:border-[#000000] dark:bg-[#1a1a1a]">
+                      <div className="text-xs text-gray-600 dark:text-gray-400">Points change</div>
+                      <div className="mt-1 font-semibold text-[#262626] dark:text-white">
+                        {typeof programJourneyDetails.entry.pointsDelta === 'number' ? programJourneyDetails.entry.pointsDelta : '—'}
+                      </div>
+                    </div>
+                    <div className="sm:col-span-2 rounded-2xl border-2 border-[#DDDDDD] bg-white p-4 dark:border-[#000000] dark:bg-[#1a1a1a]">
+                      <div className="text-xs text-gray-600 dark:text-gray-400">Comment</div>
+                      <div className="mt-1 text-sm text-[#262626] dark:text-white whitespace-pre-wrap">
+                        {formatCommentWithLevelNames(programJourneyDetails.entry.comment, programJourneyDetails.enrollment.programId) || '—'}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setProgramJourneyDetailsOpen(false)}>
+                  {dictionary.common.done ?? dictionary.common.cancel}
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
       {/* Assessment dialog */}
       <Dialog open={assessmentDialogOpen} onOpenChange={setAssessmentDialogOpen}>
         <DialogContent className="sm:max-w-[760px] max-h-[90vh] overflow-y-auto">
@@ -2262,7 +2721,7 @@ export function KidProfileClient({
                       </motion.div>
                     </div>
 
-                    <div className="mt-4">
+                    <div className="mt-4 dna-range-wrap">
                       <input
                         id={inputId}
                         type="range"
@@ -2271,12 +2730,12 @@ export function KidProfileClient({
                         step={1}
                         value={Number.isFinite(value) ? String(Math.min(10, Math.max(1, value))) : '5'}
                         onChange={(e) => setAssessmentForm((p) => ({ ...p, [f.key]: e.target.value }))}
-                        className="dna-range w-full"
+                        className="dna-range"
                         aria-label={categoryLabel(f.key)}
                         title={categoryLabel(f.key)}
                       />
 
-                      <div className="mt-2 flex justify-between text-[11px] text-white/45">
+                      <div className="dna-range-ticks mt-2 flex justify-between text-[11px] text-white/45">
                         {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                           <span
                             key={n}

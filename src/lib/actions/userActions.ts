@@ -6,6 +6,7 @@ import {
   updateUser,
   deleteUser,
   findUserById,
+  getUsersByIds,
   type CreateUserInput,
   type UpdateUserInput,
 } from '@/lib/db/repositories/userRepository';
@@ -347,6 +348,32 @@ export async function updatePlayersParentAction(
     return { 
       success: false as const, 
       error: error instanceof Error ? error.message : 'Failed to update players parent' 
+    };
+  }
+}
+
+export async function getUsersByIdsAction(params: {
+  locale: string;
+  userIds: string[];
+}) {
+  try {
+    const users = await getUsersByIds(params.userIds);
+    return { 
+      success: true as const, 
+      users: users.map(user => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+      }))
+    };
+  } catch (error) {
+    console.error('Get users by IDs error:', error);
+    return { 
+      success: false as const, 
+      error: error instanceof Error ? error.message : 'Failed to fetch users',
+      users: []
     };
   }
 }

@@ -13,11 +13,39 @@ import {
   getUserGroups,
   updateGroup,
   deleteGroup,
-  type CreateMessageInput,
+  getGroupById,
   type CreateGroupInput,
 } from '@/lib/db/repositories/messageRepository';
-import { getCurrentUser, requireAuth, requireAdmin } from '@/lib/auth/auth';
+import { getCurrentUser, requireAdmin } from '@/lib/auth/auth';
 import { findUserById } from '@/lib/db/repositories/userRepository';
+import { getAcademyContextIfAuthenticated } from '@/lib/academies/academyContext';
+import { listAcademyMembers } from '@/lib/db/repositories/academyMembershipRepository';
+
+async function isManagerAllowedRecipient(managerUserId: string, recipientUserId: string): Promise<boolean> {
+  const ctx = await getAcademyContextIfAuthenticated();
+  if (!ctx) return false;
+  if (ctx.user.id !== managerUserId) return false;
+  if (ctx.academyRole !== 'manager') return false;
+
+  const members = await listAcademyMembers(ctx.academyId);
+  return members.some((m) => m.userId === recipientUserId);
+}
+
+async function isManagerAllowedGroup(managerUserId: string, groupId: string): Promise<boolean> {
+  const ctx = await getAcademyContextIfAuthenticated();
+  if (!ctx) return false;
+  if (ctx.user.id !== managerUserId) return false;
+  if (ctx.academyRole !== 'manager') return false;
+
+  const group = await getGroupById(groupId);
+  if (!group) return false;
+
+  const members = await listAcademyMembers(ctx.academyId);
+  const allowed = new Set(members.map((m) => m.userId));
+  allowed.add(managerUserId);
+
+  return group.members.every((id) => allowed.has(id));
+}
 
 /**
  * Send push notification to user
@@ -55,6 +83,22 @@ export async function sendMessageAction(input: {
 
     if (!input.recipientId && !input.groupId) {
       return { success: false, error: 'Recipient or group is required' };
+    }
+
+    if (currentUser.role === 'manager') {
+      if (input.recipientId) {
+        const allowed = await isManagerAllowedRecipient(currentUser.id, input.recipientId);
+        if (!allowed) {
+          return { success: false, error: 'Not authorized to message this recipient' };
+        }
+      }
+
+      if (input.groupId) {
+        const allowedGroup = await isManagerAllowedGroup(currentUser.id, input.groupId);
+        if (!allowedGroup) {
+          return { success: false, error: 'Not authorized to message this group' };
+        }
+      }
     }
 
     const message = await createMessage({

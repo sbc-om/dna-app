@@ -369,14 +369,24 @@
 /* Range slider (1–10) styling                                                */
 /* -------------------------------------------------------------------------- */
 
+.dna-range-wrap {
+  --dna-range-track-height: 10px;
+  --dna-range-thumb-size: 22px;
+  --dna-range-thumb-half: calc(var(--dna-range-thumb-size) / 2);
+}
+
 .dna-range {
   -webkit-appearance: none;
   appearance: none;
-  height: 10px;
+  width: 100%;
+  height: var(--dna-range-thumb-size);
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   outline: none;
   cursor: pointer;
+  box-sizing: border-box;
+  /* Keep thumb aligned with the numeric ticks (1..10) by accounting for half thumb width. */
+  padding-inline: var(--dna-range-thumb-half);
 }
 
 .dna-range:focus-visible {
@@ -385,7 +395,7 @@
 }
 
 .dna-range::-webkit-slider-runnable-track {
-  height: 10px;
+  height: var(--dna-range-track-height);
   border-radius: 999px;
   background: transparent;
 }
@@ -393,25 +403,31 @@
 .dna-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 22px;
-  height: 22px;
+  width: var(--dna-range-thumb-size);
+  height: var(--dna-range-thumb-size);
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.95);
   border: 2px solid rgba(255, 255, 255, 0.22);
+  /* Ensure the thumb circle sits exactly centered on the track line. */
+  margin-top: calc((var(--dna-range-track-height) - var(--dna-range-thumb-size)) / 2);
 }
 
 .dna-range::-moz-range-track {
-  height: 10px;
+  height: var(--dna-range-track-height);
   border-radius: 999px;
   background: transparent;
 }
 
 .dna-range::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
+  width: var(--dna-range-thumb-size);
+  height: var(--dna-range-thumb-size);
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.95);
   border: 2px solid rgba(255, 255, 255, 0.22);
+}
+
+.dna-range-ticks {
+  padding-inline: var(--dna-range-thumb-half);
 }
 
 @keyframes slideInFromLeft {

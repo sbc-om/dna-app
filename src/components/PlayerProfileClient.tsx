@@ -1246,7 +1246,7 @@ export function KidProfileClient({
                       </motion.div>
                     </div>
 
-                    <div className="mt-4">
+                    <div className="mt-4 dna-range-wrap">
                       <input
                         id={inputId}
                         type="range"
@@ -1255,12 +1255,12 @@ export function KidProfileClient({
                         step={1}
                         value={Number.isFinite(value) ? String(Math.min(10, Math.max(1, value))) : '5'}
                         onChange={(e) => setAssessmentForm((p) => ({ ...p, [f.key]: e.target.value }))}
-                        className="dna-range w-full"
+                        className="dna-range"
                         aria-label={categoryLabel(f.key)}
                         title={categoryLabel(f.key)}
                       />
 
-                      <div className="mt-2 flex justify-between text-[11px] text-white/45">
+                      <div className="dna-range-ticks mt-2 flex justify-between text-[11px] text-white/45">
                         {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                           <span
                             key={n}

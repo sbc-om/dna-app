@@ -64,6 +64,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
   const { confirm, ConfirmDialog } = useConfirm();
 
   const isAdmin = currentUser.role === 'admin';
+  const canSelectRecipients = currentUser.role === 'admin' || currentUser.role === 'manager';
 
   const loadData = useCallback(async () => {
     try {
@@ -300,7 +301,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
               </p>
             </div>
             <div className="flex gap-2 shrink-0">
-              {isAdmin && (
+              {canSelectRecipients && (
                 <Button 
                   onClick={() => setShowUserSelectDialog(true)} 
                   size="sm"
@@ -310,7 +311,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                   <span className="hidden sm:inline">{dictionary.messages?.newMessage || 'New Message'}</span>
                 </Button>
               )}
-              {permissions.canCreateGroup && (
+              {isAdmin && permissions.canCreateGroup && (
                 <Button 
                   onClick={() => setShowNewGroupDialog(true)} 
                   size="sm"
@@ -619,8 +620,30 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                                 </div>
                               )}
 
-                              <div className={`group max-w-[85%] sm:max-w-[70%] ${isOwn ? 'bg-linear-to-br from-[#FF5F02] to-[#ff7b33] text-white' : 'bg-white dark:bg-[#262626] dark:text-white'} rounded-2xl ${isOwn ? 'rounded-br-md' : 'rounded-bl-md'} p-3 sm:p-4 shadow-md hover:shadow-lg transition-shadow`}>
-                                <p className="wrap-break-word text-sm sm:text-base whitespace-pre-wrap">{message.content}</p>
+                              <div
+                                className={
+                                  `relative group max-w-[85%] sm:max-w-[70%] rounded-2xl ${
+                                    isOwn ? 'rounded-br-md' : 'rounded-bl-md'
+                                  } p-3 sm:p-4 shadow-lg transition-all ` +
+                                  (isOwn
+                                    ? 'bg-linear-to-br from-[#FF5F02] via-[#ff6a1a] to-[#ff7b33] text-white shadow-orange-500/20 ring-1 ring-white/10'
+                                    : 'bg-white/95 text-gray-900 border border-black/10 shadow-black/5 dark:bg-[#0f0f10]/95 dark:text-white dark:border-white/10 dark:shadow-black/30')
+                                }
+                              >
+                                {/* Bubble tail */}
+                                <span
+                                  aria-hidden="true"
+                                  className={
+                                    `pointer-events-none absolute bottom-3 h-3 w-3 rotate-45 ` +
+                                    (isOwn
+                                      ? '-right-1.5 bg-[#ff7b33]'
+                                      : '-left-1.5 bg-white/95 dark:bg-[#0f0f10]/95')
+                                  }
+                                />
+
+                                <p className="wrap-break-word text-sm sm:text-base whitespace-pre-wrap leading-relaxed">
+                                  {message.content}
+                                </p>
                                 <div className={`flex items-center gap-1.5 mt-1.5 ${isOwn ? 'justify-end' : 'justify-start'}`}>
                                   <p className={`text-xs ${isOwn ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
                                     {new Date(message.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
@@ -740,7 +763,7 @@ export function MessagesClient({ dictionary, locale, currentUser, allUsers, perm
                   <p className="text-sm sm:text-base mb-6">
                     {dictionary.messages?.selectUser || 'Select a conversation to start chatting'}
                   </p>
-                  {isAdmin && (
+                  {canSelectRecipients && (
                     <Button
                       onClick={() => setShowUserSelectDialog(true)}
                       className="bg-[#FF5F02] hover:bg-[#e55502] shadow-md"
