@@ -1,0 +1,351 @@
+{
+  "meta": {
+    "title": "DNA App — Developer Documentation",
+    "subtitle": "Next.js 16 (App Router) • TypeScript • LMDB • shadcn/ui • PWA",
+    "updatedAt": "2026-01-06"
+  },
+  "ui": {
+    "languageLabel": "Language",
+    "english": "English",
+    "arabic": "Arabic",
+    "searchPlaceholder": "Search in docs…",
+    "toc": "Table of contents",
+    "tipText": "Use the search bar to filter sections.",
+    "heroTitle": "Developer Guide",
+    "heroLead": "This is a single-page HTML documentation view. It loads bilingual content from translation JSON files under documentation/locales/.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "note": "Note",
+    "warning": "Warning"
+  },
+  "sections": [
+    {
+      "id": "overview",
+      "title": "Overview",
+      "icon": "🧭",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "This document explains the DNA web app for developers who need to maintain and extend it. It is designed to be practical: where things live, how data flows, and what to touch when adding features."
+        },
+        {
+          "type": "ul",
+          "items": [
+            "Framework: Next.js 16 (App Router) + React 19",
+            "Language: TypeScript",
+            "Database: LMDB (file-based) — server-only",
+            "Auth: JWT in HTTP-only cookie (auth-token)",
+            "i18n: URL locale segment /{locale} (en, ar)",
+            "UI: Tailwind + shadcn/ui; motion via framer-motion",
+            "PWA: next-pwa with offline fallback (/offline)"
+          ]
+        },
+        {
+          "type": "note",
+          "title": "Repository conventions",
+          "text": "Identifiers, comments, and internal strings must remain in English. Localized user-facing text belongs in translation dictionaries."
+        }
+      ]
+    },
+    {
+      "id": "quickstart",
+      "title": "Quickstart",
+      "icon": "🚀",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Local development runs on port 3016. Use the scripts below." 
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "npm install\nnpm run dev\n# or if Turbopack misbehaves:\nnpm run dev:webpack"
+        },
+        {
+          "type": "p",
+          "text": "Production build and start:" 
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "npm run build\nPORT=3016 npm run start"
+        },
+        {
+          "type": "note",
+          "title": "Database initialization",
+          "text": "To seed/initialize LMDB and create an admin user, use npm run db:init and npm run create-admin (see Scripts & Maintenance)."
+        }
+      ]
+    },
+    {
+      "id": "structure",
+      "title": "Project Structure",
+      "icon": "🗂️",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Key folders and what they contain:" 
+        },
+        {
+          "type": "ul",
+          "items": [
+            "src/app — Next.js routes, layouts, API route handlers",
+            "src/components — shared UI components (client components, animated UI)",
+            "src/lib — server-side utilities (auth, db, i18n, academy context)",
+            "src/lib/db/repositories — LMDB repositories (CRUD + indexes)",
+            "data/lmdb — database files (data.mdb, lock.mdb)",
+            "data/uploads — persisted uploads (images, documents, videos, etc.)",
+            "public — static assets (manifest, icons, service worker)",
+            "docs — product/feature markdown specs",
+            "documentation — developer documentation (this HTML + reference docs)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "routing-i18n",
+      "title": "Routing & i18n",
+      "icon": "🌍",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Locales are implemented via the first URL segment: /{locale}/... where locale is en or ar." 
+        },
+        {
+          "type": "ul",
+          "items": [
+            "Supported locales: src/config/i18n.ts",
+            "Root redirect: src/app/page.tsx (uses the locale cookie)",
+            "Locale layout: src/app/[locale]/layout.tsx sets dir=ltr/rtl"
+          ]
+        },
+        {
+          "type": "note",
+          "title": "Strings",
+          "text": "Do not hard-code long user-facing text in components. Add keys to src/locales/en.json and src/locales/ar.json and read via getDictionary(locale)."
+        }
+      ]
+    },
+    {
+      "id": "auth",
+      "title": "Authentication",
+      "icon": "🔐",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Authentication uses a JWT stored in an HTTP-only cookie named auth-token." 
+        },
+        {
+          "type": "ul",
+          "items": [
+            "JWT helpers: src/lib/auth/auth.ts",
+            "Login endpoint: POST /api/auth/login (sets cookie)",
+            "Logout endpoint: POST /api/auth/logout (clears cookie)",
+            "Current user endpoint: GET /api/auth/me"
+          ]
+        },
+        {
+          "type": "warning",
+          "title": "Security",
+          "text": "UI gating is not security. Always enforce authorization on the server (API routes and server components)."
+        }
+      ]
+    },
+    {
+      "id": "permissions",
+      "title": "Roles & Permissions",
+      "icon": "🧩",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "The current permission system is role-based boolean flags stored in LMDB. The dashboard layout maps those flags to accessible resource keys." 
+        },
+        {
+          "type": "ul",
+          "items": [
+            "Role permissions repository: src/lib/db/repositories/rolePermissionRepository.ts",
+            "Dashboard gating: src/app/[locale]/dashboard/layout.tsx",
+            "Client layout consumes: accessibleResources[]"
+          ]
+        },
+        {
+          "type": "p",
+          "text": "To add a new module menu item, you typically:"
+        },
+        {
+          "type": "ol",
+          "items": [
+            "Add a new boolean flag to RolePermission.permissions",
+            "Set defaults per role",
+            "Map the flag to a dashboard.<module> resource key",
+            "Gate UI + API routes server-side"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "academy-context",
+      "title": "Academy Context (Multi-tenancy)",
+      "icon": "🏟️",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Many modules are scoped to a selected academy. The selected academy id is stored in an HTTP-only cookie named academy-id." 
+        },
+        {
+          "type": "ul",
+          "items": [
+            "Resolver: src/lib/academies/academyContext.ts (requireAcademyContext)",
+            "Managers are locked to a single academy (cookie is ignored)",
+            "Non-admin users may get legacy membership auto-backfilled"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "data-lmdb",
+      "title": "Data Layer (LMDB)",
+      "icon": "🗄️",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "LMDB is accessed server-side only. Repositories implement CRUD and indexes using key prefixes." 
+        },
+        {
+          "type": "ul",
+          "items": [
+            "LMDB connection: src/lib/db/lmdb.ts",
+            "Repositories: src/lib/db/repositories/*.ts",
+            "Never import LMDB or repositories from Client Components"
+          ]
+        },
+        {
+          "type": "p",
+          "text": "Repository conventions:" 
+        },
+        {
+          "type": "ul",
+          "items": [
+            "Use stable key prefixes (e.g., users:, users_by_email:)",
+            "Maintain secondary indexes manually",
+            "Use getRange(start/end) for prefix scans (end = prefix + \\xFF)",
+            "Include academyId in records or key design for scoping"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "title": "API Routes",
+      "icon": "🛰️",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "API routes are implemented as App Router route handlers under src/app/api/**/route.ts." 
+        },
+        {
+          "type": "ul",
+          "items": [
+            "Health: GET /api/health",
+            "Auth: /api/auth/login, /api/auth/logout, /api/auth/me",
+            "Uploads: POST /api/upload",
+            "Backups: GET/POST /api/backup (admin)",
+            "Restore: POST /api/restore (admin)",
+            "WhatsApp: /api/whatsapp/*",
+            "Notifications: /api/notifications/*",
+            "Messages: /api/messages/unread-count"
+          ]
+        },
+        {
+          "type": "warning",
+          "title": "Backup/restore caution",
+          "text": "Backup/restore endpoints execute shell commands (tar, rm). Restrict access in production and consider additional hardening." 
+        }
+      ]
+    },
+    {
+      "id": "ui",
+      "title": "UI & Motion Guidelines",
+      "icon": "🎮",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "The app’s UI is intentionally game-like. Use framer-motion for page transitions and interactive feedback." 
+        },
+        {
+          "type": "ul",
+          "items": [
+            "Use motion wrappers on interactive elements (hover/tap scale)",
+            "Add entrance animations for pages and cards",
+            "Prefer shadcn/ui for primitives and Tailwind for composition",
+            "Root theme is forced dark (ThemeProvider forcedTheme=dark)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "deployment",
+      "title": "Deployment (Docker) & PWA",
+      "icon": "📦",
+      "blocks": [
+        {
+          "type": "p",
+          "text": "Docker builds the Next.js app and runs it in production on port 4040 (docker-compose.yml)." 
+        },
+        {
+          "type": "ul",
+          "items": [
+            "Dockerfile: multi-stage build (builder + runner)",
+            "docker-compose.yml: volumes persist data, uploads, logs",
+            "Healthcheck: GET /api/health",
+            "PWA: configured in next.config.ts (disabled in dev)"
+          ]
+        },
+        {
+          "type": "note",
+          "title": "Offline route",
+          "text": "Offline fallback page is implemented at src/app/offline/page.tsx and configured as the PWA document fallback." 
+        }
+      ]
+    },
+    {
+      "id": "extend",
+      "title": "How to Add a New Feature",
+      "icon": "🧱",
+      "blocks": [
+        {
+          "type": "ol",
+          "items": [
+            "Create routes under src/app/[locale]/dashboard/<module>/...",
+            "Create or extend repositories under src/lib/db/repositories",
+            "Add translations in src/locales/en.json and src/locales/ar.json",
+            "Add permission flag(s) if the feature should be gated",
+            "Gate server-side in API routes and server components",
+            "Build UI with shadcn/ui + framer-motion patterns"
+          ]
+        },
+        {
+          "type": "note",
+          "title": "Keep it modular",
+          "text": "Prefer small, testable changes. Extend repositories instead of touching LMDB directly from routes."
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting",
+      "title": "Troubleshooting",
+      "icon": "🛠️",
+      "blocks": [
+        {
+          "type": "ul",
+          "items": [
+            "Dev assets blocked behind proxy/LAN host: set NEXT_ALLOWED_DEV_ORIGINS",
+            "LMDB reader issues: raise LMDB_MAX_READERS and avoid client imports",
+            "Uploads not visible: verify data volume mount and /uploads routing",
+            "Push not delivered: verify VAPID env vars and subscription presence"
+          ]
+        }
+      ]
+    }
+  ]
+}

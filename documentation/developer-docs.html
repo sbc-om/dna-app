@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DNA App — Developer Documentation</title>
+  <style>
+    :root {
+      --bg: #07070a;
+      --panel: rgba(255, 255, 255, 0.06);
+      --panel-2: rgba(255, 255, 255, 0.08);
+      --text: rgba(255, 255, 255, 0.92);
+      --muted: rgba(255, 255, 255, 0.70);
+      --border: rgba(255, 255, 255, 0.14);
+      --accent: #7c3aed;
+      --accent-2: #06b6d4;
+      --good: #22c55e;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+      --shadow: 0 16px 60px rgba(0, 0, 0, 0.45);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background:
+        radial-gradient(1200px 600px at 15% -5%, rgba(124, 58, 237, 0.35), transparent 60%),
+        radial-gradient(900px 500px at 85% 0%, rgba(6, 182, 212, 0.25), transparent 55%),
+        radial-gradient(900px 700px at 50% 110%, rgba(34, 197, 94, 0.12), transparent 60%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    a { color: inherit; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 28px 18px 64px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(14px);
+      background: rgba(7, 7, 10, 0.65);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 16px 18px;
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.9), rgba(6, 182, 212, 0.85));
+      box-shadow: 0 14px 40px rgba(124, 58, 237, 0.22);
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .subtitle {
+      margin: 3px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr;
+      align-items: center;
+    }
+
+    @media (min-width: 880px) {
+      .header-inner { grid-template-columns: 1fr 520px; }
+      .controls { grid-template-columns: 1fr auto; }
+    }
+
+    .search {
+      width: 100%;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: var(--text);
+      outline: none;
+      box-shadow: var(--shadow);
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-start;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .seg {
+      display: inline-flex;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .seg button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      padding: 10px 12px;
+      cursor: pointer;
+      font-weight: 650;
+      letter-spacing: 0.15px;
+      font-size: 12px;
+    }
+
+    .seg button[aria-pressed="true"] {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.55), rgba(6, 182, 212, 0.35));
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    @media (min-width: 980px) {
+      .grid { grid-template-columns: 330px 1fr; }
+    }
+
+    aside {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .aside-head {
+      padding: 16px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.04);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .aside-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 750;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .updated {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .toc {
+      padding: 10px 12px 14px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .toc a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      color: var(--text);
+      border: 1px solid transparent;
+      background: transparent;
+    }
+
+    .toc a:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.10);
+      text-decoration: none;
+    }
+
+    .toc .toc-icon {
+      font-size: 18px;
+      line-height: 1;
+      opacity: 0.95;
+      width: 26px;
+    }
+
+    .toc .toc-text {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .toc .toc-label {
+      font-size: 13px;
+      font-weight: 650;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toc .toc-arrow {
+      opacity: 0.5;
+    }
+
+    main {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero {
+      padding: 18px 18px 16px;
+      border-bottom: 1px solid var(--border);
+      background:
+        radial-gradient(900px 260px at 20% 0%, rgba(124, 58, 237, 0.20), transparent 60%),
+        radial-gradient(900px 260px at 80% 0%, rgba(6, 182, 212, 0.14), transparent 60%),
+        rgba(255, 255, 255, 0.03);
+    }
+
+    .hero h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .content {
+      padding: 6px 18px 22px;
+    }
+
+    section {
+      padding: 18px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    section:last-child { border-bottom: 0; }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing: 0.2px;
+    }
+
+    .section-icon {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      font-size: 26px; /* big emoji */
+      line-height: 1;
+    }
+
+    p {
+      margin: 10px 0;
+      line-height: 1.7;
+      color: var(--text);
+    }
+
+    ul, ol {
+      margin: 10px 0;
+      padding-inline-start: 22px;
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    li { margin: 6px 0; }
+
+    pre {
+      margin: 12px 0;
+      background: rgba(0, 0, 0, 0.40);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      padding: 12px;
+      overflow: auto;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    code { font-family: var(--mono); font-size: 12.5px; }
+
+    .code-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .copy-btn {
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1px;
+      font-size: 12px;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.10);
+    }
+
+    .callout {
+      margin: 12px 0;
+      padding: 12px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: 0 16px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    .callout-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 850;
+      margin: 0 0 6px;
+      letter-spacing: 0.15px;
+    }
+
+    .callout.note { border-color: rgba(34, 197, 94, 0.35); }
+    .callout.warning { border-color: rgba(245, 158, 11, 0.45); }
+
+    .callout.note .badge { color: var(--good); }
+    .callout.warning .badge { color: var(--warn); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      font-size: 12px;
+    }
+
+    .hidden { display: none !important; }
+
+    /* RTL tweaks */
+    [dir="rtl"] ul, [dir="rtl"] ol { padding-right: 22px; padding-left: 0; }
+    [dir="rtl"] .toc .toc-text { flex-direction: row-reverse; }
+    [dir="rtl"] .code-head { flex-direction: row-reverse; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-title">
+           <div style="min-width: 0;">
+            <h1 id="docTitle">DNA App</h1>
+            <div class="subtitle" id="docSubtitle">Loading…</div>
+          </div>
+        </div>
+
+        <div class="pill" title="Updated date">
+          <span aria-hidden="true">🗓️</span>
+          <span id="updatedAt">—</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <input id="search" class="search" type="search" placeholder="Search in docs…" autocomplete="off" />
+        <div class="actions">
+          <div class="pill">
+            <span aria-hidden="true">🌐</span>
+             <div class="seg" role="group" aria-label="Language toggle">
+              <button id="btnEn" type="button" aria-pressed="true">EN</button>
+              <button id="btnAr" type="button" aria-pressed="false">AR</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="grid">
+      <aside>
+        <div class="aside-head">
+          <div class="aside-title" id="tocTitle">Table of contents</div>
+          <div class="updated" id="tocCount">0</div>
+        </div>
+        <nav class="toc" id="toc"></nav>
+      </aside>
+
+      <main>
+        <div class="hero">
+          <h2 id="heroTitle">Developer Guide</h2>
+          <p id="heroLead">This is a single-page HTML documentation view. It loads bilingual content from translation JSON files under documentation/locales/.</p>
+        </div>
+        <div class="content" id="content"></div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * Bilingual HTML docs viewer
+     * - Loads dictionaries from ./locales/en.json and ./locales/ar.json
+     * - Renders a TOC + content sections
+     * - Supports search filtering
+     * - Adds copy-to-clipboard for code blocks
+     */
+
+    const state = {
+      lang: 'en',
+      dict: null,
+      allSections: [],
+      filteredSections: []
+    };
+
+    const el = {
+      docTitle: document.getElementById('docTitle'),
+      docSubtitle: document.getElementById('docSubtitle'),
+      updatedAt: document.getElementById('updatedAt'),
+      search: document.getElementById('search'),
+      tocTitle: document.getElementById('tocTitle'),
+      tocCount: document.getElementById('tocCount'),
+      toc: document.getElementById('toc'),
+      content: document.getElementById('content'),
+      btnEn: document.getElementById('btnEn'),
+      btnAr: document.getElementById('btnAr'),
+      heroTitle: document.getElementById('heroTitle'),
+      heroLead: document.getElementById('heroLead')
+    };
+
+    function setPressed(btn, pressed) {
+      btn.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+    }
+
+    function setDirAndLang(lang) {
+      const isAr = lang === 'ar';
+      document.documentElement.lang = isAr ? 'ar' : 'en';
+      document.documentElement.dir = isAr ? 'rtl' : 'ltr';
+    }
+
+    async function loadDict(lang) {
+      const url = lang === 'ar' ? './locales/ar.json' : './locales/en.json';
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`Failed to load ${url} (${res.status})`);
+      return res.json();
+    }
+
+    function normalize(s) {
+      return String(s ?? '').toLowerCase();
+    }
+
+    function sectionMatches(section, q) {
+      if (!q) return true;
+      const hay = [
+        section.title,
+        section.id,
+        ...(section.blocks || []).flatMap((b) => {
+          if (b.type === 'p') return [b.text];
+          if (b.type === 'ul' || b.type === 'ol') return b.items || [];
+          if (b.type === 'note' || b.type === 'warning') return [b.title, b.text];
+          if (b.type === 'code') return [b.code, b.language];
+          return [];
+        })
+      ].map(normalize).join(' ');
+      return hay.includes(q);
+    }
+
+    function clearChildren(node) {
+      while (node.firstChild) node.removeChild(node.firstChild);
+    }
+
+    function create(tag, attrs = {}, text) {
+      const node = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs)) {
+        if (v === undefined || v === null) continue;
+        if (k === 'class') node.className = v;
+        else if (k.startsWith('data-')) node.setAttribute(k, v);
+        else node[k] = v;
+      }
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function renderTOC(sections) {
+      clearChildren(el.toc);
+
+      sections.forEach((s) => {
+        const a = create('a', { href: `#${s.id}` });
+
+        const left = create('span', { class: 'toc-text' });
+        left.appendChild(create('span', { class: 'toc-icon', 'aria-hidden': 'true' }, s.icon || '📘'));
+        left.appendChild(create('span', { class: 'toc-label' }, s.title));
+
+        a.appendChild(left);
+        a.appendChild(create('span', { class: 'toc-arrow', 'aria-hidden': 'true' }, '↗'));
+
+        el.toc.appendChild(a);
+      });
+
+      el.tocCount.textContent = `${sections.length}`;
+    }
+
+    function renderBlock(block, dictUI) {
+      if (block.type === 'p') {
+        return create('p', {}, block.text);
+      }
+
+      if (block.type === 'ul' || block.type === 'ol') {
+        const list = create(block.type);
+        (block.items || []).forEach((it) => {
+          list.appendChild(create('li', {}, it));
+        });
+        return list;
+      }
+
+      if (block.type === 'code') {
+        const wrap = create('div');
+
+        const head = create('div', { class: 'code-head' });
+        head.appendChild(create('span', {}, block.language ? `${block.language}` : 'code'));
+
+        const btn = create('button', { class: 'copy-btn', type: 'button' }, dictUI.copy || 'Copy');
+        btn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(String(block.code || ''));
+            const prev = btn.textContent;
+            btn.textContent = dictUI.copied || 'Copied';
+            setTimeout(() => (btn.textContent = prev), 900);
+          } catch {
+            // fallback
+            const ta = create('textarea', { value: String(block.code || '') });
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+          }
+        });
+
+        head.appendChild(btn);
+
+        const pre = create('pre');
+        pre.appendChild(create('code', {}, block.code || ''));
+
+        wrap.appendChild(head);
+        wrap.appendChild(pre);
+
+        return wrap;
+      }
+
+      if (block.type === 'note' || block.type === 'warning') {
+        const kind = block.type;
+        const callout = create('div', { class: `callout ${kind}` });
+
+        const titleRow = create('div', { class: 'callout-title' });
+        const badgeText = kind === 'note' ? (dictUI.note || 'Note') : (dictUI.warning || 'Warning');
+        const badge = create('span', { class: 'badge badge' });
+        badge.appendChild(create('span', { class: 'badge', style: 'border:none;background:transparent;padding:0' }, badgeText));
+        titleRow.appendChild(create('span', { class: 'badge', 'aria-hidden': 'true', style: 'border:none;background:transparent;padding:0' }, kind === 'note' ? '✅' : '⚠️'));
+        titleRow.appendChild(create('span', {}, block.title || badgeText));
+
+        callout.appendChild(titleRow);
+        callout.appendChild(create('div', {}, block.text || ''));
+        return callout;
+      }
+
+      return create('p', {}, '');
+    }
+
+    function renderContent(sections, dict) {
+      clearChildren(el.content);
+      const dictUI = dict.ui || {};
+
+      sections.forEach((s) => {
+        const sec = create('section', { id: s.id });
+
+        const title = create('h3', { class: 'section-title' });
+        title.appendChild(create('span', { class: 'section-icon', 'aria-hidden': 'true' }, s.icon || '📘'));
+        title.appendChild(create('span', {}, s.title));
+        sec.appendChild(title);
+
+        (s.blocks || []).forEach((b) => {
+          sec.appendChild(renderBlock(b, dictUI));
+        });
+
+        el.content.appendChild(sec);
+      });
+    }
+
+    function applyDictToChrome(dict) {
+      el.docTitle.textContent = dict.meta?.title || 'DNA App — Developer Documentation';
+      el.docSubtitle.textContent = dict.meta?.subtitle || '';
+      el.updatedAt.textContent = dict.meta?.updatedAt || '—';
+
+      const ui = dict.ui || {};
+      el.search.placeholder = ui.searchPlaceholder || 'Search in docs…';
+      el.tocTitle.textContent = ui.toc || 'Table of contents';
+
+      el.heroTitle.textContent = ui.heroTitle || 'Developer Guide';
+      el.heroLead.textContent = ui.heroLead || 'This is a single-page HTML documentation view. It loads bilingual content from translation JSON files under documentation/locales/.';
+
+      // Buttons
+      setPressed(el.btnEn, state.lang === 'en');
+      setPressed(el.btnAr, state.lang === 'ar');
+    }
+
+    function filterAndRender() {
+      const q = normalize(el.search.value).trim();
+      state.filteredSections = state.allSections.filter((s) => sectionMatches(s, q));
+      renderTOC(state.filteredSections);
+      renderContent(state.filteredSections, state.dict);
+    }
+
+    async function setLanguage(lang) {
+      state.lang = lang;
+      setDirAndLang(lang);
+
+      state.dict = await loadDict(lang);
+      state.allSections = Array.isArray(state.dict.sections) ? state.dict.sections : [];
+
+      applyDictToChrome(state.dict);
+      filterAndRender();
+
+      // Keep the current hash section visible.
+      if (location.hash) {
+        const id = location.hash.slice(1);
+        const node = document.getElementById(id);
+        if (node) node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    el.search.addEventListener('input', () => filterAndRender());
+
+    el.btnEn.addEventListener('click', () => setLanguage('en'));
+    el.btnAr.addEventListener('click', () => setLanguage('ar'));
+
+    // Initial load
+    (async function init() {
+      try {
+        await setLanguage('en');
+      } catch (err) {
+        console.error(err);
+        el.docSubtitle.textContent = 'Failed to load dictionaries. If you opened this file via file://, fetch() may be blocked. Serve it via a local web server.';
+        el.heroLead.textContent = 'Tip: Open this directory using a simple static server, or view the Markdown docs under documentation/.';
+      }
+    })();
+  </script>
+</body>
+</html>
