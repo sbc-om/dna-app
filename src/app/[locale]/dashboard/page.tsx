@@ -7,6 +7,8 @@ import { listUsers, getChildrenByParentId, getUsersByIds, findUserById } from '@
 import { listAcademyMembers } from '@/lib/db/repositories/academyMembershipRepository';
 import { ensurePlayerProfile } from '@/lib/db/repositories/playerProfileRepository';
 import { findAcademyById } from '@/lib/db/repositories/academyRepository';
+import { getAllCourses } from '@/lib/db/repositories/courseRepository';
+import { getAllEnrollments } from '@/lib/db/repositories/enrollmentRepository';
 import { DashboardHomeClient } from '@/components/DashboardHomeClient';
 import { type AcademyAdminDashboardData, type AcademyAdminPlayerRow } from '@/components/AcademyAdminDashboardHomeClient';
 import { KidProfileClient } from '@/components/KidProfileClient';
