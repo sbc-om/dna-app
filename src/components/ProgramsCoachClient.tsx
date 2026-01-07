@@ -478,6 +478,7 @@ export default function ProgramsCoachClient({ locale, dict }: ProgramsCoachClien
                   const isPresent = attendance[m.userId]?.present ?? false;
                   const points = m.pointsTotal ?? 0;
                   const sessionsAttended = attendanceSummaryByUserId[m.userId]?.attended ?? 0;
+                  const profilePicture = m.user?.profilePicture;
 
                   return (
                     <motion.div
@@ -486,25 +487,78 @@ export default function ProgramsCoachClient({ locale, dict }: ProgramsCoachClien
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
                       transition={{ delay: idx * 0.02 }}
-                      whileHover={{ scale: 1.01 }}
-                      className="rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#111114] p-4"
+                      whileHover={{ scale: 1.02, rotateY: 2, rotateX: 2 }}
+                      style={{ transformStyle: 'preserve-3d' }}
+                      className="relative group rounded-2xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-white dark:bg-[#111114] p-5 overflow-hidden"
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="font-bold text-[#262626] dark:text-white truncate">{name}</div>
-                          <div className="mt-1 flex flex-wrap gap-2">
-                            <Badge className="border-2 border-[#DDDDDD] bg-white text-[#262626] dark:border-[#000000] dark:bg-[#1a1a1a] dark:text-white">
-                              {dict.programs.pointsLabel}: {points}
+                      {/* Animated glow effect on hover */}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-50"
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      />
+                      
+                      <div className="relative flex items-start gap-4">
+                        {/* Player Photo with Animation */}
+                        <motion.div 
+                          className="relative shrink-0"
+                          whileHover={{ scale: 1.1, rotate: 5 }}
+                          transition={{ type: 'spring', stiffness: 300 }}
+                        >
+                          {profilePicture ? (
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl blur-md opacity-75"></div>
+                              <img
+                                src={profilePicture}
+                                alt={name}
+                                className="relative w-20 h-20 rounded-2xl object-cover border-3 border-white dark:border-[#FF5F02] shadow-lg"
+                              />
+                              {isPresent && (
+                                <motion.div
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white dark:border-[#111114] flex items-center justify-center"
+                                >
+                                  <CheckCircle2 className="w-4 h-4 text-white" />
+                                </motion.div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center border-3 border-white dark:border-[#FF5F02] shadow-lg">
+                              <span className="text-2xl font-bold text-white">
+                                {name.charAt(0).toUpperCase()}
+                              </span>
+                              {isPresent && (
+                                <motion.div
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white dark:border-[#111114] flex items-center justify-center"
+                                >
+                                  <CheckCircle2 className="w-4 h-4 text-white" />
+                                </motion.div>
+                              )}
+                            </div>
+                          )}
+                        </motion.div>
+
+                        {/* Player Info */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="font-black text-lg text-[#262626] dark:text-white truncate">{name}</div>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge className="border-2 border-[#DDDDDD] bg-gradient-to-r from-blue-50 to-purple-50 text-[#262626] dark:border-[#000000] dark:from-blue-900/30 dark:to-purple-900/30 dark:text-white font-semibold">
+                              <Star className="w-3 h-3 mr-1" />
+                              {points} {dict.programs.pointsLabel}
                             </Badge>
-                            <Badge className="border-2 border-[#DDDDDD] bg-white text-[#262626] dark:border-[#000000] dark:bg-[#1a1a1a] dark:text-white">
-                              {t.sessionsAttendedLabel}: {sessionsAttended}
+                            <Badge className="border-2 border-[#DDDDDD] bg-gradient-to-r from-emerald-50 to-teal-50 text-[#262626] dark:border-[#000000] dark:from-emerald-900/30 dark:to-teal-900/30 dark:text-white font-semibold">
+                              <Calendar className="w-3 h-3 mr-1" />
+                              {sessionsAttended} {t.sessionsAttendedLabel || 'Sessions'}
                             </Badge>
-                            {lvlName ? (
-                              <Badge className="bg-white/10 text-white border-white/15">
-                                {t.currentLevelLabel}: {lvlName}
+                            {lvlName && (
+                              <Badge className="bg-gradient-to-r from-orange-500 to-pink-500 text-white border-0 font-semibold">
+                                {lvlName}
                               </Badge>
-                            ) : (
-                              <Badge className="bg-white/10 text-white/70 border-white/10">{t.noLevel}</Badge>
                             )}
                           </div>
 

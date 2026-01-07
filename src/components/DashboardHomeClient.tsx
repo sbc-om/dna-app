@@ -35,16 +35,6 @@ type ChildSummary = {
   dateOfBirth?: string;
 };
 
-type CoachCourseSummary = {
-  id: string;
-  name: string;
-  nameAr: string;
-  isActive: boolean;
-  startDate?: string;
-  endDate?: string;
-  courseImage?: string;
-};
-
 export interface DashboardHomeClientProps {
   locale: Locale;
   dictionary: Dictionary;
@@ -59,7 +49,6 @@ export interface DashboardHomeClientProps {
   adminStats?: AdminStats | null;
   managerDashboard?: AcademyAdminDashboardData | null;
   parentChildren?: ChildSummary[];
-  coachCourses?: Array<{ course: CoachCourseSummary; activePlayers: number }>;
 }
 
 export function DashboardHomeClient({
@@ -70,7 +59,6 @@ export function DashboardHomeClient({
   adminStats,
   managerDashboard,
   parentChildren,
-  coachCourses,
 }: DashboardHomeClientProps) {
   const title = dictionary.nav?.dashboard || 'Dashboard';
   const subtitle = `${dictionary.common?.welcome || 'Welcome'} ${user.fullName || user.username} • ${dictionary.users?.role || 'Role'}: ${roleLabel}`;
@@ -140,10 +128,10 @@ export function DashboardHomeClient({
                       </Button>
                     </Link>
                   ) : user.role === 'coach' ? (
-                    <Link href={`/${locale}/dashboard/courses`} className="h-full w-full">
+                    <Link href={`/${locale}/dashboard/programs`} className="h-full w-full">
                       <Button className="h-full w-full rounded-none border-0 bg-transparent px-4 text-white hover:bg-[#14141a]">
                         <BookOpen className="h-4 w-4 mr-2" />
-                        <span className="font-semibold">{dictionary.nav?.courses || 'Courses'}</span>
+                        <span className="font-semibold">{dictionary.nav?.programs || 'Programs'}</span>
                       </Button>
                     </Link>
                   ) : (
@@ -281,88 +269,32 @@ export function DashboardHomeClient({
           transition={{ duration: 0.6, delay: 0.15 }}
           className="space-y-6"
         >
-          <div className={`${shell} p-5 sm:p-6`}> 
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl border-2 border-[#DDDDDD] dark:border-[#000000] bg-linear-to-br from-blue-500/10 to-purple-500/10 flex items-center justify-center">
-                <BookOpen className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-base font-bold text-[#262626] dark:text-white">
-                  {dictionary.dashboard?.coachCourses || 'Courses'}
+          <motion.div
+            whileHover={{ scale: 1.02, rotateX: 2, rotateY: 2 }}
+            style={{ transformStyle: 'preserve-3d' }}
+          >
+            <Link href={`/${locale}/dashboard/programs`}>
+              <div className={`${shell} p-8 text-center relative overflow-hidden group`}>
+                <div className="absolute inset-0 bg-linear-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative">
+                  <div className="inline-flex h-20 w-20 mb-4 rounded-2xl bg-linear-to-br from-[#FF5F02] to-orange-600 items-center justify-center shadow-lg">
+                    <BookOpen className="h-10 w-10 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-black text-[#262626] dark:text-white mb-2">
+                    {dictionary.coachCourse?.myPrograms || 'My Training Programs'}
+                  </h2>
+                  <p className={`text-sm ${subtleText} mb-6`}>
+                    {dictionary.coachCourse?.myProgramsDescription || 'Manage attendance and track player progress'}
+                  </p>
+                  <Button className="bg-linear-to-r from-[#FF5F02] to-orange-600 text-white font-bold px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                    <BookOpen className="h-5 w-5 mr-2" />
+                    {dictionary.nav?.programs || 'View Programs'}
+                    <ArrowRight className="h-5 w-5 ml-2" />
+                  </Button>
                 </div>
-                <div className={`text-sm ${subtleText} truncate`}>
-                  {dictionary.dashboard?.coachCoursesDescription || ''}
-                </div>
               </div>
-            </div>
-          </div>
-
-          {!coachCourses || coachCourses.length === 0 ? (
-            <div className={`${shell} p-10 text-center`}>
-              <div className="text-[#262626] dark:text-white font-bold">
-                {dictionary.dashboard?.noCoachCourses || 'No courses assigned'}
-              </div>
-              <div className={`text-sm mt-2 ${subtleText}`}>
-                {dictionary.dashboard?.coachCoursesDescription || ''}
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {coachCourses.map(({ course, activePlayers }, index) => {
-                const titleText = locale === 'ar' ? course.nameAr : course.name;
-                return (
-                  <motion.div
-                    key={course.id}
-                    initial={{ opacity: 0, y: 18 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.05 + index * 0.06 }}
-                    whileHover={{ scale: 1.02, rotateX: 2, rotateY: 2 }}
-                    style={{ transformStyle: 'preserve-3d' }}
-                  >
-                    <Link href={`/${locale}/dashboard/coach/courses/${course.id}`} className="block">
-                      <div className={`${shell} overflow-hidden`}> 
-                        <div className="relative h-40 bg-gray-100 dark:bg-black/40 overflow-hidden">
-                          {course.courseImage ? (
-                            <img src={course.courseImage} alt={titleText} className="h-full w-full object-cover" />
-                          ) : (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <GraduationCap className="h-16 w-16 text-gray-300 dark:text-white/20" />
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/25 to-transparent" />
-                          <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-white font-black text-lg truncate">{titleText}</div>
-                              <div className="text-white/70 text-xs truncate">{activePlayers} {dictionary.dashboard?.activePlayers || 'Active players'}</div>
-                            </div>
-                            <ArrowRight className="h-5 w-5 text-white/80 shrink-0" />
-                          </div>
-                        </div>
-
-                        <div className="p-4">
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <div className="text-xs font-semibold text-gray-600 dark:text-gray-400">
-                                {dictionary.dashboard?.activePlayers || 'Active players'}
-                              </div>
-                              <div className="text-2xl font-black text-blue-600 dark:text-blue-400">{activePlayers}</div>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-10 border-2 border-[#DDDDDD] dark:border-[#000000] bg-white/80 dark:bg-[#111114] text-[#262626] dark:text-white hover:bg-gray-50 dark:hover:bg-[#1a1a1d]"
-                            >
-                              {dictionary.dashboard?.viewRoster || 'View'}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
+            </Link>
+          </motion.div>
         </motion.div>
       ) : null}
 

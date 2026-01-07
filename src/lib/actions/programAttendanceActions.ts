@@ -70,7 +70,7 @@ export async function saveProgramAttendanceAction(params: {
   academyId?: string;
   programId: string;
   sessionDate: string;
-  entries: Array<{ userId: string; present: boolean; notes?: string }>;
+  entries: Array<{ userId: string; present: boolean; score?: number; notes?: string }>;
 }): Promise<{ success: true; records: ProgramAttendanceRecord[] } | { success: false; error: string }> {
   try {
     const academyId = params.academyId ?? (await requireAcademyContext(params.locale)).academyId;

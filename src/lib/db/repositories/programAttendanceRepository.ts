@@ -10,6 +10,7 @@ export interface ProgramAttendanceRecord {
   coachId: string;
   sessionDate: string; // YYYY-MM-DD
   present: boolean;
+  score?: number; // 0-10 session score
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -22,6 +23,7 @@ export interface UpsertProgramAttendanceInput {
   coachId: string;
   sessionDate: string;
   present: boolean;
+  score?: number; // 0-10 session score
   notes?: string;
 }
 
@@ -72,6 +74,7 @@ export async function upsertProgramAttendanceRecord(input: UpsertProgramAttendan
     coachId: input.coachId,
     sessionDate: date,
     present: input.present,
+    score: input.score,
     notes: input.notes,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
@@ -86,7 +89,7 @@ export async function saveProgramAttendanceBatch(params: {
   programId: string;
   coachId: string;
   sessionDate: string;
-  entries: Array<{ userId: string; present: boolean; notes?: string }>;
+  entries: Array<{ userId: string; present: boolean; score?: number; notes?: string }>;
 }): Promise<ProgramAttendanceRecord[]> {
   const date = normalizeDate(params.sessionDate);
   const results: ProgramAttendanceRecord[] = [];
@@ -100,6 +103,7 @@ export async function saveProgramAttendanceBatch(params: {
         sessionDate: date,
         userId: e.userId,
         present: e.present,
+        score: e.score,
         notes: e.notes,
       })
     );

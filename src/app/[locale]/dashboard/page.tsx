@@ -5,8 +5,6 @@ import { Locale } from '@/config/i18n';
 import { ROLE_LABELS } from '@/config/roles';
 import { listUsers, getChildrenByParentId, getUsersByIds, findUserById } from '@/lib/db/repositories/userRepository';
 import { listAcademyMembers } from '@/lib/db/repositories/academyMembershipRepository';
-import { getCoursesByCoachIdAndAcademyId, type Course, getCoursesByAcademyId, getAllCourses } from '@/lib/db/repositories/courseRepository';
-import { getPaidEnrollmentsByCourseIdAndAcademyId, getEnrollmentsByAcademyId, getAllEnrollments } from '@/lib/db/repositories/enrollmentRepository';
 import { ensurePlayerProfile } from '@/lib/db/repositories/playerProfileRepository';
 import { findAcademyById } from '@/lib/db/repositories/academyRepository';
 import { DashboardHomeClient } from '@/components/DashboardHomeClient';
@@ -134,30 +132,7 @@ export default async function DashboardPage({
     };
   }
 
-  // Fetch courses for coach
-  let coachCourses: Array<{ course: Course; activePlayers: number }> = [];
-  if (user.role === 'coach') {
-    const courses = await getCoursesByCoachIdAndAcademyId(user.id, ctx!.academyId);
-
-    if (courses.length > 0) {
-      coachCourses = await Promise.all(
-        courses.map(async (course) => {
-          const paidEnrollments = await getPaidEnrollmentsByCourseIdAndAcademyId(course.id, ctx!.academyId);
-
-          if (paidEnrollments.length === 0) {
-            return { course, activePlayers: 0 };
-          }
-
-          const studentIds = Array.from(new Set(paidEnrollments.map((enrollment) => enrollment.studentId)));
-          const students = await getUsersByIds(studentIds);
-          const activeStudentIds = new Set(students.filter((student) => student.isActive).map((student) => student.id));
-          const activePlayers = paidEnrollments.filter((enrollment) => activeStudentIds.has(enrollment.studentId)).length;
-
-          return { course, activePlayers };
-        })
-      );
-    }
-  }
+  // Coach no longer has courses section - redirect to programs
 
   const parentChildren = children.map((c) => ({
     id: c.id,
@@ -170,19 +145,6 @@ export default async function DashboardPage({
     dateOfBirth: (c as any).dateOfBirth,
   }));
 
-  const coachCoursesSummary = coachCourses.map(({ course, activePlayers }) => ({
-    activePlayers,
-    course: {
-      id: course.id,
-      name: course.name,
-      nameAr: course.nameAr,
-      isActive: course.isActive,
-      startDate: course.startDate,
-      endDate: course.endDate,
-      courseImage: (course as any).courseImage,
-    },
-  }));
-
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl space-y-6 overflow-x-hidden">
       <DashboardHomeClient
@@ -193,7 +155,6 @@ export default async function DashboardPage({
         adminStats={stats}
         managerDashboard={managerDashboard}
         parentChildren={parentChildren}
-        coachCourses={coachCoursesSummary}
       />
     </div>
   );
