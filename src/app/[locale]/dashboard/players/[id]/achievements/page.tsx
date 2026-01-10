@@ -12,6 +12,7 @@ import { notFound, redirect } from 'next/navigation';
 import { ROLES } from '@/config/roles';
 import { AchievementsStatsClient } from '@/components/AchievementsStatsClient';
 import { requireUserInAcademy } from '@/lib/academies/academyGuards';
+import { resolveTargetUserAcademyId } from '@/lib/academies/resolveTargetUserAcademy';
 
 export default async function KidAchievementsPage({
   params,
@@ -23,8 +24,14 @@ export default async function KidAchievementsPage({
   const currentUser = await requireAuth(locale);
   const academyCtx = await requireAcademyContext(locale);
 
+  const academyId = await resolveTargetUserAcademyId({
+    viewerRole: currentUser.role,
+    preferredAcademyId: academyCtx.academyId,
+    targetUserId: id,
+  });
+
   // Prevent cross-academy access via global user IDs.
-  await requireUserInAcademy({ academyId: academyCtx.academyId, userId: id });
+  await requireUserInAcademy({ academyId, userId: id });
 
   // Fetch the kid
   const kid = await findUserById(id);
@@ -42,25 +49,26 @@ export default async function KidAchievementsPage({
     if (currentUser.id !== id) {
       redirect(`/${locale}/dashboard`);
     }
-  } else if (![ROLES.ADMIN, ROLES.MANAGER, ROLES.COACH].includes(currentUser.role as any)) {
+  } else if (!([ROLES.ADMIN, ROLES.MANAGER, ROLES.COACH] as const).includes(currentUser.role)) {
     redirect(`/${locale}/dashboard`);
   }
 
   // Get player profile (scoped to the currently selected academy)
-  const profile = await getPlayerProfile(academyCtx.academyId, id);
+  const profile = await getPlayerProfile(academyId, id);
 
   if (!profile) {
     notFound();
   }
 
   const latestAssessment = await getLatestDnaAssessmentSession({
-    academyId: academyCtx.academyId,
+    academyId,
     playerId: id,
   });
 
   // Prefer program level accent color (if the player is enrolled in any program with a colored level)
   // and fallback to default accent.
-  const enrollments = await listProgramEnrollmentsByUser({ academyId: academyCtx.academyId, userId: id });
+  const enrollments = await listProgramEnrollmentsByUser({ academyId, userId: id });
+
   const levels = await Promise.all(
     enrollments.map((e) => (e.currentLevelId ? findProgramLevelById(e.currentLevelId) : Promise.resolve(null)))
   );

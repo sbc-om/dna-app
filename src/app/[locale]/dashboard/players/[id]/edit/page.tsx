@@ -9,6 +9,7 @@ import { getAllAcademies } from '@/lib/db/repositories/academyRepository';
 import { getUserAcademyIds } from '@/lib/db/repositories/academyMembershipRepository';
 import { ROLES } from '@/config/roles';
 import { requireUserInAcademy } from '@/lib/academies/academyGuards';
+import { resolveTargetUserAcademyId } from '@/lib/academies/resolveTargetUserAcademy';
 
 export default async function EditKidProfilePage({
   params,
@@ -19,6 +20,12 @@ export default async function EditKidProfilePage({
   const dictionary = await getDictionary(locale);
   const user = await requireAuth(locale);
   const academyCtx = await requireAcademyContext(locale);
+
+  const academyId = await resolveTargetUserAcademyId({
+    viewerRole: user.role,
+    preferredAcademyId: academyCtx.academyId,
+    targetUserId: id,
+  });
 
   // Only admin can edit kid profiles
   if (user.role !== 'admin') {
@@ -32,8 +39,8 @@ export default async function EditKidProfilePage({
     notFound();
   }
 
-  // Enforce that this edit is performed within the currently selected academy.
-  await requireUserInAcademy({ academyId: academyCtx.academyId, userId: id });
+  // Enforce that this edit is performed within the resolved academy context.
+  await requireUserInAcademy({ academyId, userId: id });
 
   // Fetch academies for selection
   const allAcademies = await getAllAcademies();

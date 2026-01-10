@@ -6,6 +6,7 @@ import { findUserById } from '@/lib/db/repositories/userRepository';
 import { notFound, redirect } from 'next/navigation';
 import { requireUserInAcademy } from '@/lib/academies/academyGuards';
 import { PlayerCardPageClient } from '@/components/PlayerCardPageClient';
+import { resolveTargetUserAcademyId } from '@/lib/academies/resolveTargetUserAcademy';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,8 +20,14 @@ export default async function PlayerCardPage({
   const user = await requireAuth(locale);
   const academyCtx = await requireAcademyContext(locale);
 
+  const academyId = await resolveTargetUserAcademyId({
+    viewerRole: user.role,
+    preferredAcademyId: academyCtx.academyId,
+    targetUserId: id,
+  });
+
   // Prevent cross-academy access via global user IDs.
-  await requireUserInAcademy({ academyId: academyCtx.academyId, userId: id });
+  await requireUserInAcademy({ academyId, userId: id });
 
   const kid = await findUserById(id);
   if (!kid) notFound();
@@ -41,7 +48,7 @@ export default async function PlayerCardPage({
       <PlayerCardPageClient
         dictionary={dictionary}
         locale={locale}
-        academyId={academyCtx.academyId}
+        academyId={academyId}
         kid={kid}
       />
     </div>

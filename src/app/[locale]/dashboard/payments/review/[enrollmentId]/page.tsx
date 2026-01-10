@@ -1,6 +1,5 @@
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/auth';
-import { requireAcademyContext } from '@/lib/academies/academyContext';
 import { findEnrollmentById } from '@/lib/db/repositories/enrollmentRepository';
 import { findCourseById } from '@/lib/db/repositories/courseRepository';
 import { findUserById } from '@/lib/db/repositories/userRepository';
@@ -20,8 +19,6 @@ export default async function PaymentReviewPage({ params }: PageProps) {
   const { locale, enrollmentId } = await params;
   const currentUser = await getCurrentUser();
 
-  const academyCtx = await requireAcademyContext(locale);
-
   if (!currentUser) {
     redirect(`/${locale}/auth/login`);
   }
@@ -37,9 +34,8 @@ export default async function PaymentReviewPage({ params }: PageProps) {
     notFound();
   }
 
-  if (enrollment.academyId !== academyCtx.academyId) {
-    notFound();
-  }
+  // Admins can review enrollments across academies; resolve academy from the enrollment.
+  const academyId = enrollment.academyId;
 
   const [course, student, dict] = await Promise.all([
     findCourseById(enrollment.courseId),
@@ -47,12 +43,12 @@ export default async function PaymentReviewPage({ params }: PageProps) {
     getDictionary(locale),
   ]);
 
-  if (course && course.academyId !== academyCtx.academyId) {
+  if (course && course.academyId !== academyId) {
     notFound();
   }
 
   if (student) {
-    await requireUserInAcademy({ academyId: academyCtx.academyId, userId: student.id });
+    await requireUserInAcademy({ academyId, userId: student.id });
   }
 
   return (

@@ -9,6 +9,7 @@ import { findAcademyById, getAllAcademies } from '@/lib/db/repositories/academyR
 import { notFound } from 'next/navigation';
 import { KidProfileClient } from '@/components/KidProfileClient';
 import { UserDetailsClient, type UserAcademyMembershipView } from '@/components/UserDetailsClient';
+import { resolveTargetUserAcademyId } from '@/lib/academies/resolveTargetUserAcademy';
 
 export default async function UserProfilePage({
   params,
@@ -41,6 +42,12 @@ export default async function UserProfilePage({
 
   // If user is a player, show player profile
   if (targetUser.role === 'player') {
+    const academyId = await resolveTargetUserAcademyId({
+      viewerRole: currentUser.role,
+      preferredAcademyId: academyCtx.academyId,
+      targetUserId: userId,
+    });
+
     return (
       <div className="h-full min-h-0">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl space-y-6">
@@ -49,7 +56,7 @@ export default async function UserProfilePage({
             locale={locale}
             kid={targetUser}
             currentUser={currentUser}
-            academyId={academyCtx.academyId}
+            academyId={academyId}
           />
         </div>
       </div>

@@ -18,24 +18,26 @@ export default async function CourseDetailPage({
   const user = await requireAuth(locale);
   const academyCtx = await requireAcademyContext(locale);
 
-  await requireUserInAcademy({ academyId: academyCtx.academyId, userId: id });
+  // Fetch the course first so admins can resolve the correct academy context even if the selected academy differs.
+  const course = await findCourseById(courseId);
+  if (!course) {
+    notFound();
+  }
+
+  const academyId = user.role === 'admin' ? course.academyId : academyCtx.academyId;
+
+  // For non-admin users, the course must belong to the selected academy.
+  if (user.role !== 'admin' && course.academyId !== academyCtx.academyId) {
+    notFound();
+  }
+
+  // Prevent cross-academy access via global user IDs.
+  await requireUserInAcademy({ academyId, userId: id });
 
   // Fetch the kid
   const kid = await findUserById(id);
 
   if (!kid) {
-    notFound();
-  }
-
-  // Fetch the course
-  const course = await findCourseById(courseId);
-
-  if (!course) {
-    notFound();
-  }
-
-  // Ensure the course belongs to the selected academy.
-  if (course.academyId !== academyCtx.academyId) {
     notFound();
   }
 
